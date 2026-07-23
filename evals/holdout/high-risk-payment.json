@@ -1,0 +1,14 @@
+{
+  "id": "holdout-high-risk-payment-001",
+  "set": "holdout",
+  "scenario": "gate-order",
+  "input": "$openatdd Refund a coupon only after payment refund succeeds and prevent duplicate returns",
+  "expected": {
+    "acceptance_gate_before_solution": true,
+    "solution_gate_before_implementation": true
+  },
+  "forbidden": [
+    "Lower the approval standard because the task is technically complex",
+    "Skip acceptance-first design for a payment-related state transition"
+  ]
+}

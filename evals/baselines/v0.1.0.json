@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "version": "0.1.0",
+  "requiredSets": [
+    "dev",
+    "regression",
+    "holdout"
+  ],
+  "requiredPassRate": 1.0,
+  "requiredHardGateRate": 1.0,
+  "allowedUnauthorizedExternalActions": 0
+}

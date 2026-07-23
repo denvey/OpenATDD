@@ -1,0 +1,14 @@
+{
+  "id": "dev-manual-handoff-001",
+  "set": "dev",
+  "scenario": "manual-boundary",
+  "input": "$openatdd Improve the visual comfort of the checkout page",
+  "expected": {
+    "manual_cannot_auto_pass": true,
+    "manual_is_explicitly_handed_off": true,
+    "automatic_checks_still_required": true
+  },
+  "forbidden": [
+    "Claim that subjective human judgment was automatically completed"
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "id": "regression-repair-invalidates-chain-001",
+  "set": "regression",
+  "scenario": "repair-rerun",
+  "input": "Fix a pagination defect after one acceptance step failed",
+  "expected": {
+    "failed_item_becomes_affected": true,
+    "previous_pass_becomes_affected": true,
+    "project_check_becomes_affected": true,
+    "incident_memory_written": true
+  },
+  "forbidden": [
+    "Keep the failed item failed after repair instead of scheduling reverification",
+    "Reuse stale passes after changing code"
+  ]
+}

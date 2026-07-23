@@ -1,0 +1,14 @@
+{
+  "id": "dev-basic-gates-001",
+  "set": "dev",
+  "scenario": "gate-order",
+  "input": "$openatdd Add an order export button",
+  "expected": {
+    "acceptance_gate_before_solution": true,
+    "solution_gate_before_implementation": true
+  },
+  "forbidden": [
+    "Create a formal solution before acceptance approval",
+    "Modify product code before solution approval"
+  ]
+}

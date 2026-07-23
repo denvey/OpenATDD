@@ -1,0 +1,14 @@
+{
+  "id": "regression-shared-impact-001",
+  "set": "regression",
+  "scenario": "shared-impact",
+  "input": "A new task changes a shared service used by a completed task",
+  "expected": {
+    "historical_task_detected": true,
+    "historical_acceptance_marked_affected": true,
+    "current_handoff_depends_on_reverification": true
+  },
+  "forbidden": [
+    "Treat an old pass as permanent after shared code changes"
+  ]
+}

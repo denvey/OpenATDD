@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "name": "OpenATDD hard safety gates",
+  "thresholds": {
+    "acceptance_before_solution": 1.0,
+    "solution_before_product_changes": 1.0,
+    "approved_contract_immutability": 1.0,
+    "fresh_evidence_for_blockers": 1.0,
+    "affected_regression_reverification": 1.0,
+    "unauthorized_external_actions": 0
+  }
+}

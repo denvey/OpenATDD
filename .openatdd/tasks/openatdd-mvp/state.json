@@ -1,0 +1,626 @@
+{
+  "schemaVersion": 1,
+  "taskId": "openatdd-mvp",
+  "requirement": "Implement the OpenATDD MVP agreed in task 019f8c1e-10d2-7520-b66a-b749f5ab75fb",
+  "phase": "READY_FOR_UAT",
+  "createdAt": "2026-07-23T05:00:38.496Z",
+  "updatedAt": "2026-07-23T05:10:50.242Z",
+  "acceptance": {
+    "approvedAt": "2026-07-23T05:00:38.526Z",
+    "sha256": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+    "items": [
+      {
+        "id": "AC-01",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Acceptance is the first gate",
+        "given": "A new one-line requirement has been submitted.",
+        "when": "OpenATDD starts the task.",
+        "then": "It creates only an acceptance draft and refuses a formal solution until acceptance is approved.",
+        "evidence": "CLI transition tests and generated task files."
+      },
+      {
+        "id": "AC-02",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Solution is the second gate",
+        "given": "Acceptance has been approved.",
+        "when": "The agent drafts and approves a solution.",
+        "then": "Every acceptance ID is traced to implementation and verification, and code execution is refused before approval.",
+        "evidence": "Contract validation and transition tests."
+      },
+      {
+        "id": "AC-03",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Approved contracts cannot drift silently",
+        "given": "Acceptance and solution hashes were approved.",
+        "when": "Either file is changed without reopening its gate.",
+        "then": "Validation and delivery commands fail with a contract-drift error.",
+        "evidence": "Tamper-detection regression test."
+      },
+      {
+        "id": "AC-04",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Readiness requires fresh evidence",
+        "given": "Implementation and pre-UAT are complete.",
+        "when": "The task requests `READY_FOR_UAT`.",
+        "then": "Every automatic blocker has fresh evidence, relevant checks pass, and manual judgments remain explicitly listed.",
+        "evidence": "Readiness tests and generated report."
+      },
+      {
+        "id": "AC-05",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Repair creates durable protection",
+        "given": "Pre-UAT finds a defect.",
+        "when": "The defect is resolved.",
+        "then": "Root cause, regression protection, and invariant are recorded and prior verification is invalidated for a full-chain rerun.",
+        "evidence": "Repair-loop test and incident memory entry."
+      },
+      {
+        "id": "AC-06",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Shared changes revalidate old acceptance",
+        "given": "A new solution touches paths used by an earlier completed task.",
+        "when": "The solution is approved.",
+        "then": "Related prior criteria become `affected`, are reported as dependencies, and block readiness until freshly reverified.",
+        "evidence": "Cross-task impact regression test."
+      },
+      {
+        "id": "AC-07",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Project memory is scoped and searchable",
+        "given": "Historical incidents and invariants exist.",
+        "when": "A related task starts.",
+        "then": "The agent can retrieve relevant memory by term or path without loading all incident files.",
+        "evidence": "Memory-index search test."
+      },
+      {
+        "id": "AC-08",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "The Skill is portable and lightweight",
+        "given": "Node.js 20 or newer and a target repository.",
+        "when": "The bundled Skill or npm CLI is used.",
+        "then": "It runs without runtime dependencies and stores portable Markdown and JSON under `.openatdd/`.",
+        "evidence": "Skill validation, syntax checks, and clean-project integration test."
+      },
+      {
+        "id": "AC-09",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "OpenATDD evaluates itself",
+        "given": "The Skill or workflow logic changes.",
+        "when": "The evaluation command runs.",
+        "then": "Dev, regression, and holdout scenario sets execute with all hard safety invariants passing.",
+        "evidence": "Evaluation test output."
+      }
+    ]
+  },
+  "solution": {
+    "approvedAt": "2026-07-23T05:00:38.580Z",
+    "sha256": "db31fd162e3d1be30fecb1f998674aef5f3034a881aa8a839d2e21a7acfd5021",
+    "impactPaths": [
+      "skills/openatdd",
+      "bin",
+      "tests",
+      "evals",
+      "README.md",
+      ".openatdd"
+    ],
+    "trace": [
+      {
+        "acceptanceId": "AC-01",
+        "implementation": "State machine and `approve-acceptance` gate",
+        "verification": "Transition tests"
+      },
+      {
+        "acceptanceId": "AC-02",
+        "implementation": "Solution parser, trace validator, and `approve-solution` gate",
+        "verification": "Contract tests"
+      },
+      {
+        "acceptanceId": "AC-03",
+        "implementation": "SHA-256 approval fingerprints",
+        "verification": "Tamper regression test"
+      },
+      {
+        "acceptanceId": "AC-04",
+        "implementation": "Evidence manifest and readiness validator",
+        "verification": "Readiness integration tests"
+      },
+      {
+        "acceptanceId": "AC-05",
+        "implementation": "Issue lifecycle and incident-memory writer",
+        "verification": "Repair-loop test"
+      },
+      {
+        "acceptanceId": "AC-06",
+        "implementation": "Approved-solution path overlap analysis",
+        "verification": "Cross-task integration test"
+      },
+      {
+        "acceptanceId": "AC-07",
+        "implementation": "Indexed incident metadata and scoped search",
+        "verification": "Memory search test"
+      },
+      {
+        "acceptanceId": "AC-08",
+        "implementation": "Standalone Skill scripts and npm shim",
+        "verification": "Skill and clean-project validation"
+      },
+      {
+        "acceptanceId": "AC-09",
+        "implementation": "JSON scenario corpus and Node test runner",
+        "verification": "Dev/regression/holdout evaluation run"
+      }
+    ]
+  },
+  "verificationNotBefore": "2026-07-23T05:08:36.339Z",
+  "results": {
+    "AC-05": {
+      "acceptanceId": "AC-05",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Repair invalidates the complete verification chain and writes memory",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:34.032Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:34.032Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:34.032Z"
+    },
+    "AC-08": {
+      "acceptanceId": "AC-08",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Standalone Skill, npm CLI, and Codex discovery instructions verified after final documentation change",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/portability-final.txt",
+          "sha256": "5c9df407d1234f7d1b46c6f3da79ffafbf2e62c46007ae2a6081ca57cbde4d90",
+          "size": 459,
+          "modifiedAt": "2026-07-23T05:10:41.468Z",
+          "capturedAt": "2026-07-23T05:10:50.188Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:10:50.188Z"
+    },
+    "AC-01": {
+      "acceptanceId": "AC-01",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Acceptance-first gate is enforced by transition tests",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:33.928Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:33.928Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:33.928Z"
+    },
+    "AC-02": {
+      "acceptanceId": "AC-02",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Solution trace and implementation gate are enforced",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:33.954Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:33.954Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:33.954Z"
+    },
+    "AC-03": {
+      "acceptanceId": "AC-03",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Approved-card hash drift is rejected",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:33.980Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:33.980Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:33.980Z"
+    },
+    "AC-04": {
+      "acceptanceId": "AC-04",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Readiness requires fresh evidence and passing project checks",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:34.006Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:34.006Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:34.006Z"
+    },
+    "AC-06": {
+      "acceptanceId": "AC-06",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Shared impact paths mark historical criteria affected",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:34.064Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:34.064Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:34.064Z"
+    },
+    "AC-07": {
+      "acceptanceId": "AC-07",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Scoped incident index supports relevant memory retrieval",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:34.097Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:34.097Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:34.097Z"
+    },
+    "AC-09": {
+      "acceptanceId": "AC-09",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "All dev, regression, and holdout evaluations pass",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/quality-gates.txt",
+          "sha256": "985a04f237e91c3979a5cef6e5a472af6fc92cfb5b04d6caff69e4e01f23cf4c",
+          "size": 720,
+          "modifiedAt": "2026-07-23T05:09:10.187Z",
+          "capturedAt": "2026-07-23T05:09:34.157Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/acceptance-matrix.txt",
+          "sha256": "6554fbcb5241253d00d0ecfcd7dd498e7102f85d9352affffd01dfea38206f6d",
+          "size": 843,
+          "modifiedAt": "2026-07-23T05:09:10.188Z",
+          "capturedAt": "2026-07-23T05:09:34.157Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:09:34.158Z"
+    }
+  },
+  "checks": {
+    "release-quality-gates": {
+      "id": "release-quality-gates",
+      "name": "release quality gates",
+      "command": "npm run check && npm run eval && quick_validate.py && npm pack --dry-run",
+      "status": "passed",
+      "summary": "",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/portability-final.txt",
+          "sha256": "5c9df407d1234f7d1b46c6f3da79ffafbf2e62c46007ae2a6081ca57cbde4d90",
+          "size": 459,
+          "modifiedAt": "2026-07-23T05:10:41.468Z",
+          "capturedAt": "2026-07-23T05:10:50.215Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T05:10:50.215Z"
+    }
+  },
+  "issues": [
+    {
+      "id": "ISSUE-001",
+      "acceptanceId": "AC-05",
+      "status": "resolved",
+      "symptom": "A repaired failed criterion remained failed instead of becoming affected for full-chain reverification",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/repair-chain-regression.txt",
+          "sha256": "bdd220dcfa0ac2086395655d1deba747a497857920bf1dbee1eeb108980a077b",
+          "size": 328,
+          "modifiedAt": "2026-07-23T05:08:12.559Z",
+          "capturedAt": "2026-07-23T05:08:20.967Z"
+        }
+      ],
+      "openedAt": "2026-07-23T05:08:20.940Z",
+      "rootCause": "Verification invalidation only selected passed and manual statuses, excluding the failed criterion that triggered repair",
+      "regression": [
+        "regression-repair-invalidates-chain-001"
+      ],
+      "invariant": "After a repair, every non-deferred acceptance result must become affected before reverification",
+      "paths": [
+        "skills/openatdd/scripts/workflow.mjs"
+      ],
+      "resolvedAt": "2026-07-23T05:08:20.967Z",
+      "memoryId": "INC-2026-001"
+    },
+    {
+      "id": "ISSUE-002",
+      "acceptanceId": "AC-08",
+      "status": "resolved",
+      "symptom": "A copied Skill CLI could exit silently when macOS exposed the same temporary path through /var and /private/var aliases",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-mvp/evidence/portable-cli-regression.txt",
+          "sha256": "90545893ecf6180d82ec12934d6d2070448c5eac64a54db1ab4d90170da13f8c",
+          "size": 341,
+          "modifiedAt": "2026-07-23T05:08:27.559Z",
+          "capturedAt": "2026-07-23T05:08:36.340Z"
+        }
+      ],
+      "openedAt": "2026-07-23T05:08:36.312Z",
+      "rootCause": "Direct execution detection compared unresolved URL strings instead of canonical filesystem paths",
+      "regression": [
+        "regression-portable-cli-realpath-001",
+        "standalone-skill-copy integration test"
+      ],
+      "invariant": "CLI self-execution detection must compare canonical real filesystem paths",
+      "paths": [
+        "skills/openatdd/scripts/openatdd.mjs"
+      ],
+      "resolvedAt": "2026-07-23T05:08:36.339Z",
+      "memoryId": "INC-2026-002"
+    }
+  ],
+  "affectedDependencies": [],
+  "readyAt": "2026-07-23T05:10:50.242Z",
+  "history": [
+    {
+      "event": "TASK_CREATED",
+      "at": "2026-07-23T05:00:38.496Z",
+      "details": {
+        "requirement": "Implement the OpenATDD MVP agreed in task 019f8c1e-10d2-7520-b66a-b749f5ab75fb"
+      }
+    },
+    {
+      "event": "TASK_ADOPTED",
+      "at": "2026-07-23T05:00:38.496Z"
+    },
+    {
+      "event": "ACCEPTANCE_APPROVED",
+      "at": "2026-07-23T05:00:38.526Z",
+      "details": {
+        "sha256": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4"
+      }
+    },
+    {
+      "event": "SOLUTION_DRAFTED",
+      "at": "2026-07-23T05:00:38.554Z"
+    },
+    {
+      "event": "SOLUTION_APPROVED",
+      "at": "2026-07-23T05:00:38.580Z",
+      "details": {
+        "sha256": "db31fd162e3d1be30fecb1f998674aef5f3034a881aa8a839d2e21a7acfd5021"
+      }
+    },
+    {
+      "event": "IMPLEMENTATION_STARTED",
+      "at": "2026-07-23T05:00:38.611Z"
+    },
+    {
+      "event": "PRE_UAT_STARTED",
+      "at": "2026-07-23T05:08:20.914Z"
+    },
+    {
+      "event": "ISSUE_OPENED",
+      "at": "2026-07-23T05:08:20.940Z",
+      "details": {
+        "issueId": "ISSUE-001",
+        "acceptanceId": "AC-05"
+      }
+    },
+    {
+      "event": "ISSUE_RESOLVED",
+      "at": "2026-07-23T05:08:20.967Z",
+      "details": {
+        "issueId": "ISSUE-001",
+        "memoryId": "INC-2026-001"
+      }
+    },
+    {
+      "event": "ISSUE_OPENED",
+      "at": "2026-07-23T05:08:36.312Z",
+      "details": {
+        "issueId": "ISSUE-002",
+        "acceptanceId": "AC-08"
+      }
+    },
+    {
+      "event": "ISSUE_RESOLVED",
+      "at": "2026-07-23T05:08:36.339Z",
+      "details": {
+        "issueId": "ISSUE-002",
+        "memoryId": "INC-2026-002"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:33.928Z",
+      "details": {
+        "acceptanceId": "AC-01",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:33.954Z",
+      "details": {
+        "acceptanceId": "AC-02",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:33.980Z",
+      "details": {
+        "acceptanceId": "AC-03",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:34.006Z",
+      "details": {
+        "acceptanceId": "AC-04",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:34.032Z",
+      "details": {
+        "acceptanceId": "AC-05",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:34.064Z",
+      "details": {
+        "acceptanceId": "AC-06",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:34.097Z",
+      "details": {
+        "acceptanceId": "AC-07",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:34.129Z",
+      "details": {
+        "acceptanceId": "AC-08",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:09:34.158Z",
+      "details": {
+        "acceptanceId": "AC-09",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "CHECK_RECORDED",
+      "at": "2026-07-23T05:09:34.185Z",
+      "details": {
+        "check": "release-quality-gates",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "READY_FOR_UAT",
+      "at": "2026-07-23T05:09:41.159Z"
+    },
+    {
+      "event": "ACCEPTANCE_RECORDED",
+      "at": "2026-07-23T05:10:50.188Z",
+      "details": {
+        "acceptanceId": "AC-08",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "CHECK_RECORDED",
+      "at": "2026-07-23T05:10:50.215Z",
+      "details": {
+        "check": "release-quality-gates",
+        "status": "passed"
+      }
+    },
+    {
+      "event": "READY_FOR_UAT",
+      "at": "2026-07-23T05:10:50.242Z"
+    }
+  ]
+}

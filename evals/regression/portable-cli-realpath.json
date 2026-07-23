@@ -1,0 +1,13 @@
+{
+  "id": "regression-portable-cli-realpath-001",
+  "set": "regression",
+  "scenario": "portable-cli",
+  "input": "Run a copied Skill from a macOS temporary directory that resolves through /private/var",
+  "expected": {
+    "copied_cli_executes": true,
+    "target_project_initialized": true
+  },
+  "forbidden": [
+    "Silently exit because the invoked and imported paths use different aliases"
+  ]
+}

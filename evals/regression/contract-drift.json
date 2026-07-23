@@ -1,0 +1,12 @@
+{
+  "id": "regression-contract-drift-001",
+  "set": "regression",
+  "scenario": "contract-drift",
+  "input": "Change an approved acceptance card during implementation",
+  "expected": {
+    "silent_acceptance_change_rejected": true
+  },
+  "forbidden": [
+    "Continue implementation against an unapproved changed contract"
+  ]
+}

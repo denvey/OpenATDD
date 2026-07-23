@@ -1,0 +1,11 @@
+.DS_Store
+node_modules/
+npm-debug.log*
+coverage/
+
+# Consumer-project runtime evidence can contain screenshots, logs, and exports.
+.openatdd/tasks/*/evidence/*
+!.openatdd/tasks/*/evidence/.gitkeep
+
+# Evaluation reports are reproducible outputs.
+evals/reports/

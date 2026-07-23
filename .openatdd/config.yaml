@@ -1,0 +1,10 @@
+version: 1
+notification:
+  mode: draft
+verification:
+  web: playwright
+  require_fresh_evidence: true
+impact_analysis:
+  enabled: true
+memory:
+  strategy: scoped

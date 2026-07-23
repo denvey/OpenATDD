@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "incidents": [
+    {
+      "id": "INC-2026-001",
+      "title": "A repaired failed criterion remained failed instead of becoming affected for full-chain reverification",
+      "area": "skills/openatdd/scripts/workflow.mjs",
+      "rootCause": "Verification invalidation only selected passed and manual statuses, excluding the failed criterion that triggered repair",
+      "invariantId": "INV-2026-001",
+      "invariant": "After a repair, every non-deferred acceptance result must become affected before reverification",
+      "tests": [
+        "regression-repair-invalidates-chain-001"
+      ],
+      "paths": [
+        "skills/openatdd/scripts/workflow.mjs"
+      ],
+      "tags": [
+        "repair",
+        "state-machine"
+      ],
+      "sourceTask": "openatdd-mvp",
+      "sourceIssue": "ISSUE-001",
+      "createdAt": "2026-07-23T05:08:20.967Z",
+      "file": "incidents/INC-2026-001-a-repaired-failed-criterion-remained-failed-inst.md"
+    },
+    {
+      "id": "INC-2026-002",
+      "title": "A copied Skill CLI could exit silently when macOS exposed the same temporary path through /var and /private/var aliases",
+      "area": "skills/openatdd/scripts/openatdd.mjs",
+      "rootCause": "Direct execution detection compared unresolved URL strings instead of canonical filesystem paths",
+      "invariantId": "INV-2026-002",
+      "invariant": "CLI self-execution detection must compare canonical real filesystem paths",
+      "tests": [
+        "regression-portable-cli-realpath-001",
+        "standalone-skill-copy integration test"
+      ],
+      "paths": [
+        "skills/openatdd/scripts/openatdd.mjs"
+      ],
+      "tags": [
+        "cli",
+        "portability",
+        "macos"
+      ],
+      "sourceTask": "openatdd-mvp",
+      "sourceIssue": "ISSUE-002",
+      "createdAt": "2026-07-23T05:08:36.339Z",
+      "file": "incidents/INC-2026-002-a-copied-skill-cli-could-exit-silently-when-maco.md"
+    }
+  ]
+}

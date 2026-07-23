@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenATDD"
+  short_description: "用两次人工确认驱动 AI 自动实现、预验收、修复与证据交付"
+  default_prompt: "Use $openatdd to turn this requirement into an approved acceptance card, approved solution, and evidence-backed delivery."
