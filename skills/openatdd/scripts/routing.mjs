@@ -40,6 +40,21 @@ export const AGENT_POLICIES = Object.freeze({
   }),
 });
 
+export const INTERACTION_POLICIES = Object.freeze({
+  [LANES.QUICK]: Object.freeze({
+    approvals: "autonomous",
+    contract: "compact",
+  }),
+  [LANES.STANDARD]: Object.freeze({
+    approvals: "human",
+    contract: "full",
+  }),
+  [LANES.DEEP]: Object.freeze({
+    approvals: "human",
+    contract: "full",
+  }),
+});
+
 const SCOPES = new Set(["local", "cross-module", "system"]);
 const PROJECT_PATTERNS = new Set(["established", "partial", "none"]);
 const REVERSIBILITIES = new Set(["reversible", "costly", "irreversible"]);
@@ -60,6 +75,11 @@ function addEnumError(errors, label, value, allowed) {
 function cloneAgentPolicy(lane) {
   const policy = AGENT_POLICIES[lane];
   return { policy: policy.policy, roles: [...policy.roles] };
+}
+
+function cloneInteractionPolicy(lane) {
+  const policy = INTERACTION_POLICIES[lane];
+  return { approvals: policy.approvals, contract: policy.contract };
 }
 
 function collectRiskSignals(assessment) {
@@ -128,6 +148,11 @@ export function agentPolicyForLane(lane) {
   return cloneAgentPolicy(lane);
 }
 
+export function interactionPolicyForLane(lane) {
+  assert(LANE_VALUES.has(lane), "INVALID_ROUTING_LANE", `Unknown routing lane: ${lane}`);
+  return cloneInteractionPolicy(lane);
+}
+
 /**
  * Deterministically classify a task from facts gathered by discovery.
  * No repository access, model judgment, clocks, or environment state is used.
@@ -178,6 +203,7 @@ export function classifyTask(assessment) {
       externalResearch: lane === LANES.DEEP,
     },
     agents: cloneAgentPolicy(lane),
+    interaction: interactionPolicyForLane(lane),
   };
 
   const resultValidation = validateRouting(result);
@@ -210,6 +236,15 @@ export function validateRouting(routing) {
     const expected = AGENT_POLICIES[routing.lane];
     if (routing.agents.policy !== expected.policy || JSON.stringify(routing.agents.roles) !== JSON.stringify(expected.roles)) {
       errors.push("Agent policy does not match the routing lane.");
+    }
+  }
+
+  if (!isRecord(routing.interaction) || typeof routing.interaction.approvals !== "string" || typeof routing.interaction.contract !== "string") {
+    errors.push("interaction must contain approvals and contract policies.");
+  } else if (LANE_VALUES.has(routing.lane)) {
+    const expected = INTERACTION_POLICIES[routing.lane];
+    if (routing.interaction.approvals !== expected.approvals || routing.interaction.contract !== expected.contract) {
+      errors.push("Interaction policy does not match the routing lane.");
     }
   }
 

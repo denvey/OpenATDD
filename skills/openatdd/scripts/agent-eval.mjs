@@ -187,6 +187,9 @@ export function createCommandAdapter(options = {}) {
     kind: "command",
     provenance: options.provenance ?? "external-command",
     realModel: options.realModel === true,
+    argv: [...options.argv],
+    model: options.model ?? null,
+    reasoningEffort: options.reasoningEffort ?? null,
     async run({ prompt, workspace }) {
       const command = await runArgv(options.argv, {
         cwd: workspace,
@@ -221,6 +224,9 @@ export function createCodexAdapter(options = {}) {
   const adapterPath = fileURLToPath(new URL("./codex-agent-adapter.mjs", import.meta.url));
   const disabledCapabilities = [...new Set(options.disabledCapabilities ?? [])];
   const suffix = disabledCapabilities.length > 0 ? `without-${disabledCapabilities.join("-")}` : null;
+  const model = options.model?.trim() || null;
+  const reasoningEffort = options.reasoningEffort?.trim() || "low";
+  invariant(["low", "medium", "high", "xhigh", "max", "ultra"].includes(reasoningEffort), "Codex adapter reasoningEffort is invalid.");
   return createCommandAdapter({
     name: options.name ?? (options.bare === true ? "codex-bare" : suffix ? `codex-${suffix}` : "codex-openatdd"),
     argv: [
@@ -228,10 +234,15 @@ export function createCodexAdapter(options = {}) {
       adapterPath,
       "--mode",
       options.bare === true ? "bare" : "primary",
+      ...(model ? ["--model", model] : []),
+      "--reasoning-effort",
+      reasoningEffort,
       ...disabledCapabilities.flatMap((id) => ["--disable-capability", id]),
     ],
     provenance: "bundled-codex-exec-adapter",
     realModel: true,
+    model,
+    reasoningEffort,
     timeoutMs: options.timeoutMs ?? 240_000,
     maxOutputBytes: options.maxOutputBytes ?? 2 * 1024 * 1024,
   });
@@ -435,6 +446,8 @@ async function runAdapterSet({ scenario, scenarioPath, rubric, adapter, repetiti
       kind: adapter.kind,
       provenance: adapter.provenance,
       realModelEvaluated: adapter.realModel === true,
+      model: adapter.model ?? null,
+      reasoningEffort: adapter.reasoningEffort ?? null,
     },
     runs,
     summary: aggregateRuns(runs),
@@ -608,7 +621,7 @@ function parseArgvJson(value, label) {
 
 async function cli(argv) {
   if (argv.includes("--help") || argv.length === 0) {
-    process.stdout.write(`Usage:\n  agent-eval.mjs --scenario <file> [--adapter mock|command|codex] [--argv-json '["command","arg"]'] [--real-model] [--adapter-name NAME] [--bare-agent] [--ablate CAPABILITY] [--runs N] [--report <file>]\n  agent-eval.mjs --verify-report <file> [--min-runs N] [--require-baseline] [--require-ablation CAPABILITY]\n`);
+    process.stdout.write(`Usage:\n  agent-eval.mjs --scenario <file> [--adapter mock|command|codex] [--argv-json '["command","arg"]'] [--real-model] [--adapter-name NAME] [--model MODEL] [--reasoning-effort LEVEL] [--bare-agent] [--ablate CAPABILITY] [--runs N] [--report <file>]\n  agent-eval.mjs --verify-report <file> [--min-runs N] [--require-baseline] [--require-ablation CAPABILITY]\n`);
     return;
   }
   if (optionValue(argv, "--verify-report")) {
@@ -624,6 +637,10 @@ async function cli(argv) {
   invariant(scenarioPath, "--scenario is required.");
   const scenario = validateScenario(await readJson(path.resolve(scenarioPath)), scenarioPath);
   const adapterKind = optionValue(argv, "--adapter") ?? "mock";
+  const codexOptions = {
+    model: optionValue(argv, "--model"),
+    reasoningEffort: optionValue(argv, "--reasoning-effort"),
+  };
   let adapter;
   if (adapterKind === "mock") {
     invariant(scenario.mock?.primary, `Scenario ${scenario.id} has no mock.primary fixture.`);
@@ -636,7 +653,7 @@ async function cli(argv) {
       provenance: argv.includes("--real-model") ? "declared-real-model-command" : undefined,
     });
   } else if (adapterKind === "codex") {
-    adapter = createCodexAdapter({ name: optionValue(argv, "--adapter-name") });
+    adapter = createCodexAdapter({ name: optionValue(argv, "--adapter-name"), ...codexOptions });
   } else {
     throw new Error(`Unknown adapter: ${adapterKind}`);
   }
@@ -651,7 +668,7 @@ async function cli(argv) {
         provenance: argv.includes("--bare-real-model") ? "declared-real-model-command" : undefined,
       });
     } else if (adapterKind === "codex") {
-      baselineAdapter = createCodexAdapter({ bare: true, name: optionValue(argv, "--bare-adapter-name") });
+      baselineAdapter = createCodexAdapter({ bare: true, name: optionValue(argv, "--bare-adapter-name"), ...codexOptions });
     } else {
       invariant(scenario.mock?.bareAgent, `Scenario ${scenario.id} has no mock.bareAgent fixture.`);
       baselineAdapter = createMockAdapter(scenario.mock.bareAgent, { name: "bare-mock" });
@@ -662,7 +679,7 @@ async function cli(argv) {
   const ablationAdapters = ablatedCapabilities.map((capabilityId) => ({
     capabilityId,
     profile: capabilityProfile(`without-${capabilityId}`, [capabilityId]),
-    adapter: createCodexAdapter({ disabledCapabilities: [capabilityId] }),
+    adapter: createCodexAdapter({ disabledCapabilities: [capabilityId], ...codexOptions }),
   }));
   const repetitionsValue = optionValue(argv, "--runs");
   const report = await runAgentEvaluation({

@@ -123,6 +123,26 @@ test("resume and repair automatically restore the scoped context boundary", asyn
   assert(resumed.scopedContext.references.length > 0);
   assert.equal(JSON.parse(await readFile(files.contextFile, "utf8")).digest, resumed.scopedContext.digest);
 
+  await assert.rejects(
+    () => recordAgentDispatch(root, "resume-context", {
+      role: "independent-review",
+      status: "passed",
+      model: "gpt-5.6-sol",
+    }),
+    (error) => error.code === "AGENT_PROFILE_MISMATCH",
+  );
+  const reviewed = await recordAgentDispatch(root, "resume-context", {
+    role: "independent-review",
+    status: "passed",
+    inputTokens: 30,
+    cachedInputTokens: 20,
+    outputTokens: 10,
+    durationMs: 250,
+  });
+  assert.equal(reviewed.dispatch.model, "gpt-5.6-terra");
+  assert.equal(reviewed.dispatch.reasoningEffort, "high");
+  assert.equal(reviewed.dispatch.durationMs, 250);
+
   await recordRepairAttempt(root, "resume-context", {
     hypothesis: "The persisted recovery boundary was missing",
     outcome: "progress",
@@ -176,7 +196,37 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   await run(root, "draft-solution", "cli-intelligence");
   const files = taskFiles(root, "cli-intelligence");
   await writeFile(files.solution, solutionMarkdown("cli-intelligence", criteria, ["src/export"]));
-  await run(root, "agent-dispatch", "cli-intelligence", "--id", "AGENT-009", "--role", "independent-review", "--status", "passed", "--summary", "Review completed");
+  await run(
+    root,
+    "agent-dispatch",
+    "cli-intelligence",
+    "--id",
+    "AGENT-009",
+    "--role",
+    "independent-review",
+    "--status",
+    "passed",
+    "--summary",
+    "Review completed",
+    "--profile",
+    "independent-review-high-risk",
+    "--model",
+    "gpt-5.6-sol",
+    "--reasoning-effort",
+    "high",
+    "--fork-turns",
+    "none",
+    "--sandbox",
+    "read-only",
+    "--input-tokens",
+    "120",
+    "--cached-input-tokens",
+    "80",
+    "--output-tokens",
+    "40",
+    "--duration-ms",
+    "1500",
+  );
   await run(
     root,
     "review-solution",
@@ -225,6 +275,15 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   assert.equal(state.agents.dispatches[0].context.surface, "verification");
   assert(state.agents.dispatches[0].context.digest);
   assert.equal(state.agents.dispatches[0].id, "AGENT-009");
+  assert.equal(state.agents.dispatches[0].profile, "independent-review-high-risk");
+  assert.equal(state.agents.dispatches[0].model, "gpt-5.6-sol");
+  assert.equal(state.agents.dispatches[0].reasoningEffort, "high");
+  assert.equal(state.agents.dispatches[0].forkTurns, "none");
+  assert.equal(state.agents.dispatches[0].sandbox, "read-only");
+  assert.equal(state.agents.dispatches[0].inputTokens, 120);
+  assert.equal(state.agents.dispatches[0].cachedInputTokens, 80);
+  assert.equal(state.agents.dispatches[0].outputTokens, 40);
+  assert.equal(state.agents.dispatches[0].durationMs, 1500);
   assert.equal(state.repair.attempts[0].progressFingerprint, "repair-v2");
   assert.equal(state.context.path, ".openatdd/tasks/cli-intelligence/context.json");
 });

@@ -318,7 +318,7 @@ async function probeFastFinalization(t) {
     ],
     uat: {
       estimatedRoundTrips: 1,
-      batches: [{ id: "journey", name: "Approved journey", runner: "internal", acceptanceIds: ["AC-01"] }],
+      batches: [{ id: "journey", name: "Approved journey", acceptanceIds: ["AC-01"], commands: [trivial("approved-journey")] }],
     },
     acceptance: { "AC-01": ["check:broad", "batch:journey"] },
     history: { mode: "deferred", overrides: [] },

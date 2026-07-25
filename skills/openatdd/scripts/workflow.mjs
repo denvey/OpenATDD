@@ -23,7 +23,8 @@ import {
   validateAcceptance,
   validateSolution,
 } from "./contracts.mjs";
-import { classifyTask } from "./routing.mjs";
+import { classifyTask, interactionPolicyForLane } from "./routing.mjs";
+import { profileForDispatch } from "./agent-profiles.mjs";
 import {
   blockingDecisions,
   createDecision,
@@ -103,7 +104,14 @@ function initialState(taskId, requirement, now) {
     updatedAt: now,
     acceptance: { approvedAt: null, sha256: null, items: [] },
     solution: { approvedAt: null, sha256: null, impactPaths: [], trace: [] },
-    routing: { status: "not_assessed", lane: null, reasons: [], investigation: { externalResearch: false }, agents: { roles: [] } },
+    routing: {
+      status: "not_assessed",
+      lane: null,
+      reasons: [],
+      investigation: { externalResearch: false },
+      agents: { roles: [] },
+      interaction: { approvals: "human", contract: "full" },
+    },
     decisions: [],
     reviews: { solution: null },
     agents: { dispatches: [] },
@@ -165,10 +173,20 @@ function migrateState(persisted) {
   state.timing ??= { currentPhase: state.phase, phaseStartedAt: state.updatedAt ?? state.createdAt, phases: [] };
   state.timing.phases ??= [];
   state.finalization ??= { status: "not_started", version: 1 };
-  state.routing ??= { status: "not_assessed", lane: null, reasons: [], investigation: { externalResearch: false }, agents: { roles: [] } };
+  state.routing ??= {
+    status: "not_assessed",
+    lane: null,
+    reasons: [],
+    investigation: { externalResearch: false },
+    agents: { roles: [] },
+    interaction: { approvals: "human", contract: "full" },
+  };
   state.routing.reasons ??= [];
   state.routing.investigation ??= { externalResearch: false };
   state.routing.agents ??= { roles: [] };
+  state.routing.interaction ??= state.routing.lane
+    ? interactionPolicyForLane(state.routing.lane)
+    : { approvals: "human", contract: "full" };
   state.decisions ??= [];
   state.reviews ??= { solution: null };
   state.reviews.solution ??= null;
@@ -522,24 +540,84 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
   const now = isoNow(clock);
   const id = input.id?.trim() || `AGENT-${String(state.agents.dispatches.length + 1).padStart(3, "0")}`;
   const previous = state.agents.dispatches.find((item) => item.id === id);
+  assert(!previous || previous.role === input.role.trim(), "AGENT_DISPATCH_ROLE_MISMATCH", `Agent dispatch ${id} is already bound to role ${previous?.role}.`);
+  const recommended = profileForDispatch({
+    role: input.role.trim(),
+    lane: state.routing?.lane,
+    riskSignals: state.routing?.assessment?.riskSignals ?? [],
+    repairAttempts: state.repair?.attempts ?? [],
+  });
+  const configured = previous?.profile ? previous : recommended;
+  for (const [property, label] of [
+    ["profile", "profile"],
+    ["model", "model"],
+    ["reasoningEffort", "reasoning effort"],
+    ["forkTurns", "fork turns"],
+    ["sandbox", "sandbox"],
+  ]) {
+    if (input[property] !== undefined) {
+      assert(
+        String(input[property]).trim() === String(configured[property]),
+        "AGENT_PROFILE_MISMATCH",
+        `Agent ${label} ${input[property]} does not match ${input.role.trim()} profile ${configured[property]}.`,
+      );
+    }
+  }
+  const metric = (value, label, integer = false) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    const parsed = Number(value);
+    assert(Number.isFinite(parsed) && parsed >= 0 && (!integer || Number.isInteger(parsed)), "INVALID_AGENT_METRIC", `${label} must be a non-negative ${integer ? "integer" : "number"}.`);
+    return parsed;
+  };
+  const suppliedMetrics = {
+    inputTokens: metric(input.inputTokens, "Agent input tokens", true),
+    cachedInputTokens: metric(input.cachedInputTokens, "Agent cached input tokens", true),
+    outputTokens: metric(input.outputTokens, "Agent output tokens", true),
+    durationMs: metric(input.durationMs, "Agent duration"),
+  };
+  const startedAt = previous?.startedAt ?? now;
+  const terminal = ["passed", "failed", "blocked"].includes(input.status);
+  const inputTokens = suppliedMetrics.inputTokens ?? previous?.inputTokens ?? null;
+  const cachedInputTokens = suppliedMetrics.cachedInputTokens ?? previous?.cachedInputTokens ?? null;
+  assert(inputTokens === null || cachedInputTokens === null || cachedInputTokens <= inputTokens, "INVALID_AGENT_METRIC", "Agent cached input tokens cannot exceed total input tokens.");
   const dispatch = {
     id,
     role: input.role.trim(),
     status: input.status,
     summary: input.summary?.trim() || "",
+    profile: configured.profile,
+    model: configured.model,
+    reasoningEffort: configured.reasoningEffort,
+    forkTurns: configured.forkTurns,
+    sandbox: configured.sandbox,
+    escalation: configured.escalation ?? null,
+    inputTokens,
+    cachedInputTokens,
+    outputTokens: suppliedMetrics.outputTokens ?? previous?.outputTokens ?? null,
+    durationMs: suppliedMetrics.durationMs
+      ?? previous?.durationMs
+      ?? (terminal ? Math.max(0, new Date(now).getTime() - new Date(startedAt).getTime()) : null),
     context: prepared ? {
       surface: prepared.surface,
       digest: prepared.context.digest,
       path: state.context.path,
       referenceCount: prepared.references.length,
     } : null,
-    startedAt: previous?.startedAt ?? now,
+    startedAt,
     updatedAt: now,
   };
   const index = state.agents.dispatches.findIndex((item) => item.id === id);
   if (index === -1) state.agents.dispatches.push(dispatch);
   else state.agents.dispatches[index] = dispatch;
-  appendHistory(state, "AGENT_DISPATCH_RECORDED", now, { id, role: dispatch.role, status: dispatch.status });
+  appendHistory(state, "AGENT_DISPATCH_RECORDED", now, {
+    id,
+    role: dispatch.role,
+    status: dispatch.status,
+    profile: dispatch.profile,
+    model: dispatch.model,
+    reasoningEffort: dispatch.reasoningEffort,
+    durationMs: dispatch.durationMs,
+  });
   const saved = await saveTask(files, state, clock);
   return {
     ...saved,
@@ -1686,7 +1764,10 @@ export async function readinessErrorsForState(root, state, files, options = {}) 
         errors.push(...validation.errors.map((item) => `UAT plan: ${item}`));
         for (const batch of plan.batches) {
           const result = state.uat.batches[batch.id];
-          if (!result || result.status !== "passed" || result.epoch !== state.verification.epoch) errors.push(`UAT batch ${batch.id} has not passed in the current epoch.`);
+          const requiredStatus = batch.runner === "internal" ? "manual" : "passed";
+          if (!result || result.status !== requiredStatus || result.epoch !== state.verification.epoch) {
+            errors.push(`UAT batch ${batch.id} has not reached ${requiredStatus} in the current epoch.`);
+          }
         }
       }
     }

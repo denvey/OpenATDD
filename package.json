@@ -18,9 +18,9 @@
     "test": "node --test",
     "eval": "node --test tests/evals.test.mjs tests/agent-eval.test.mjs tests/strategy.test.mjs",
     "eval:agent": "node skills/openatdd/scripts/agent-eval.mjs --scenario evals/agent/scenarios/simplicity.v1.json --bare-agent",
-    "eval:agent:real": "node skills/openatdd/scripts/agent-eval.mjs --scenario evals/agent/scenarios/simplicity.v1.json --adapter codex --bare-agent --runs 2 --report evals/reports/openatdd-1.0-real.json",
+    "eval:agent:real": "node skills/openatdd/scripts/agent-eval.mjs --scenario evals/agent/scenarios/simplicity.v1.json --adapter codex --model gpt-5.6-terra --reasoning-effort medium --bare-agent --runs 2 --report evals/reports/openatdd-1.0-real.json",
     "eval:agent:verify": "node skills/openatdd/scripts/agent-eval.mjs --verify-report evals/reports/openatdd-1.0-real.json --min-runs 2 --require-baseline",
-    "check": "node --check bin/openatdd.mjs && node --check skills/openatdd/scripts/openatdd.mjs && node --check skills/openatdd/scripts/workflow.mjs && node --check skills/openatdd/scripts/graph.mjs && node --check skills/openatdd/scripts/context.mjs && node --check skills/openatdd/scripts/strategy.mjs && node --check skills/openatdd/scripts/agent-eval.mjs && node --check skills/openatdd/scripts/codex-agent-adapter.mjs && node --test"
+    "check": "node --check bin/openatdd.mjs && node --check skills/openatdd/scripts/openatdd.mjs && node --check skills/openatdd/scripts/workflow.mjs && node --check skills/openatdd/scripts/routing.mjs && node --check skills/openatdd/scripts/agent-profiles.mjs && node --check skills/openatdd/scripts/manifest.mjs && node --check skills/openatdd/scripts/finalization.mjs && node --check skills/openatdd/scripts/graph.mjs && node --check skills/openatdd/scripts/context.mjs && node --check skills/openatdd/scripts/strategy.mjs && node --check skills/openatdd/scripts/agent-eval.mjs && node --check skills/openatdd/scripts/codex-agent-adapter.mjs && node --test"
   },
   "engines": {
     "node": ">=20"

@@ -1,16 +1,16 @@
 ---
 name: openatdd
-description: Run a simple acceptance-first AI delivery workflow from a natural-language requirement through two concise human confirmations to autonomous implementation, verification, learning, and a detailed UAT handoff. Adapt investigation and subagents to Quick, Standard, or Deep work; ask only material human decisions with grounded recommendations and 2-3 choices; preserve deterministic contracts, evidence, recovery, and affected-history reverification.
+description: Run a risk-routed acceptance-first AI delivery workflow from a natural-language requirement to autonomous implementation, verification, learning, and a detailed UAT handoff. Quick work uses compact autonomously approved contracts; Standard and Deep work use two concise human confirmations. Ask only material human decisions with grounded recommendations and 2-3 choices; preserve deterministic contracts, evidence, recovery, and affected-history reverification.
 ---
 
 # OpenATDD
 
-Turn a one-line requirement into a human-approved acceptance journey, a
-human-approved solution, autonomous implementation, evidence-backed pre-UAT,
-and a formal handoff. Keep normal interaction to material decisions plus two
-short approvals. The person describes the outcome, chooses only what genuinely
-needs human judgment, confirms completion standards and the solution, then
-performs final UAT.
+Turn a one-line requirement into a risk-proportionate acceptance journey,
+solution, autonomous implementation, evidence-backed pre-UAT, and formal
+handoff. Quick tasks keep both deterministic contract artifacts but approve
+them autonomously without routine pauses. Standard and Deep tasks keep the two
+short human approvals. The person chooses only what genuinely needs human
+judgment, then performs final UAT.
 
 ## Interaction contract
 
@@ -20,6 +20,10 @@ performs final UAT.
   locate code, choose routine tools, or decide facts the agent can inspect.
 - Ask only product, scope, cost, risk, or authorization decisions that cannot
   be safely inferred. Batch independent decisions when that reduces waiting.
+- Do not pause a Quick task for routine acceptance or solution confirmation
+  when routing is assessed, no blocking decision remains, and the change stays
+  within the Quick boundary. Persist and validate both compact contracts, then
+  continue autonomously.
 - For every human decision, give a project- and industry-grounded
   recommendation first, then two or three concise choices with consequences.
 - Keep every human-facing card to one screen when practical. Put optional
@@ -30,8 +34,12 @@ performs final UAT.
 ## Non-negotiable rules
 
 1. Draft acceptance before a formal solution.
-2. Obtain explicit acceptance approval before drafting the solution card.
-3. Obtain explicit solution approval before modifying product code.
+2. For Standard and Deep, obtain explicit acceptance approval before drafting
+   the solution card. For Quick, validate and persist the compact acceptance
+   approval autonomously before drafting the solution.
+3. For Standard and Deep, obtain explicit solution approval before modifying
+   product code. For Quick, complete the main simplicity review, persist the
+   compact solution approval autonomously, and then begin implementation.
 4. Never silently modify an approved card. Reopen the corresponding gate.
 5. Trace every solution row to an acceptance ID.
 6. Execute the approved user journey; do not substitute unit tests for pre-UAT.
@@ -45,7 +53,8 @@ performs final UAT.
     advance the verification epoch and rerun the complete approved journey.
 
 Treat unmistakable natural-language approval as approval; do not force the user
-to type a magic phrase. Use the CLI to persist the approval immediately.
+to type a magic phrase. Use the CLI to persist every human or autonomous Quick
+approval immediately.
 
 ## Use the deterministic CLI
 
@@ -82,7 +91,8 @@ Never hand-edit `state.json`, `issues.md`, `report.md`, or the memory index.
    ```
 
    - **Quick:** local, established, reversible, low uncertainty, no hard risk.
-     Work directly; do not wait for external research or spawn routine Agents.
+     Use the compact autonomous contract path, work directly, do not wait for
+     routine approvals or external research, and do not spawn routine Agents.
    - **Standard:** ordinary cross-module or moderately uncertain work. Use
      local discovery and optional independent review only when useful.
    - **Deep:** system/novel/high-uncertainty work or any hard risk such as
@@ -93,7 +103,8 @@ Never hand-edit `state.json`, `issues.md`, `report.md`, or the memory index.
      risk. If research access is unavailable, record that limitation instead of
      silently treating the Deep task like Standard.
 
-   Routing controls internal effort, never the two-confirmation user contract.
+   Routing controls both internal effort and routine interaction: Quick uses
+   autonomous compact approvals; Standard and Deep use two human confirmations.
 6. Before either card, query relevant memory and the rebuildable graph:
 
    ```bash
@@ -122,8 +133,10 @@ Inspect the current product, roles, permissions, states, neighboring behavior,
 tests, and likely verification environment. Fill `acceptance.md` with:
 
 - one user-centered goal;
-- a 3-7 step suggested journey by default;
-- 3-8 criteria by default, expanded only for material risk;
+- for Quick, a 1-4 step journey and 1-3 criteria that reproduce the observable
+  failure, protect the repaired state, and cover the important denial path;
+- for Standard and Deep, a 3-7 step journey and 3-8 criteria by default,
+  expanded only for material risk;
 - explicit boundaries and exclusions.
 
 Use criterion headings exactly like:
@@ -140,8 +153,11 @@ Use `AUTO`, `ASSISTED`, or `MANUAL` and `BLOCKING` or `NON_BLOCKING`.
 Read [acceptance-patterns.md](references/acceptance-patterns.md) only when the
 task needs detailed patterns for Web, API, files, roles, state, or visual work.
 
-Present the short card and pause for the first approval. Apply requested edits
-and present it again. After approval, run:
+For Quick, keep the card compact, validate it, and run the approval command
+without a routine pause. If discovery found a blocking human-owned decision,
+resolve that decision first; do not disguise it as autonomous approval. For
+Standard and Deep, present the short card and pause for the first approval.
+Apply requested edits and present it again. Then run:
 
 ```bash
 openatdd approve-acceptance <task-id>
@@ -156,10 +172,12 @@ implementation details, concrete impact paths, and one trace-table row for
 every acceptance ID below it. Use the current conversation language; the
 language-independent `openatdd:*` HTML markers are the parser contract.
 
-Do not invent architecture work that has no acceptance rationale. Present the
-short summary and link the same file for details. Before presenting it, review
-the current solution for simplicity, project fit, summary/detail consistency,
-hidden material choices, acceptance trace, and unnecessary infrastructure:
+Do not invent architecture work that has no acceptance rationale. For Standard
+and Deep, present the short summary and link the same file for details. Quick
+keeps this summary in the canonical file without a routine pause. In every
+lane, review the current solution for simplicity, project fit, summary/detail
+consistency, hidden material choices, acceptance trace, and unnecessary
+infrastructure:
 
 ```bash
 openatdd review-solution <task-id> --status passed \
@@ -167,14 +185,16 @@ openatdd review-solution <task-id> --status passed \
   --summary "<concise finding>" [--agent-id AGENT-001]
 ```
 
-Quick tasks may use the main Agent; Deep tasks require an independent review.
+Quick tasks use the main Agent and continue without a routine solution pause;
+Deep tasks require an independent review.
 For Deep tasks, first record a bounded `independent-review` dispatch with
 `openatdd agent-dispatch --surface verification`, then bind its Agent ID to the
 review. A passed independent review without that scoped-context trace is
 rejected.
 Any solution edit invalidates the review hash. If feedback changes user behavior
 or outcomes, run `openatdd reopen-acceptance <task-id> --reason "..."` and return
-to Gate 1. Otherwise update the solution and, after approval, run:
+to Gate 1. Otherwise update the solution. Quick persists approval
+autonomously; Standard and Deep wait for human approval. Then run:
 
 ```bash
 openatdd approve-solution <task-id>
@@ -200,6 +220,12 @@ After both gates pass:
    openatdd preflight <task-id> --environment local --assertions <file>
    ```
 
+   Prefer reusable project-level `preflight.commands` in the finalization
+   manifest. They run during rehearsal and inside the formal verification
+   epoch, print sanitized assertion JSON, and become their own fresh evidence.
+   Do not create a new task-local preflight script when an equivalent project
+   adapter can be reused.
+
 5. Implement using the project's existing architecture and conventions.
 6. Add risk-proportionate unit, integration, API, file, or browser coverage.
 7. Use `focused` checks during edits and `module` checks after repairs. Do not
@@ -223,6 +249,22 @@ After both gates pass:
    This one operation performs final preflight, ordered check groups, the
    complete batched UAT journey, acceptance evidence mapping, affected-history
    reverification, handoff generation, and readiness validation.
+
+For Quick tasks, keep the critical path to:
+
+```text
+reproduce the observable failure
+→ trace every active state source
+→ smallest complete patch
+→ affected tests
+→ one formal real user journey
+```
+
+Do not first run a manual browser journey and then declare a JSON verifier to
+be the formal journey. The batch command itself must execute the observable
+journey, capture its evidence, and bind it to the frozen source. Reuse the
+project manifest; task-local finalization helpers are a last resort, not the
+default Quick path.
 
 Do not mandate TDD, Gherkin, worktrees, subagents, or a particular framework.
 Choose them only when the project or task benefits. Read
@@ -252,6 +294,13 @@ outcomes, and progress fingerprints with `openatdd repair-attempt`; three
 repeated no-progress attempts without a new hypothesis form a recoverable
 blocked boundary rather than an endless loop.
 
+Use the deterministic role profiles: Luna/low/read-only for local discovery and
+external research, Terra/medium/workspace-write for clean-context execution,
+and Terra/high/read-only for independent review. Escalate only hard-risk review
+or clean-context execution after two consecutive failed repair attempts to
+Sol/high. Always use `forkTurns: none`. Record actual token counts and duration
+when available; never invent missing metrics.
+
 The semantic graph under `.openatdd/knowledge/graph.json` is a local,
 source-hashed, rebuildable index, never a source of truth or an external graph
 database. Missing or stale indexes are repaired automatically. Use graph
@@ -271,6 +320,7 @@ verify the persisted report without invoking the model again:
 
 ```bash
 openatdd agent-eval --scenario <scenario.json> --adapter codex \
+  --model <model> --reasoning-effort <level> \
   --bare-agent --runs 2 --report <report.json>
 openatdd agent-eval --verify-report <report.json> \
   --min-runs 2 --require-baseline

@@ -87,6 +87,9 @@ Usage:
   openatdd issue TASK --id ISSUE-001 --status resolved --root-cause TEXT
                   --regression TEST --invariant TEXT --paths PATH --evidence PATH
   openatdd agent-dispatch TASK --role ROLE --status STATUS [--id ID] [--surface implementation|verification]
+                  [--profile NAME] [--model MODEL] [--reasoning-effort LEVEL]
+                  [--fork-turns none] [--sandbox MODE] [--input-tokens N]
+                  [--cached-input-tokens N] [--output-tokens N] [--duration-ms N]
   openatdd repair-attempt TASK --hypothesis TEXT --outcome OUTCOME [--progress-fingerprint HASH]
   openatdd graph-rebuild
   openatdd graph-query QUERY [--limit N]
@@ -94,7 +97,8 @@ Usage:
   openatdd context-build TASK [--persist] [--query TEXT]
   openatdd context-show TASK
   openatdd agent-eval --scenario FILE [--adapter mock|command|codex] [--argv-json JSON]
-                  [--real-model] [--adapter-name NAME] [--bare-agent]
+                  [--real-model] [--adapter-name NAME] [--model MODEL]
+                  [--reasoning-effort LEVEL] [--bare-agent]
                   [--bare-argv-json JSON] [--bare-real-model] [--ablate CAPABILITY]
                   [--runs N] [--report FILE]
   openatdd agent-eval --verify-report FILE [--min-runs N] [--require-baseline]
@@ -465,6 +469,15 @@ async function execute(parsed, io) {
         status: required(options.status, "--status"),
         summary: options.summary,
         surface: options.surface,
+        profile: options.profile,
+        model: options.model,
+        reasoningEffort: options["reasoning-effort"],
+        forkTurns: options["fork-turns"],
+        sandbox: options.sandbox,
+        inputTokens: options["input-tokens"],
+        cachedInputTokens: options["cached-input-tokens"],
+        outputTokens: options["output-tokens"],
+        durationMs: options["duration-ms"],
       });
       const dispatch = result.dispatch ?? result.state.agents.dispatches.find((item) => item.id === (options.id ?? result.state.agents.dispatches.at(-1).id));
       if (json) outputJson(io, { ...dispatch, scopedContext: result.scopedContext });
@@ -536,6 +549,10 @@ async function execute(parsed, io) {
       const scenarioPath = path.resolve(root, required(options.scenario, "--scenario"));
       const scenario = JSON.parse(await readFile(scenarioPath, "utf8"));
       const adapterKind = String(options.adapter ?? "mock");
+      const codexOptions = {
+        model: options.model ? String(options.model) : undefined,
+        reasoningEffort: options["reasoning-effort"] ? String(options["reasoning-effort"]) : undefined,
+      };
       if (!["mock", "command", "codex"].includes(adapterKind)) throw new OpenATDDError("INVALID_ARGUMENT", `Unknown adapter: ${adapterKind}`);
       const adapter = adapterKind === "command"
         ? createCommandAdapter({
@@ -545,7 +562,7 @@ async function execute(parsed, io) {
           provenance: options["real-model"] ? "declared-real-model-command" : undefined,
         })
         : adapterKind === "codex"
-          ? createCodexAdapter({ name: options["adapter-name"] })
+          ? createCodexAdapter({ name: options["adapter-name"], ...codexOptions })
           : createMockAdapter(scenario.mock?.primary);
       let baselineAdapter;
       if (options["bare-agent"]) {
@@ -557,7 +574,7 @@ async function execute(parsed, io) {
             provenance: options["bare-real-model"] ? "declared-real-model-command" : undefined,
           })
           : adapterKind === "codex"
-            ? createCodexAdapter({ bare: true, name: options["bare-adapter-name"] })
+            ? createCodexAdapter({ bare: true, name: options["bare-adapter-name"], ...codexOptions })
             : createMockAdapter(scenario.mock?.bareAgent, { name: "bare-mock" });
       }
       const ablatedCapabilities = asArray(options.ablate).map(String);
@@ -567,7 +584,7 @@ async function execute(parsed, io) {
       const ablationAdapters = ablatedCapabilities.map((capabilityId) => ({
         capabilityId,
         profile: capabilityProfile(`without-${capabilityId}`, [capabilityId]),
-        adapter: createCodexAdapter({ disabledCapabilities: [capabilityId] }),
+        adapter: createCodexAdapter({ disabledCapabilities: [capabilityId], ...codexOptions }),
       }));
       const repetitions = options.runs === undefined ? undefined : Number(options.runs);
       const report = await runAgentEvaluation({

@@ -118,6 +118,8 @@ process.stdin.on("end", () => {
   const adapter = createCommandAdapter({
     name: "argv-fixture",
     argv: [process.execPath, "-e", child],
+    model: "fixture-model",
+    reasoningEffort: "low",
   });
   const report = await runAgentEvaluation({
     scenarioPath: loaded.scenarioPath,
@@ -131,6 +133,8 @@ process.stdin.on("end", () => {
 
   assert.equal(report.primary.adapter.kind, "command");
   assert.equal(report.primary.adapter.realModelEvaluated, false);
+  assert.equal(report.primary.adapter.model, "fixture-model");
+  assert.equal(report.primary.adapter.reasoningEffort, "low");
   assert.equal(report.primary.summary.passRate, 1);
   assert.equal(report.primary.summary.inputTokens, 12);
   assert.equal(report.primary.summary.outputTokens, 5);
@@ -232,11 +236,16 @@ process.stdin.on("end", () => {
 });
 
 test("bundled Codex adapters distinguish OpenATDD and bare real-model runs", () => {
-  const primary = createCodexAdapter();
-  const baseline = createCodexAdapter({ bare: true });
+  const primary = createCodexAdapter({ model: "gpt-5.6-terra", reasoningEffort: "medium" });
+  const baseline = createCodexAdapter({ bare: true, model: "gpt-5.6-terra", reasoningEffort: "medium" });
   assert.equal(primary.realModel, true);
   assert.equal(primary.name, "codex-openatdd");
   assert.equal(primary.provenance, "bundled-codex-exec-adapter");
+  assert.equal(primary.model, "gpt-5.6-terra");
+  assert.equal(primary.reasoningEffort, "medium");
+  assert.deepEqual(primary.argv.slice(-4), ["--model", "gpt-5.6-terra", "--reasoning-effort", "medium"]);
   assert.equal(baseline.realModel, true);
   assert.equal(baseline.name, "codex-bare");
+  assert.equal(baseline.model, primary.model);
+  assert.equal(baseline.reasoningEffort, primary.reasoningEffort);
 });

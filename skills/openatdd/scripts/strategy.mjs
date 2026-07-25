@@ -26,7 +26,7 @@ const SOURCES = Object.freeze({
 export const strategyCapabilityCatalog = Object.freeze([
   {
     id: "acceptance-first",
-    labels: { "zh-CN": "验收优先与双确认", en: "Acceptance-first two-gate delivery" },
+    labels: { "zh-CN": "验收优先与风险分层确认", en: "Acceptance-first risk-routed approvals" },
     sources: [SOURCES.openatdd, SOURCES.specKit],
   },
   {
@@ -100,6 +100,80 @@ function checkStatusCounts(state) {
   return counts;
 }
 
+const DELIVERY_PHASES = new Set(["IMPLEMENTING", "REPAIRING", "PRE_UAT"]);
+
+function elapsedMs(start, end) {
+  const started = new Date(start ?? 0).getTime();
+  const ended = new Date(end ?? 0).getTime();
+  return Number.isFinite(started) && Number.isFinite(ended) ? Math.max(0, ended - started) : 0;
+}
+
+function deliveryTiming(state, clock) {
+  const now = isoNow(clock);
+  const completed = [...(state.timing?.phases ?? [])];
+  if (state.timing?.currentPhase && state.timing.currentPhase !== "READY_FOR_UAT" && state.timing.phaseStartedAt) {
+    completed.push({
+      phase: state.timing.currentPhase,
+      startedAt: state.timing.phaseStartedAt,
+      endedAt: now,
+      durationMs: elapsedMs(state.timing.phaseStartedAt, now),
+    });
+  }
+  const grouped = new Map();
+  for (const phase of completed) {
+    grouped.set(phase.phase, (grouped.get(phase.phase) ?? 0) + Number(phase.durationMs ?? elapsedMs(phase.startedAt, phase.endedAt)));
+  }
+  const phases = [...grouped.entries()]
+    .map(([phase, durationMs]) => ({ phase, durationMs }))
+    .sort((left, right) => right.durationMs - left.durationMs);
+  const deliveryActiveMs = phases
+    .filter((item) => DELIVERY_PHASES.has(item.phase))
+    .reduce((sum, item) => sum + item.durationMs, 0);
+  const contractElapsedMs = phases
+    .filter((item) => ["ACCEPTANCE_DRAFT", "SOLUTION_DRAFT"].includes(item.phase))
+    .reduce((sum, item) => sum + item.durationMs, 0);
+  const end = state.readyAt ?? now;
+  return {
+    taskWallTimeMs: elapsedMs(state.createdAt, end),
+    deliveryActiveMs,
+    contractElapsedMs,
+    phases,
+  };
+}
+
+function executionMetrics(state, clock) {
+  const timing = deliveryTiming(state, clock);
+  const preflights = (state.history ?? []).filter((item) => item.event === "ENVIRONMENT_PREFLIGHT");
+  const resolvedIssues = (state.issues ?? []).filter((item) => item.status === "resolved");
+  const dispatches = state.agents?.dispatches ?? [];
+  const executionDispatches = dispatches.filter((item) => /execution|implementation/i.test(item.role ?? ""));
+  const durations = executionDispatches.map((item) => elapsedMs(item.startedAt, item.updatedAt ?? item.completedAt));
+  const implementationPhases = (state.timing?.phases ?? []).filter((item) => item.phase === "IMPLEMENTING");
+  const lastImplementationEnd = implementationPhases.map((item) => item.endedAt).filter(Boolean).sort().at(-1);
+  const lastAgentEnd = executionDispatches.map((item) => item.updatedAt ?? item.completedAt).filter(Boolean).sort().at(-1);
+  const integrationTailMs = lastImplementationEnd && lastAgentEnd && new Date(lastImplementationEnd) >= new Date(lastAgentEnd)
+    ? elapsedMs(lastAgentEnd, lastImplementationEnd)
+    : 0;
+  return {
+    timing,
+    preflight: {
+      attempts: preflights.length,
+      failed: preflights.filter((item) => item.details?.status === "failed").length,
+      passed: preflights.filter((item) => item.details?.status === "passed").length,
+    },
+    issues: {
+      total: state.issues?.length ?? 0,
+      resolved: resolvedIssues.length,
+      open: (state.issues ?? []).filter((item) => item.status === "open").length,
+      repairDurationMs: resolvedIssues.reduce((sum, item) => sum + elapsedMs(item.openedAt, item.resolvedAt), 0),
+    },
+    agents: {
+      criticalPathMs: durations.length ? Math.max(...durations) : 0,
+      integrationTailMs,
+    },
+  };
+}
+
 function selectionFor(id, state, evaluationReports) {
   const assessed = state.routing?.status === "assessed";
   const lane = state.routing?.lane ?? null;
@@ -157,7 +231,7 @@ function observationFor(id, state, evaluationReports, language) {
     case "acceptance-first": {
       const approvals = [state.acceptance?.approvedAt, state.solution?.approvedAt].filter(Boolean).length;
       return approvals > 0
-        ? { status: "observed", evidence: [stateEvidence(t(language, `已记录 ${approvals}/2 次确认`, `${approvals}/2 approvals recorded`))] }
+        ? { status: "observed", evidence: [stateEvidence(t(language, `已记录 ${approvals}/2 个合同批准`, `${approvals}/2 contract approvals recorded`))] }
         : { status: "not-used", evidence: [] };
     }
     case "adaptive-depth":
@@ -291,7 +365,7 @@ function comparisonRows(groups) {
   return rows;
 }
 
-function recommendations(state, groups, comparisons, language) {
+function recommendations(state, groups, comparisons, language, execution) {
   const values = [];
   if (groups.length === 0) {
     values.push({
@@ -328,6 +402,27 @@ function recommendations(state, groups, comparisons, language) {
       reason: t(language, "本次未调用 Agent，条件式策略避免了不必要的多 Agent 成本。", "No Agent was dispatched; the conditional policy avoided unnecessary multi-Agent cost."),
     });
   }
+  if (state.routing?.lane === "quick" && execution.timing.deliveryActiveMs > 10 * 60 * 1000) {
+    values.push({
+      action: "reduce",
+      capabilityId: "quick-critical-path",
+      reason: t(language, "Quick 自主交付超过 10 分钟；应减少任务级脚手架、重复旅程和无关广泛检查。", "Quick autonomous delivery exceeded 10 minutes; remove task-local scaffolding, duplicate journeys, and unrelated broad checks."),
+    });
+  }
+  if (execution.preflight.failed > 0) {
+    values.push({
+      action: "reduce",
+      capabilityId: "environment-preflight",
+      reason: t(language, `环境预检失败 ${execution.preflight.failed} 次；应复用项目级 epoch 内 assertions 命令。`, `Environment preflight failed ${execution.preflight.failed} time(s); reuse project-level in-epoch assertion commands.`),
+    });
+  }
+  if (execution.agents.integrationTailMs > 5 * 60 * 1000) {
+    values.push({
+      action: "reduce",
+      capabilityId: "integration-tail",
+      reason: t(language, "实现 Agent 完成后仍存在超过 5 分钟的整合尾巴；应在每个模块完成时流水式整合。", "More than five minutes remained after implementation Agents completed; integrate each module as it finishes."),
+    });
+  }
   return [...new Map(values.map((item) => [`${item.action}:${item.capabilityId}:${item.reason}`, item])).values()].slice(0, 8);
 }
 
@@ -345,6 +440,7 @@ export function buildStrategyRetrospective(state, evaluationReports = [], clock 
   const selected = capabilities.filter((item) => item.selection.status === "selected");
   const observed = capabilities.filter((item) => item.execution.status === "observed");
   const notUsed = capabilities.filter((item) => item.execution.status === "not-used");
+  const execution = executionMetrics(state, clock);
   const metrics = {
     approvals: [state.acceptance?.approvedAt, state.solution?.approvedAt].filter(Boolean).length,
     decisions: {
@@ -355,8 +451,14 @@ export function buildStrategyRetrospective(state, evaluationReports = [], clock 
     agents: {
       total: state.agents?.dispatches?.length ?? 0,
       passed: (state.agents?.dispatches ?? []).filter((item) => item.status === "passed").length,
+      criticalPathMs: execution.agents.criticalPathMs,
+      integrationTailMs: execution.agents.integrationTailMs,
     },
-    repairs: state.repair?.attempts?.length ?? 0,
+    repairs: execution.issues.resolved,
+    repairAttempts: state.repair?.attempts?.length ?? 0,
+    issues: execution.issues,
+    preflight: execution.preflight,
+    timing: execution.timing,
     acceptance: resultStatusCounts(state),
     checks: checkStatusCounts(state),
     finalization: state.finalization?.metrics ?? null,
@@ -377,8 +479,9 @@ export function buildStrategyRetrospective(state, evaluationReports = [], clock 
     },
     capabilities,
     metrics,
+    bottlenecks: execution.timing.phases.slice(0, 5),
     comparisons,
-    recommendations: recommendations(state, groups, comparisons, language),
+    recommendations: recommendations(state, groups, comparisons, language, execution),
     caveats: [
       t(language, "借鉴来源表示设计启发，不表示运行外部框架。", "Sources indicate design inspiration, not execution of external frameworks."),
       t(language, "策略选择、实际调用和效果相关性分开展示；单次对照不能证明因果。", "Selection, observed execution, and outcome correlation are separate; one comparison cannot prove causality."),
@@ -399,6 +502,17 @@ function metric(value) {
   return value === null || value === undefined ? "—" : String(value);
 }
 
+function duration(value) {
+  if (!Number.isFinite(value)) return "—";
+  const totalSeconds = Math.round(value / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+  if (minutes > 0) return `${minutes}m ${String(seconds).padStart(2, "0")}s`;
+  return `${seconds}s`;
+}
+
 function sourceLinks(sources) {
   return sources.map((source) => `[${source.name}](${source.url})`).join("、");
 }
@@ -406,6 +520,9 @@ function sourceLinks(sources) {
 function capabilityLabel(id, language) {
   if (language === "zh-CN" && id === "openatdd-full") return "完整 OpenATDD";
   if (language === "zh-CN" && id === "context-overhead") return "上下文开销";
+  if (language === "zh-CN" && id === "quick-critical-path") return "Quick 关键路径";
+  if (language === "zh-CN" && id === "environment-preflight") return "环境预检";
+  if (language === "zh-CN" && id === "integration-tail") return "整合尾巴";
   const item = CATALOG_BY_ID.get(id);
   return item?.labels?.[language] ?? item?.labels?.en ?? id;
 }
@@ -477,6 +594,7 @@ export function renderStrategyRetrospective(retrospective) {
     `- ${zh ? "实际观察" : "Observed capabilities"}：${retrospective.summary.observedCapabilities.map((id) => capabilityLabel(id, retrospective.language)).join("、") || "—"}`,
     `- ${zh ? "未调用" : "Not used"}：${retrospective.summary.notUsedCapabilities.map((id) => capabilityLabel(id, retrospective.language)).join("、") || "—"}`,
     `- ${zh ? "确认 / 决策 / Agent / 修复" : "Approvals / decisions / Agents / repairs"}：${retrospective.metrics.approvals} / ${retrospective.metrics.decisions.total} / ${retrospective.metrics.agents.total} / ${retrospective.metrics.repairs}`,
+    `- ${zh ? "自主交付 / 总墙钟" : "Autonomous delivery / total wall"}：${duration(retrospective.metrics.timing.deliveryActiveMs)} / ${duration(retrospective.metrics.timing.taskWallTimeMs)}`,
     "",
     `## ${zh ? "能力与来源" : "Capabilities and sources"}`,
     "",
@@ -487,6 +605,9 @@ export function renderStrategyRetrospective(retrospective) {
     lines.push(`| ${escapeCell(item.label)} | ${sourceLinks(item.sources)} | ${escapeCell(`${localizedStatus(item.selection.status, retrospective.language)}：${localizedReason(item.selection.reason, retrospective.language)}`)} | ${escapeCell(localizedStatus(item.execution.status, retrospective.language))} | ${escapeCell(evidenceLinks(item.execution.evidence))} |`);
   }
   lines.push("", `## ${zh ? "效果指标" : "Outcome metrics"}`, "");
+  lines.push(`- ${zh ? "预检尝试 / 失败" : "Preflight attempts / failures"}：${retrospective.metrics.preflight.attempts} / ${retrospective.metrics.preflight.failed}`);
+  lines.push(`- ${zh ? "已解决问题 / 修复尝试" : "Resolved issues / repair attempts"}：${retrospective.metrics.issues.resolved} / ${retrospective.metrics.repairAttempts}`);
+  lines.push(`- ${zh ? "Agent 关键路径 / 整合尾巴" : "Agent critical path / integration tail"}：${duration(retrospective.metrics.agents.criticalPathMs)} / ${duration(retrospective.metrics.agents.integrationTailMs)}`);
   lines.push(`- ${zh ? "验收状态" : "Acceptance statuses"}：${Object.entries(retrospective.metrics.acceptance).map(([key, value]) => `${key}=${value}`).join(", ")}`);
   lines.push(`- ${zh ? "检查状态" : "Check statuses"}：${Object.entries(retrospective.metrics.checks).map(([key, value]) => `${key}=${value}`).join(", ")}`);
   if (retrospective.metrics.finalization) {
@@ -502,6 +623,10 @@ export function renderStrategyRetrospective(retrospective) {
       lines.push(`| ${escapeCell(group.profile.name)} | ${escapeCell(group.scenarioId)} | ${percent(group.summary.passRate)} | ${percent(group.summary.firstPassAcceptanceRate)} | ${metric(group.summary.inputTokens)} / ${metric(group.summary.cachedInputTokens)} / ${metric(group.summary.outputTokens)} | ${metric(group.summary.durationMs)} ms |`);
     }
   }
+  lines.push("", `### ${zh ? "阶段耗时" : "Phase timing"}`, "");
+  lines.push(`| ${zh ? "阶段" : "Phase"} | ${zh ? "耗时" : "Duration"} |`);
+  lines.push("|---|---:|");
+  for (const phase of retrospective.metrics.timing.phases) lines.push(`| ${phase.phase} | ${duration(phase.durationMs)} |`);
   lines.push("", `## ${zh ? "优化建议" : "Optimization recommendations"}`, "");
   for (const item of retrospective.recommendations) lines.push(`- **${localizedAction(item.action, retrospective.language)} · ${capabilityLabel(item.capabilityId, retrospective.language)}**：${item.reason}`);
   lines.push("", `## ${zh ? "解释边界" : "Interpretation limits"}`, "");
@@ -514,6 +639,7 @@ export function strategyRetrospectiveSummary(retrospective) {
   return [
     `${zh ? "策略回溯" : "Strategy retrospective"}: ${retrospective.taskId}`,
     `${zh ? "任务深度" : "Lane"}: ${retrospective.lane ?? "—"}`,
+    `${zh ? "自主交付耗时" : "Autonomous delivery"}: ${duration(retrospective.metrics.timing.deliveryActiveMs)}`,
     `${zh ? "选择 / 实际 / 未调用" : "Selected / observed / not used"}: ${retrospective.summary.selectedCapabilities.length} / ${retrospective.summary.observedCapabilities.length} / ${retrospective.summary.notUsedCapabilities.length}`,
     `${zh ? "建议" : "Recommendations"}: ${retrospective.recommendations.map((item) => `${localizedAction(item.action, retrospective.language)}:${capabilityLabel(item.capabilityId, retrospective.language)}`).join(", ") || "—"}`,
   ].join("\n");

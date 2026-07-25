@@ -34,6 +34,7 @@ import {
   PHASES,
   advanceEpoch,
   assertContractIntegrity,
+  evidenceBoundary,
   loadTask,
   projectFiles,
   readinessErrorsForState,
@@ -155,7 +156,62 @@ async function executeCommand(root, commandInput, credentials, outputPath, metri
   assert(passed, "FINALIZATION_COMMAND_FAILED", `Finalization command failed: ${command.id}`, {
     errors: [`exit=${exitCode}; timedOut=${timedOut}; overflow=${overflow}; evidence=${toPosix(path.relative(root, outputPath))}`],
   });
-  return { id: command.id, argv: command.argv, durationMs, exitCode, evidencePath: toPosix(path.relative(root, outputPath)) };
+  return {
+    id: command.id,
+    argv: command.argv,
+    durationMs,
+    exitCode,
+    evidencePath: toPosix(path.relative(root, outputPath)),
+    stdout: stdoutText,
+  };
+}
+
+const PREFLIGHT_ASSERTION_NAMES = new Set([
+  "login",
+  "organization",
+  "integration",
+  "fixture",
+  "known_workarounds",
+]);
+
+function mergePreflightAssertions(base, generated) {
+  return { ...(base ?? {}), ...generated };
+}
+
+async function executePreflightCommands(root, manifest, credentials, outputDirectory, metrics, clock) {
+  const generated = {};
+  for (const command of manifest.preflight?.commands ?? []) {
+    const result = await executeCommand(
+      root,
+      command,
+      credentials,
+      path.join(outputDirectory, `preflight-${command.id}.md`),
+      metrics,
+      clock,
+    );
+    let payload;
+    try {
+      payload = JSON.parse(result.stdout);
+    } catch (error) {
+      assert(false, "INVALID_PREFLIGHT_ASSERTIONS", `Preflight command ${command.id} must print one JSON assertion object to stdout.`, {
+        errors: [error.message],
+      });
+    }
+    assert(payload && typeof payload === "object" && !Array.isArray(payload), "INVALID_PREFLIGHT_ASSERTIONS", `Preflight command ${command.id} returned a non-object payload.`);
+    for (const [name, assertion] of Object.entries(payload)) {
+      assert(PREFLIGHT_ASSERTION_NAMES.has(name), "INVALID_PREFLIGHT_ASSERTIONS", `Preflight command ${command.id} returned an unknown assertion: ${name}.`);
+      assert(generated[name] === undefined, "INVALID_PREFLIGHT_ASSERTIONS", `Multiple preflight commands returned assertion ${name}.`);
+      assert(assertion && typeof assertion === "object" && !Array.isArray(assertion), "INVALID_PREFLIGHT_ASSERTIONS", `Preflight assertion ${name} must be an object.`);
+      assert(["passed", "failed"].includes(assertion.status), "INVALID_PREFLIGHT_ASSERTIONS", `Preflight assertion ${name} must report passed or failed.`);
+      assert(typeof assertion.summary === "string" && assertion.summary.trim(), "INVALID_PREFLIGHT_ASSERTIONS", `Preflight assertion ${name} requires a concise summary.`);
+      generated[name] = {
+        status: assertion.status,
+        summary: assertion.summary.trim(),
+        evidence: result.evidencePath,
+      };
+    }
+  }
+  return generated;
 }
 
 function buildUatPlan(state, manifest) {
@@ -167,6 +223,7 @@ function buildUatPlan(state, manifest) {
     batches: manifest.uat.batches.map((batch) => ({
       id: batch.id,
       name: batch.name,
+      runner: batch.runner === "internal" ? "internal" : "command",
       reuseSession: batch.reuseSession !== false,
       steps: batch.acceptanceIds.map((acceptanceId, index) => ({
         id: `${acceptanceId.toLowerCase()}-${index + 1}`,
@@ -339,10 +396,21 @@ export async function dryRunFinalization(root, taskId, input = {}, clock = () =>
   const errors = [];
   try {
     let phaseStarted = beginMetricsPhase(metrics, "preflight");
+    const generatedBoundary = isoNow(clock);
+    const generatedAssertions = await executePreflightCommands(
+      root,
+      manifestInfo.manifest,
+      credentials,
+      previewDirectory,
+      metrics,
+      clock,
+    );
+    const hasGeneratedAssertions = (manifestInfo.manifest.preflight?.commands?.length ?? 0) > 0;
     const preflight = await runEnvironmentPreflight(root, manifestInfo.manifest.environment, {
-      assertions: input.assertions,
+      assertions: mergePreflightAssertions(input.assertions, generatedAssertions),
       timeoutMs: input.timeoutMs,
       persist: false,
+      notBefore: hasGeneratedAssertions ? generatedBoundary : evidenceBoundary(state),
     }, clock);
     assert(preflight.result.status === "passed", "PREFLIGHT_FAILED", "Dry-run environment preflight failed.", {
       errors: preflight.result.checks.filter((item) => item.status === "failed").map((item) => `${item.name}: ${item.detail}`),
@@ -524,6 +592,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
 
   const metrics = initialMetrics("final", clock);
   metrics.dryRunRuns = Number(preview.metrics?.dryRunRuns ?? 1);
+  const previousBoundary = evidenceBoundary(state);
   const now = isoNow(clock);
   const draft = structuredClone(state);
   advanceEpoch(draft, now, `final source frozen: ${inventory.fingerprint}`);
@@ -539,11 +608,20 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   await mkdir(runDirectory, { recursive: true });
 
   let phaseStarted = beginMetricsPhase(metrics, "preflight");
+  const generatedAssertions = await executePreflightCommands(
+    root,
+    manifestInfo.manifest,
+    credentials,
+    runDirectory,
+    metrics,
+    clock,
+  );
+  const hasGeneratedAssertions = (manifestInfo.manifest.preflight?.commands?.length ?? 0) > 0;
   const preflight = await runEnvironmentPreflight(root, manifestInfo.manifest.environment, {
-    assertions: input.assertions,
+    assertions: mergePreflightAssertions(input.assertions, generatedAssertions),
     timeoutMs: input.timeoutMs,
     persist: false,
-    notBefore: boundary,
+    notBefore: hasGeneratedAssertions ? boundary : previousBoundary,
   }, clock);
   assert(preflight.result.status === "passed", "PREFLIGHT_FAILED", "Final environment preflight failed.", {
     errors: preflight.result.checks.filter((item) => item.status === "failed").map((item) => `${item.name}: ${item.detail}`),
@@ -586,13 +664,14 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   const planValidation = validateUatPlan(draft, plan);
   assert(planValidation.valid, "INVALID_UAT_PLAN", "Final UAT plan is invalid.", { errors: planValidation.errors });
   draft.uat = { planStatus: "planned", plannedAt: isoNow(clock), batches: {}, warnings: [], estimatedRoundTrips: plan.estimatedRoundTrips };
-  metrics.uatJourneyRuns = 1;
+  const executedJourney = manifestInfo.manifest.uat.batches.some((batch) => batch.runner !== "internal");
+  metrics.uatJourneyRuns = executedJourney ? 1 : 0;
   metrics.browserRoundTrips = plan.estimatedRoundTrips;
   for (const batch of manifestInfo.manifest.uat.batches) {
     const paths = [];
     if (batch.runner === "internal") {
       const target = path.join(runDirectory, `batch-${batch.id}-internal.md`);
-      await atomicWrite(target, `# Internal UAT batch: ${batch.name}\n\nCovered acceptance: ${batch.acceptanceIds.join(", ")}\nSource fingerprint: ${inventory.fingerprint}\n`);
+      await atomicWrite(target, `# Manual UAT handoff: ${batch.name}\n\nNo automatic UAT journey was executed for this batch.\n\nCovered acceptance: ${batch.acceptanceIds.join(", ")}\nSource fingerprint: ${inventory.fingerprint}\nRequired outcome: a person must judge the approved journey.\n`);
       metrics.evidenceWrites += 1;
       metrics.evidenceWritesByPhase.uat = (metrics.evidenceWritesByPhase.uat ?? 0) + 1;
       paths.push(toPosix(path.relative(root, target)));
@@ -604,7 +683,17 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     }
     const evidence = await capturePaths(root, paths, boundary, clock);
     referenceEvidence.set(`batch:${batch.id}`, evidence);
-    draft.uat.batches[batch.id] = { id: batch.id, status: "passed", summary: `${batch.name} passed.`, evidence, verifiedAt: isoNow(clock), epoch: draft.verification.epoch };
+    const status = batch.runner === "internal" ? "manual" : "passed";
+    draft.uat.batches[batch.id] = {
+      id: batch.id,
+      status,
+      summary: batch.runner === "internal"
+        ? `${batch.name} requires explicit human judgment; no automatic journey was executed.`
+        : `${batch.name} passed.`,
+      evidence,
+      verifiedAt: isoNow(clock),
+      epoch: draft.verification.epoch,
+    };
     metrics.uatBatchRuns += 1;
   }
   endMetricsPhase(metrics, "uat", phaseStarted);
@@ -650,7 +739,13 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   metrics.wallTimeMs = Math.max(0, Date.now() - wallStart);
   applyBudgets(metrics, manifestInfo.manifest.budgets);
   assert(metrics.checkGroupRuns.broad === 1, "FINALIZATION_REPETITION_LIMIT", "A successful fingerprint requires exactly one broad group.");
-  assert(metrics.uatJourneyRuns === 1, "FINALIZATION_REPETITION_LIMIT", "A successful fingerprint requires exactly one complete UAT journey.");
+  assert(
+    metrics.uatJourneyRuns === (executedJourney ? 1 : 0),
+    "FINALIZATION_REPETITION_LIMIT",
+    executedJourney
+      ? "A successful fingerprint requires exactly one complete automatic UAT journey."
+      : "A manual-only handoff must not claim an automatic UAT journey.",
+  );
   assert(metrics.affectedHistoryPasses <= 1, "FINALIZATION_REPETITION_LIMIT", "A successful fingerprint permits at most one affected-history pass.");
   finishMetrics(metrics);
   const result = {

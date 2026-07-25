@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
@@ -56,8 +56,8 @@ function finalizationManifest(criteria = [criterion("AC-01")], overrides = {}) {
       batches: [{
         id: batchId,
         name: "Complete approved journey",
-        runner: "internal",
         acceptanceIds: criteria.map((item) => item.id),
+        commands: [command("approved-journey", 'process.stdout.write(JSON.stringify({ journey: "passed" }))')],
         reuseSession: true,
       }],
     },
@@ -124,6 +124,31 @@ test("strict manifests require argv commands, ordered scopes, complete UAT, and 
   assert(result.errors.some((item) => item.includes("Exactly one broad")));
   assert(result.errors.some((item) => item.includes("do not cover AC-02")));
   assert(result.errors.some((item) => item.includes("unknown evidence")));
+});
+
+test("internal UAT can hand off assisted or manual judgment but cannot satisfy automatic acceptance", () => {
+  const automatic = [criterion("AC-01")];
+  const invalid = finalizationManifest(automatic, {
+    uat: {
+      batches: [{ id: "manual-handoff", name: "Manual handoff", runner: "internal", acceptanceIds: ["AC-01"] }],
+    },
+  });
+  invalid.acceptance["AC-01"] = ["check:broad", "batch:manual-handoff"];
+  const rejected = validateFinalizationManifest(invalid, automatic);
+  assert.equal(rejected.valid, false);
+  assert(rejected.errors.some((item) => item.includes("cannot cover automatic acceptance AC-01")));
+
+  const judged = [
+    criterion("AC-01", { classification: "ASSISTED" }),
+    criterion("AC-02", { classification: "MANUAL" }),
+  ];
+  const valid = finalizationManifest(judged, {
+    uat: {
+      batches: [{ id: "manual-handoff", name: "Manual handoff", runner: "internal", acceptanceIds: judged.map((item) => item.id) }],
+    },
+  });
+  valid.acceptance = Object.fromEntries(judged.map((item) => [item.id, ["check:broad", "batch:manual-handoff"]]));
+  assert.deepEqual(validateFinalizationManifest(valid, judged).errors, []);
 });
 
 test("dry-run executes the real entry point while keeping formal state byte-for-byte unchanged", async (t) => {
@@ -223,7 +248,15 @@ test("formal finalization prepares ASSISTED evidence without claiming the human 
     classification: "ASSISTED",
     title: "A person judges the concise handoff",
   })];
-  const { root, taskId } = await approvedImplementation(t, "assisted-finalize", { criteria });
+  const { root, taskId } = await approvedImplementation(t, "assisted-finalize", {
+    criteria,
+    manifest: {
+      uat: {
+        batches: [{ id: "manual-handoff", name: "Human judgment handoff", runner: "internal", acceptanceIds: ["AC-01"] }],
+      },
+      acceptance: { "AC-01": ["check:broad", "batch:manual-handoff"] },
+    },
+  });
   await dryRunFinalization(root, taskId);
   const completed = await finalizeTask(root, taskId);
 
@@ -231,6 +264,9 @@ test("formal finalization prepares ASSISTED evidence without claiming the human 
   assert.equal(completed.state.results["AC-01"].status, "manual");
   assert.match(completed.state.results["AC-01"].summary, /human judgment remains required/);
   assert(completed.state.results["AC-01"].evidence.length > 0);
+  assert.equal(completed.state.uat.batches["manual-handoff"].status, "manual");
+  assert.match(completed.state.uat.batches["manual-handoff"].summary, /no automatic journey was executed/);
+  assert.equal(completed.result.metrics.uatJourneyRuns, 0);
 });
 
 test("a failed formal command leaves no passed result or READY state", async (t) => {
@@ -288,6 +324,62 @@ test("loaded local credentials are redacted from preview commands and reports", 
   const persisted = (await Promise.all((await filesBelow(files.task)).map((file) => readFile(file, "utf8")))).join("\n");
   assert(!persisted.includes(secret));
   assert(persisted.includes("[REDACTED]"));
+});
+
+test("formal preflight accepts reusable assertion evidence from the current repair boundary without a one-second race", async (t) => {
+  const { root, taskId, files } = await approvedImplementation(t, "stable-preflight-boundary");
+  const profile = path.join(root, ".openatdd", "environments", "local.yaml");
+  const profileText = await readFile(profile, "utf8");
+  await writeFile(profile, profileText.replace("role: n/a", "role: tester"));
+  const evidence = path.join(files.evidence, "login.txt");
+  await writeFile(evidence, "authenticated local tester\n");
+  const olderThanFormalEpoch = new Date(Date.now() - 10_000);
+  await utimes(evidence, olderThanFormalEpoch, olderThanFormalEpoch);
+  const assertions = {
+    login: {
+      status: "passed",
+      summary: "authenticated local tester",
+      evidence: path.relative(root, evidence),
+    },
+  };
+
+  await dryRunFinalization(root, taskId, { assertions });
+  const completed = await finalizeTask(root, taskId, { assertions });
+
+  assert.equal(completed.state.preflight.status, "passed");
+  assert(new Date(completed.state.preflight.checkedAt) >= new Date(completed.state.verification.startedAt));
+});
+
+test("manifest preflight commands generate fresh formal assertions inside the verification epoch", async (t) => {
+  const payload = {
+    login: { status: "passed", summary: "fresh login succeeded" },
+    organization: { status: "passed", summary: "qa organization selected" },
+    integration: { status: "passed", summary: "local integration responded" },
+    fixture: { status: "passed", summary: "fixture is available" },
+  };
+  const { root, taskId } = await approvedImplementation(t, "command-preflight", {
+    manifest: {
+      preflight: {
+        commands: [command("runtime-assertions", `process.stdout.write(${JSON.stringify(JSON.stringify(payload))})`)],
+      },
+    },
+  });
+  const profile = path.join(root, ".openatdd", "environments", "local.yaml");
+  const profileText = await readFile(profile, "utf8");
+  await writeFile(profile, profileText
+    .replace("role: n/a", "role: tester")
+    .replace("organization: n/a", "organization: qa-org")
+    .replace("integration: n/a", "integration: local-api")
+    .replace("fixture: n/a", "fixture: sample"));
+
+  await dryRunFinalization(root, taskId);
+  const completed = await finalizeTask(root, taskId);
+  const assertions = completed.state.preflight.checks.filter((item) => payload[item.name]);
+
+  assert.equal(assertions.length, 4);
+  assert(assertions.every((item) => item.status === "passed"));
+  assert(assertions.every((item) => item.evidence[0].path.includes("preflight-runtime-assertions.md")));
+  assert(completed.result.metrics.commandInvocations >= 4);
 });
 
 test("CLI exposes both finalize modes and forwards JSON results", async (t) => {

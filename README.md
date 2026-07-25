@@ -1,28 +1,31 @@
 # OpenATDD
 
-**描述需求，确认验收与方案，其余交给 AI。**
+**描述需求；Quick 直接交付，Standard / Deep 确认验收与方案。**
 
 OpenATDD 1.0 is a standalone, acceptance-first AI delivery framework. A person
 describes the desired feature in normal language, answers only material product
-or authorization decisions, confirms concise completion standards and a
-one-screen solution, then receives an autonomously implemented,
-evidence-backed result ready for human UAT.
+or authorization decisions, and receives an autonomously implemented,
+evidence-backed result ready for human UAT. Quick uses compact autonomously
+approved contracts; Standard and Deep retain concise acceptance and solution
+confirmations.
 
 ```text
 requirement
   -> repository discovery -> Quick / Standard / Deep
   -> only unresolved human decisions (recommendation + 2-3 choices)
-  -> acceptance card -> human approval
-  -> concise solution summary -> human approval -> optional details in same file
+  -> Quick: compact acceptance + solution -> autonomous approval
+  -> Standard / Deep: acceptance approval -> solution approval
   -> focused implementation -> non-formal rehearsal -> repair
   -> source freeze -> checks + batched UAT + history once
   -> detailed steps + links -> human UAT
 ```
 
-Those are the only two routine confirmations. The acceptance approval and solution approval are separate gates. A formal
-solution cannot be approved before acceptance, product code cannot be changed
-before both gates pass, and approved contracts cannot be edited silently.
-Final UAT is a separate human observation, not another implementation approval.
+Standard and Deep have two routine confirmations. Quick preserves the same
+contract order and hashes but does not pause when no blocking human decision
+exists. A formal solution cannot be approved before acceptance, product code
+cannot be changed before both persisted gates pass, and approved contracts
+cannot be edited silently. Final UAT is a separate human observation, not
+another implementation approval.
 
 All human-facing content follows the current conversation language. There is no
 `--language` option, language configuration, or language-selection question.
@@ -58,10 +61,10 @@ Invoke the bundled Codex Skill with:
 $openatdd Let finance export filtered orders
 ```
 
-The agent writes `.openatdd/tasks/order-export/acceptance.md`, pauses for the
-first approval, writes the solution only after that approval, and pauses once
-more. The deterministic CLI then protects state transitions and contract
-hashes while the agent performs the implementation.
+The agent writes `.openatdd/tasks/order-export/acceptance.md` and `solution.md`
+in deterministic order. Quick validates and approves the compact cards without
+routine pauses; Standard and Deep pause at both gates. The CLI protects state
+transitions and contract hashes while the agent performs the implementation.
 
 Useful commands:
 
@@ -91,7 +94,8 @@ projects that have not adopted the manifest yet.
 OpenATDD records one deterministic lane from repository-derived facts:
 
 - **Quick** — local, established, reversible, and low uncertainty. Work stays
-  direct and local; no routine subagent or external research wait.
+  direct and local with compact autonomous approvals; no routine confirmation,
+  subagent, or external research wait.
 - **Standard** — ordinary cross-module or moderately uncertain work. Local
   discovery is normal and an independent review is optional.
 - **Deep** — system-wide, novel, highly uncertain, irreversible, or sensitive
@@ -99,7 +103,8 @@ OpenATDD records one deterministic lane from repository-derived facts:
   public compatibility. Relevant external research accompanies local discovery;
   clean-context execution and independent review are used when they reduce risk.
 
-Routing changes internal effort, never the user's two-confirmation contract.
+Routing changes internal effort and routine interaction. Quick uses compact
+autonomous approvals; Standard and Deep use the two human confirmations.
 OpenATDD investigates discoverable facts first. Every remaining human-owned
 decision is stored with an owner, two or three choices, consequences, a
 grounded recommendation, and the final selection. Blocking decisions stop the
@@ -135,6 +140,13 @@ verification references. Quick context stays in memory; Standard and Deep
 context persists by default for clean-context Agents and recovery. Source
 digests cause stale context to rebuild instead of silently drifting.
 
+Agent dispatches use role-level defaults instead of inheriting the main model:
+local discovery and external research use `gpt-5.6-luna/low`, clean-context
+execution uses `gpt-5.6-terra/medium`, and independent review uses
+`gpt-5.6-terra/high`. Hard-risk review and execution after two consecutive
+failed repair attempts escalate to `gpt-5.6-sol/high`. Every dispatch records
+the selected profile, isolation settings, available token counts, and duration.
+
 Useful diagnostic commands include `graph-rebuild`, `graph-query`,
 `graph-impact`, `context-build`, and `context-show`. They are internal tools,
 not extra human gates.
@@ -153,7 +165,8 @@ treated as test evidence.
 npm run eval
 npm run eval:agent
 openatdd agent-eval --scenario evals/agent/scenarios/simplicity.v1.json \
-  --adapter codex --bare-agent --runs 2 \
+  --adapter codex --model gpt-5.6-terra --reasoning-effort medium \
+  --bare-agent --runs 2 \
   --report evals/reports/openatdd-real.json
 openatdd agent-eval --verify-report evals/reports/openatdd-real.json \
   --min-runs 2 --require-baseline
@@ -162,7 +175,8 @@ openatdd agent-eval --verify-report evals/reports/openatdd-real.json \
 The first command actually invokes the model. The verifier is deterministic and
 is what finalization should run, so rehearsal and formal finalization do not pay
 for or vary a second model evaluation. Mock-only reports cannot claim a real
-model pass.
+model pass. Primary, bare baseline, and ablation runs share the explicitly
+selected model and reasoning effort, which are persisted in report metadata.
 
 ## On-demand strategy retrospective
 
@@ -179,7 +193,9 @@ openatdd retrospect order-export --json
 The command writes `retrospective.md` and `retrospective.json` inside the task
 directory. It shows the selected lane and reasons, OpenATDD capabilities and
 their design inspirations, what was actually observed, what was not used,
-evidence links, outcome metrics, and evidence-bounded optimization suggestions.
+evidence links, total and autonomous phase timing, Agent critical path,
+integration tail, preflight failures, resolved issues, outcome metrics, and
+evidence-bounded optimization suggestions.
 It reads existing artifacts only: it does not invoke a model, change delivery
 state, add a confirmation, or run an evaluation.
 
@@ -202,11 +218,16 @@ executed or installed.
 
 Each project stores its execution contract in
 `.openatdd/finalization.json`. It defines argv-only real entry-point smokes,
+optional reusable in-epoch preflight assertion commands,
 ordered focused/module/broad check groups, one to five cohesive UAT batches,
 acceptance-to-evidence mappings, deferred historical replay, and non-blocking
 repetition budgets. Copy the example from
 [`fast-finalization.md`](skills/openatdd/references/fast-finalization.md) and
 replace only project-specific commands, surfaces, paths, and mappings.
+
+Automatic acceptance must be exercised by real argv-only UAT commands.
+`runner: "internal"` is only a manual handoff for `ASSISTED` or `MANUAL`
+criteria; it records `manual` and can never satisfy an `AUTO` criterion.
 
 The default order is:
 
@@ -223,11 +244,13 @@ The rehearsal invokes real configured entry points and validates preflight,
 coverage, report rendering, links, redaction, and source stability. It does not
 record formal passes, advance the verification epoch, reverify history, prepare
 a notification, or enter READY. The formal run performs one broad group, one
-complete UAT journey, and one affected-history pass for the final fingerprint,
+complete command-backed UAT journey when automatic criteria exist, and one
+affected-history pass for the final fingerprint,
 then commits all projected state atomically. Repeating a completed unchanged
 fingerprint is an idempotent cache hit.
 
-This preserves exactly two human gates. There is no separate confirmation for
+This preserves lane-appropriate gates. Quick remains autonomous; Standard and
+Deep keep exactly two human gates. There is no separate confirmation for
 finalization; the person next acts on the prepared human UAT report.
 
 ## Project environment and local test account
@@ -315,7 +338,7 @@ npm run check
 - Repairing a defect invalidates earlier results and forces a full-chain rerun.
 - Shared impact paths mark related historical acceptance results as affected.
 - Semantic relationships expand impact analysis while preserving path fallback.
-- Quick, Standard, and Deep routing scales investigation without changing gates.
+- Quick uses compact autonomous approvals; Standard and Deep keep two human gates.
 - Human decisions always carry grounded recommendations and 2-3 choices.
 - A current-hash simplicity review protects the one-source progressive solution.
 - Implementation and verification receive distinct source-hashed context.
@@ -350,4 +373,4 @@ evals/                 deterministic and real-agent scenarios, rubrics, reports
 .openatdd/              this repository's own acceptance, memory, and evidence
 ```
 
-中文定位：**OpenATDD 是面向 AI 编程的开源验收驱动交付框架。描述需求，确认验收，确认方案，其余交给 AI。**
+中文定位：**OpenATDD 是面向 AI 编程的开源验收驱动交付框架。描述需求；Quick 直接交付，Standard / Deep 确认验收与方案，其余交给 AI。**

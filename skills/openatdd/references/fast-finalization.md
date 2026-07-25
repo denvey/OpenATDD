@@ -12,9 +12,9 @@ focused implementation and repair
 → human UAT from report.md
 ```
 
-This does not add a third approval. The person still confirms only the
-acceptance card and solution card; the two finalization commands are executed
-by the agent.
+This does not add another approval. Quick runs its compact contracts and both
+finalization commands autonomously. Standard and Deep still use the acceptance
+and solution confirmations before the agent executes finalization.
 
 ## Project manifest
 
@@ -27,6 +27,11 @@ always argv arrays and run without a shell. A minimal CLI example is:
   "surface": "cli",
   "environment": "local",
   "source": { "include": ["**/*"], "exclude": ["dist/**"] },
+  "preflight": {
+    "commands": [
+      { "id": "runtime-assertions", "argv": ["node", ".openatdd/scripts/preflight.mjs"] }
+    ]
+  },
   "dryRun": {
     "commands": [
       { "id": "help-smoke", "argv": ["node", "bin/app.mjs", "--help"] }
@@ -81,10 +86,14 @@ Rules enforced by the validator:
 - `surface` is `cli`, `api`, `web`, `file`, or `mixed`;
 - `environment` names a non-secret profile in `.openatdd/environments/`;
 - every command has a unique lowercase ID and non-empty `argv` array;
+- optional `preflight.commands` use the same safe argv-only command contract;
 - working directories stay inside the project and timeouts are positive;
 - check groups are ordered `focused → module → broad`, with exactly one broad
   group;
 - one to five cohesive UAT batches cover every acceptance criterion;
+- `AUTO` criteria use real argv-only UAT commands; `runner: "internal"` is
+  allowed only for `ASSISTED` or `MANUAL` handoff and records `manual`, never
+  `passed`;
 - every acceptance ID maps to an existing check or batch evidence reference;
 - historical overrides explicitly map every affected legacy acceptance ID;
 - budgets warn about avoidable repetition but never fail solely due to elapsed
@@ -92,6 +101,19 @@ Rules enforced by the validator:
 
 The resolved manifest is copied into the task only during successful formal
 finalization. Existing granular OpenATDD commands remain available.
+
+Each preflight command prints one JSON object to stdout. Keys may be `login`,
+`organization`, `integration`, `fixture`, or `known_workarounds`; every value
+contains `status` (`passed` or `failed`) and a sanitized `summary`. The command
+log is captured automatically as fresh evidence, so reusable project adapters
+do not need to know the task directory or create task-local assertion files:
+
+```json
+{
+  "login": { "status": "passed", "summary": "local tester authenticated" },
+  "organization": { "status": "passed", "summary": "qa organization selected" }
+}
+```
 
 ## Surface adapters
 
@@ -117,9 +139,10 @@ Run:
 openatdd finalize <task> --dry-run
 ```
 
-Add `--manifest <path>` only to try a project-contained alternate manifest and
-`--assertions <safe-json>` when the environment profile requires fresh login,
-organization, integration, fixture, or workaround evidence.
+Add `--manifest <path>` only to try a project-contained alternate manifest.
+Prefer manifest `preflight.commands` for reusable login, organization,
+integration, fixture, or workaround checks. `--assertions <safe-json>` remains
+the compatible fallback for projects without an adapter.
 
 The rehearsal checks the real entry points, non-persisting environment
 preflight, UAT coverage, report rendering, local and applicable HTTP links,

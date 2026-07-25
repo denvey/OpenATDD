@@ -6,6 +6,7 @@ import {
   validateAssessment,
   validateRouting,
 } from "../skills/openatdd/scripts/routing.mjs";
+import { profileForDispatch } from "../skills/openatdd/scripts/agent-profiles.mjs";
 import {
   blockingDecisions,
   createDecision,
@@ -47,6 +48,7 @@ test("routing classifies a local established low-risk task as quick", () => {
   assert.equal(routing.lane, "quick");
   assert.equal(routing.investigation.externalResearch, false);
   assert.deepEqual(routing.agents, { policy: "none", roles: [] });
+  assert.deepEqual(routing.interaction, { approvals: "autonomous", contract: "compact" });
   assert.equal(validateRouting(routing).valid, true);
 });
 
@@ -55,6 +57,7 @@ test("routing classifies ordinary cross-module work as standard", () => {
   assert.equal(routing.lane, "standard");
   assert.equal(routing.investigation.externalResearch, false);
   assert.deepEqual(routing.agents, { policy: "optional", roles: ["independent-review"] });
+  assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.reasons.includes("cross-module-scope"));
 });
 
@@ -63,6 +66,7 @@ test("routing classifies novel cross-cutting work as deep", () => {
   assert.equal(routing.lane, "deep");
   assert.equal(routing.investigation.externalResearch, true);
   assert.equal(routing.agents.policy, "parallel");
+  assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.agents.roles.includes("external-research"));
   assert(routing.agents.roles.includes("clean-context-execution"));
 });
@@ -75,6 +79,35 @@ test("every hard risk deterministically escalates to deep", async (t) => {
       assert(routing.reasons.includes(`hard-escalator:${signal}`));
     });
   }
+});
+
+test("Agent profiles route exploration to Luna, execution and review to Terra, and escalate only bounded high-risk work", () => {
+  assert.deepEqual(profileForDispatch({ role: "local-discovery" }), {
+    role: "local-discovery",
+    profile: "local-discovery",
+    model: "gpt-5.6-luna",
+    reasoningEffort: "low",
+    forkTurns: "none",
+    sandbox: "read-only",
+    escalation: null,
+  });
+  assert.equal(profileForDispatch({ role: "clean-context-execution" }).model, "gpt-5.6-terra");
+  assert.equal(profileForDispatch({ role: "independent-review" }).reasoningEffort, "high");
+
+  const highRiskReview = profileForDispatch({ role: "independent-review", riskSignals: ["security"] });
+  assert.equal(highRiskReview.model, "gpt-5.6-sol");
+  assert.equal(highRiskReview.escalation, "hard-risk-independent-review");
+
+  const escalatedRepair = profileForDispatch({
+    role: "clean-context-execution",
+    repairAttempts: [{ outcome: "failed" }, { outcome: "no-progress" }],
+  });
+  assert.equal(escalatedRepair.model, "gpt-5.6-sol");
+  assert.equal(escalatedRepair.escalation, "two-consecutive-failed-repairs");
+  assert.equal(profileForDispatch({
+    role: "clean-context-execution",
+    repairAttempts: [{ outcome: "failed" }, { outcome: "progress" }],
+  }).model, "gpt-5.6-terra");
 });
 
 test("irreversible assessment escalates even without a duplicated risk flag", () => {

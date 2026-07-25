@@ -102,6 +102,7 @@ function validateCommand(command, label, errors) {
 
 function allCommandIds(manifest) {
   return [
+    ...(manifest.preflight?.commands ?? []),
     ...(manifest.dryRun?.commands ?? []),
     ...(manifest.checks ?? []).flatMap((group) => group.commands ?? []),
     ...(manifest.uat?.batches ?? []).flatMap((batch) => batch.commands ?? []),
@@ -124,6 +125,17 @@ export function validateFinalizationManifest(manifest, acceptanceItems = []) {
   if (!Array.isArray(dryCommands) || dryCommands.length === 0) errors.push("dryRun.commands requires at least one real smoke command.");
   for (const [index, command] of (dryCommands ?? []).entries()) validateCommand(command, `dryRun.commands[${index}]`, errors);
 
+  if (manifest?.preflight !== undefined && (!manifest.preflight || typeof manifest.preflight !== "object" || Array.isArray(manifest.preflight))) {
+    errors.push("preflight must be an object when provided.");
+  }
+  const preflightCommands = manifest?.preflight?.commands;
+  if (preflightCommands !== undefined && (!Array.isArray(preflightCommands) || preflightCommands.length === 0)) {
+    errors.push("preflight.commands must be a non-empty command array when provided.");
+  }
+  for (const [index, command] of (preflightCommands ?? []).entries()) {
+    validateCommand(command, `preflight.commands[${index}]`, errors);
+  }
+
   const checks = manifest?.checks;
   if (!Array.isArray(checks) || checks.length === 0) errors.push("checks requires at least one scoped group.");
   let previousRank = -1;
@@ -143,15 +155,24 @@ export function validateFinalizationManifest(manifest, acceptanceItems = []) {
 
   const batches = manifest?.uat?.batches;
   if (!Array.isArray(batches) || batches.length === 0 || batches.length > 5) errors.push("uat.batches requires one to five cohesive batches.");
+  const acceptanceById = new Map(acceptanceItems.map((criterion) => [criterion.id, criterion]));
   const covered = new Set();
   for (const [index, batch] of (batches ?? []).entries()) {
     const label = `uat.batches[${index}]`;
     if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(String(batch.id ?? ""))) errors.push(`${label} requires an id.`);
     if (!batch.name?.trim()) errors.push(`${label} requires a name.`);
     if (!Array.isArray(batch.acceptanceIds) || batch.acceptanceIds.length === 0) errors.push(`${label}.acceptanceIds cannot be empty.`);
-    for (const acceptanceId of batch.acceptanceIds ?? []) covered.add(acceptanceId);
+    for (const acceptanceId of batch.acceptanceIds ?? []) {
+      covered.add(acceptanceId);
+      if (!acceptanceById.has(acceptanceId)) errors.push(`${label} references unknown acceptance: ${acceptanceId}.`);
+    }
     if (batch.runner === "internal") {
       if ((batch.commands?.length ?? 0) > 0) errors.push(`${label} internal batches cannot declare commands.`);
+      for (const acceptanceId of batch.acceptanceIds ?? []) {
+        if (acceptanceById.get(acceptanceId)?.classification === "AUTO") {
+          errors.push(`${label} runner: internal cannot cover automatic acceptance ${acceptanceId}; execute a real UAT command instead.`);
+        }
+      }
     } else {
       if (!Array.isArray(batch.commands) || batch.commands.length === 0) errors.push(`${label} requires commands or runner: internal.`);
       for (const [commandIndex, command] of (batch.commands ?? []).entries()) validateCommand(command, `${label}.commands[${commandIndex}]`, errors);

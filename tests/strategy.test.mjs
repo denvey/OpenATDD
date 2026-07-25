@@ -83,6 +83,60 @@ test("retrospective is generated only when explicitly requested and leaves task 
   assert.equal(await readFile(files.state, "utf8"), before);
 });
 
+test("retrospective exposes delivery critical path, retries, integration tail, and resolved repairs", async (t) => {
+  const root = await temporaryProject(t);
+  await prepareApprovedTask(root, "timed-retrospect", { requirement: "回溯执行慢的根本原因" });
+  await beginImplementation(root, "timed-retrospect");
+  const { state } = await loadTask(root, "timed-retrospect");
+  state.createdAt = "2026-07-24T09:00:00.000Z";
+  state.readyAt = "2026-07-24T10:40:00.000Z";
+  state.phase = "READY_FOR_UAT";
+  state.timing = {
+    currentPhase: "READY_FOR_UAT",
+    phaseStartedAt: state.readyAt,
+    phases: [
+      { phase: "ACCEPTANCE_DRAFT", startedAt: "2026-07-24T09:00:00.000Z", endedAt: "2026-07-24T09:30:00.000Z", durationMs: 1_800_000 },
+      { phase: "SOLUTION_DRAFT", startedAt: "2026-07-24T09:30:00.000Z", endedAt: "2026-07-24T10:00:00.000Z", durationMs: 1_800_000 },
+      { phase: "IMPLEMENTING", startedAt: "2026-07-24T10:00:00.000Z", endedAt: "2026-07-24T10:25:00.000Z", durationMs: 1_500_000 },
+      { phase: "REPAIRING", startedAt: "2026-07-24T10:25:00.000Z", endedAt: "2026-07-24T10:30:00.000Z", durationMs: 300_000 },
+      { phase: "PRE_UAT", startedAt: "2026-07-24T10:30:00.000Z", endedAt: "2026-07-24T10:40:00.000Z", durationMs: 600_000 },
+    ],
+  };
+  state.agents.dispatches = [{
+    id: "AGENT-001",
+    role: "clean-context-execution",
+    status: "passed",
+    startedAt: "2026-07-24T10:00:00.000Z",
+    updatedAt: "2026-07-24T10:20:00.000Z",
+  }];
+  state.issues = [{
+    id: "ISSUE-001",
+    status: "resolved",
+    openedAt: "2026-07-24T10:25:00.000Z",
+    resolvedAt: "2026-07-24T10:30:00.000Z",
+  }];
+  state.history.push(
+    { event: "ENVIRONMENT_PREFLIGHT", at: "2026-07-24T10:30:00.000Z", details: { status: "failed" } },
+    { event: "ENVIRONMENT_PREFLIGHT", at: "2026-07-24T10:31:00.000Z", details: { status: "passed" } },
+  );
+
+  const result = buildStrategyRetrospective(state, [], () => new Date("2026-07-24T10:45:00.000Z"));
+  const markdown = renderStrategyRetrospective(result);
+
+  assert.equal(result.metrics.timing.deliveryActiveMs, 2_400_000);
+  assert.equal(result.metrics.timing.taskWallTimeMs, 6_000_000);
+  assert.equal(result.metrics.preflight.attempts, 2);
+  assert.equal(result.metrics.preflight.failed, 1);
+  assert.equal(result.metrics.repairs, 1);
+  assert.equal(result.metrics.repairAttempts, 0);
+  assert.equal(result.metrics.agents.criticalPathMs, 1_200_000);
+  assert.equal(result.metrics.agents.integrationTailMs, 300_000);
+  assert.deepEqual(result.bottlenecks[0], { phase: "ACCEPTANCE_DRAFT", durationMs: 1_800_000 });
+  assert.match(markdown, /自主交付 \/ 总墙钟：40m 00s \/ 1h 40m 00s/);
+  assert.match(markdown, /预检尝试 \/ 失败：2 \/ 1/);
+  assert.match(markdown, /IMPLEMENTING \| 25m 00s/);
+});
+
 test("evaluation profiles preserve cached tokens and compare capability ablations", async (t) => {
   const loaded = await simplicityScenario();
   const primary = structuredClone(loaded.value.mock.primary);

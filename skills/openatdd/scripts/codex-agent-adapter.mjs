@@ -190,7 +190,7 @@ function tokenMetrics(jsonLines) {
   };
 }
 
-async function runCodex(prompt, schemaPath, outputPath, timeoutMs) {
+async function runCodex(prompt, schemaPath, outputPath, timeoutMs, options = {}) {
   const started = Date.now();
   return await new Promise((resolve, reject) => {
     const child = spawn("codex", [
@@ -199,8 +199,9 @@ async function runCodex(prompt, schemaPath, outputPath, timeoutMs) {
       "--skip-git-repo-check",
       "--ignore-user-config",
       "--ignore-rules",
+      ...(options.model ? ["--model", options.model] : []),
       "-c",
-      "model_reasoning_effort=\"low\"",
+      `model_reasoning_effort=${JSON.stringify(options.reasoningEffort)}`,
       "--sandbox",
       "workspace-write",
       "--output-schema",
@@ -239,13 +240,16 @@ async function runCodex(prompt, schemaPath, outputPath, timeoutMs) {
 
 async function main(argv) {
   if (argv.includes("--help")) {
-    process.stdout.write("Usage: codex-agent-adapter.mjs [--mode primary|bare] [--timeout-ms N]\n");
+    process.stdout.write("Usage: codex-agent-adapter.mjs [--mode primary|bare] [--model MODEL] [--reasoning-effort LEVEL] [--timeout-ms N]\n");
     return;
   }
   const mode = optionValue(argv, "--mode") ?? "primary";
   invariant(["primary", "bare"].includes(mode), "--mode must be primary or bare.");
   const timeoutMs = Number(optionValue(argv, "--timeout-ms") ?? 210_000);
   invariant(Number.isFinite(timeoutMs) && timeoutMs > 0, "--timeout-ms must be positive.");
+  const model = optionValue(argv, "--model");
+  const reasoningEffort = optionValue(argv, "--reasoning-effort") ?? "low";
+  invariant(["low", "medium", "high", "xhigh", "max", "ultra"].includes(reasoningEffort), "--reasoning-effort is invalid.");
   const request = await stdinText();
   invariant(request.trim().length > 0, "Expected the evaluation request on stdin.");
   const skillPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "SKILL.md");
@@ -257,7 +261,13 @@ async function main(argv) {
     const schemaPath = path.join(temporary, "output-schema.json");
     const outputPath = path.join(temporary, "output.json");
     await writeFile(schemaPath, `${JSON.stringify(outputSchema(), null, 2)}\n`);
-    const observed = await runCodex(evaluationPrompt(request, skill, mode, snapshot, disabledCapabilities), schemaPath, outputPath, timeoutMs);
+    const observed = await runCodex(
+      evaluationPrompt(request, skill, mode, snapshot, disabledCapabilities),
+      schemaPath,
+      outputPath,
+      timeoutMs,
+      { model, reasoningEffort },
+    );
     invariant(observed.exitCode === 0, `codex exec exited with ${observed.exitCode}${observed.signal ? ` (${observed.signal})` : ""}: ${observed.stderr.trim()}`);
     const result = JSON.parse(await readFile(outputPath, "utf8"));
     await writeFile(path.join(process.cwd(), "agent-result.json"), `${JSON.stringify(result.agentResult, null, 2)}\n`);

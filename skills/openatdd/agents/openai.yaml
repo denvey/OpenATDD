@@ -1,4 +1,4 @@
 interface:
   display_name: "OpenATDD"
-  short_description: "描述需求、确认验收与方案，其余由 AI 自主实现并交付验证证据"
-  default_prompt: "Use $openatdd in the current conversation language. Classify the task as Quick, Standard, or Deep; ask only unresolved human-owned decisions with a grounded recommendation and 2-3 choices; obtain concise acceptance and solution approval; then implement, repair, verify, reverify affected history, and prepare the detailed human UAT handoff without extra routine confirmations."
+  short_description: "描述需求；Quick 直接交付，Standard / Deep 确认后由 AI 实现并验证"
+  default_prompt: "Use $openatdd in the current conversation language. Classify the task as Quick, Standard, or Deep; ask only unresolved human-owned decisions with a grounded recommendation and 2-3 choices. For Quick, persist compact acceptance and solution contracts with a main review and continue autonomously without routine approval pauses. For Standard and Deep, obtain concise human acceptance and solution approval. Then implement, repair, verify one real approved journey, reverify affected history, and prepare the detailed human UAT handoff without extra routine confirmations."
