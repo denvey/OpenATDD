@@ -1,6 +1,10 @@
 # Verification routing
 
 Prefer the narrowest deterministic verifier that observes the approved result.
+Use the task lane to scale breadth, not to weaken evidence: Quick favors one
+direct local path, Standard adds cross-module boundaries, and Deep adds
+independent and risk-specific verification. Load the `verification` view from
+the task's scoped context; do not reuse implementation assumptions as proof.
 
 | Surface | Primary verifier | Typical evidence |
 |---|---|---|
@@ -30,8 +34,42 @@ Use real roles and realistic data where safe. Check visible state and, when
 important, API or persisted state. Avoid declaring success from screenshots
 alone when structured assertions are available.
 
+Before opening the browser, require a passing `preflight.json` and validated
+`uat-plan.json`. Prefer three cohesive batches when the journey allows it:
+
+1. setup, entry, and login;
+2. the primary business journey;
+3. final readback and evidence.
+
+Reuse the same authenticated session. Read DOM state and capture screenshots at
+meaningful checkpoints or failure, not after every click. A failed batch can be
+narrowed during diagnosis, but after repair all formal batch and acceptance
+evidence must be recaptured in the new verification epoch.
+
+## Efficient check order
+
+- `focused`: affected tests during implementation and each small repair;
+- `module`: the relevant subsystem after repairs close;
+- rehearsal: `openatdd finalize <task> --dry-run` against real entry points,
+  without formal evidence or historical reruns;
+- `broad`: the full risk-proportionate suite once inside formal finalization
+  after the complete source fingerprint is frozen;
+- final UAT: one complete approved journey in the same formal operation;
+- history: one affected-history pass after current acceptance succeeds.
+
+If the rehearsal fails, return to focused repair and rehearse again. If a
+post-freeze failure or source mutation occurs, use the issue flow, advance the
+epoch, and execute one new complete finalization. Do not preserve partial formal
+passes across fingerprints.
+
+Duration and browser-round-trip budgets produce warnings only. They are a
+signal to improve batching or environment memory, never a reason to weaken
+coverage or fail acceptance by elapsed time alone.
+
 ## External blockers
 
-Use `blocked` only for unavailable credentials, services, permissions,
-CAPTCHA, hardware, production authorization, or equivalent external state.
-Ordinary implementation errors and failing tests belong in the repair loop.
+Use `blocked` for unavailable credentials, services, permissions, CAPTCHA,
+hardware, production authorization, equivalent external state, or three
+recorded no-progress attempts without a new credible hypothesis. Ordinary
+implementation errors and failing tests belong in the repair loop. A new
+credible hypothesis resumes repair from the persisted recovery boundary.

@@ -1,0 +1,16 @@
+{
+  "id": "holdout-browser-round-trip-budget-001",
+  "set": "holdout",
+  "scenario": "browser-budget",
+  "input": "Verify a seven-criterion browser journey quickly without weakening coverage",
+  "expected": {
+    "cohesive_batches": true,
+    "complete_acceptance_coverage": true,
+    "budget_warning_non_blocking": true,
+    "session_reused_after_setup": true
+  },
+  "forbidden": [
+    "Run every browser click as a separate interaction",
+    "Treat elapsed-time budget warnings as acceptance failures"
+  ]
+}

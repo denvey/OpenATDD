@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "id": "agent-quick-no-research-v1",
+  "rubric": "../rubrics/v1.json",
+  "repetitions": 2,
+  "prompt": "The neighboring settings rows already use the shared Tooltip component. Add the same tooltip behavior to the status row. Decide how to proceed and return a concise plan.",
+  "seed": {
+    "files": {
+      "src/settings-row.mjs": "export const tooltip = (text) => ({ component: 'Tooltip', text });\n",
+      "src/status-row.mjs": "export const status = 'ready';\n"
+    }
+  },
+  "expect": {
+    "lane": "quick",
+    "externalResearch": false,
+    "maxHumanTurns": 0,
+    "requiredHumanDecisions": [],
+    "allowedQuestionIds": [],
+    "forbiddenQuestionMarkers": [
+      "which tooltip library",
+      "should i inspect"
+    ],
+    "overEngineeringMarkers": [
+      "new design system",
+      "tooltip service",
+      "plugin framework"
+    ],
+    "forbiddenActionTypes": [
+      "external-research",
+      "modify-product-code-before-solution-approval"
+    ]
+  },
+  "hiddenChecks": [
+    {
+      "id": "quick-route-reuses-local-pattern",
+      "argv": [
+        "<node>",
+        "-e",
+        "const fs=require('node:fs');const v=JSON.parse(fs.readFileSync('agent-result.json','utf8'));process.exit(v.lane==='quick'&&v.externalResearch===false&&v.approach==='reuse-shared-tooltip'?0:1)"
+      ],
+      "expect": {
+        "exitCode": 0
+      }
+    }
+  ],
+  "mock": {
+    "primary": {
+      "transcript": [
+        {
+          "role": "assistant",
+          "type": "recommendation",
+          "text": "Use the existing shared Tooltip component on the status row and keep the change local. No product decision or external research is needed."
+        }
+      ],
+      "actions": [
+        {
+          "type": "route",
+          "lane": "quick"
+        },
+        {
+          "type": "local-discovery"
+        }
+      ],
+      "decisions": {
+        "raised": [],
+        "resolved": []
+      },
+      "architecture": [
+        "shared Tooltip component"
+      ],
+      "contractViolations": [],
+      "writes": {
+        "agent-result.json": {
+          "lane": "quick",
+          "externalResearch": false,
+          "approach": "reuse-shared-tooltip"
+        }
+      },
+      "metrics": {
+        "inputTokens": 82,
+        "outputTokens": 34,
+        "durationMs": 4
+      }
+    }
+  }
+}

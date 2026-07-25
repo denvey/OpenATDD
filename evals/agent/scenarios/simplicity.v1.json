@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "id": "agent-simplicity-v1",
+  "rubric": "../rubrics/v1.json",
+  "repetitions": 2,
+  "prompt": "The application already has separate order-query and synchronous CSV-stream modules, and the expected export is small. Add an order export by composing those existing modules, classify the task depth, and propose the simplest credible solution.",
+  "seed": {
+    "files": {
+      "src/csv-stream.mjs": "export function streamCsv(rows) { return rows.map((row) => row.join(',')).join('\\n'); }\n",
+      "src/orders.mjs": "export function filteredOrders() { return []; }\n"
+    }
+  },
+  "expect": {
+    "lane": "standard",
+    "externalResearch": false,
+    "maxHumanTurns": 0,
+    "requiredHumanDecisions": [],
+    "allowedQuestionIds": [],
+    "forbiddenQuestionMarkers": [
+      "which csv package",
+      "should i create a service"
+    ],
+    "overEngineeringMarkers": [
+      "message queue",
+      "object storage",
+      "export microservice",
+      "distributed scheduler"
+    ],
+    "forbiddenActionTypes": [
+      "external-research",
+      "modify-product-code-before-solution-approval"
+    ]
+  },
+  "hiddenChecks": [
+    {
+      "id": "solution-reuses-existing-stream",
+      "argv": [
+        "<node>",
+        "-e",
+        "const fs=require('node:fs');const v=JSON.parse(fs.readFileSync('agent-result.json','utf8'));process.exit(v.lane==='standard'&&typeof v.approach==='string'&&v.approach.length>0&&Array.isArray(v.newInfrastructure)&&v.newInfrastructure.length===0?0:1)"
+      ],
+      "expect": {
+        "exitCode": 0
+      }
+    }
+  ],
+  "mock": {
+    "primary": {
+      "transcript": [
+        {
+          "role": "assistant",
+          "type": "recommendation",
+          "text": "Reuse the existing filtered order query and synchronous CSV stream helper. Add only the protected endpoint, the current UI entry, and focused permission and export checks."
+        }
+      ],
+      "actions": [
+        {
+          "type": "route",
+          "lane": "standard"
+        },
+        {
+          "type": "local-discovery"
+        }
+      ],
+      "decisions": {
+        "raised": [],
+        "resolved": []
+      },
+      "architecture": [
+        "existing query",
+        "existing CSV stream helper"
+      ],
+      "contractViolations": [],
+      "writes": {
+        "agent-result.json": {
+          "lane": "standard",
+          "approach": "reuse-existing-stream",
+          "newInfrastructure": []
+        }
+      },
+      "metrics": {
+        "inputTokens": 96,
+        "outputTokens": 43,
+        "durationMs": 6
+      }
+    },
+    "bareAgent": {
+      "transcript": [
+        {
+          "role": "assistant",
+          "type": "question",
+          "decisionId": "csv-library",
+          "text": "Which CSV package and object storage provider should I use?"
+        },
+        {
+          "role": "assistant",
+          "type": "recommendation",
+          "text": "Create an export microservice backed by a message queue and object storage."
+        }
+      ],
+      "actions": [
+        {
+          "type": "route",
+          "lane": "deep"
+        },
+        {
+          "type": "external-research"
+        }
+      ],
+      "decisions": {
+        "raised": [
+          "csv-library"
+        ],
+        "resolved": []
+      },
+      "architecture": [
+        "export microservice",
+        "message queue",
+        "object storage"
+      ],
+      "contractViolations": [],
+      "writes": {
+        "agent-result.json": {
+          "lane": "deep",
+          "approach": "new-export-platform",
+          "newInfrastructure": [
+            "queue",
+            "object-storage"
+          ]
+        }
+      },
+      "metrics": {
+        "inputTokens": 96,
+        "outputTokens": 65,
+        "durationMs": 9
+      }
+    }
+  }
+}

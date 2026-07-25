@@ -1,0 +1,1593 @@
+{
+  "schemaVersion": 3,
+  "deliveryVersion": 2,
+  "taskId": "fast-portable-finalization",
+  "requirement": "Standardize a portable fast OpenATDD execution path that completes pre-freeze validation, batch finalization, and one-time historical reverification without weakening evidence.",
+  "phase": "READY_FOR_UAT",
+  "createdAt": "2026-07-23T10:57:03.641Z",
+  "updatedAt": "2026-07-24T03:56:39.977Z",
+  "acceptance": {
+    "approvedAt": "2026-07-23T10:59:27.144Z",
+    "sha256": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+    "items": [
+      {
+        "id": "AC-01",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Every project receives the same portable execution contract",
+        "given": "A CLI, API, Web, file, or mixed-surface repository has initialized OpenATDD.",
+        "when": "A task enters implementation after the two existing approvals.",
+        "then": "OpenATDD resolves a versioned project-local finalization manifest with applicable commands, surfaces, paths, evidence routes, budgets, and explicit not-applicable reasons; the contract works from a copied or symlinked Skill with Node.js 20+ and no new runtime dependency.",
+        "evidence": "Clean-project fixtures for CLI, API, Web, and mixed surfaces; schema validation; copied-Skill and npm-linked CLI integration tests."
+      },
+      {
+        "id": "AC-02",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Dry-run catches delivery defects before formal evidence",
+        "given": "Implementation appears complete but the source has not been formally frozen.",
+        "when": "OpenATDD runs `finalize --dry-run`.",
+        "then": "It invokes the real configured entry points in a disposable or non-mutating context, validates CLI option wiring, environment and credential references, UAT coverage, report rendering, secret scanning, and every applicable local/URL link; it writes actionable preview diagnostics but creates no formal passes, clean epoch, READY state, notification, or affected-history reverification.",
+        "evidence": "Regression fixtures for ignored CLI options, missing report targets, wrong workspace/port/login/organization/fixture, leaked secrets, incomplete UAT coverage, and a successful preview with unchanged formal task state."
+      },
+      {
+        "id": "AC-03",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "The freeze fingerprint represents the complete deliverable",
+        "given": "Dry-run is green and the implementation is ready for final verification.",
+        "when": "OpenATDD freezes the source for finalization.",
+        "then": "The fingerprint deterministically covers relevant tracked, modified, and untracked deliverable files while excluding Git metadata, local credentials, caches, and OpenATDD runtime evidence; any included-file change during or after finalization aborts or invalidates that run before READY.",
+        "evidence": "Fingerprint tests for tracked/untracked changes, exclusions, cross-platform path order, mid-run mutation, unchanged reruns, and secret-file omission."
+      },
+      {
+        "id": "AC-04",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "One validated manifest replaces serial evidence bookkeeping",
+        "given": "The final source fingerprint is stable.",
+        "when": "OpenATDD runs `finalize` with the validated manifest.",
+        "then": "A single top-level operation executes final preflight, required focused/module/broad checks, cohesive UAT batches, acceptance mapping, evidence capture, secret scan, handoff preparation, and readiness validation; all inputs are validated before state is committed, and a failed operation cannot leave a partially passed finalization.",
+        "evidence": "End-to-end success, validation failure, command failure, atomic rollback, resumed retry, and equivalence tests against the existing individual CLI commands."
+      },
+      {
+        "id": "AC-05",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Repairs occur at the cheapest safe stage",
+        "given": "A defect is found before or after the freeze boundary.",
+        "when": "OpenATDD routes the repair.",
+        "then": "Pre-freeze failures return to focused repair without invalidating formal evidence that does not yet exist; post-freeze failures use the issue/root-cause/regression/invariant flow, advance the epoch, and require exactly one new final run of the complete journey for the changed fingerprint.",
+        "evidence": "State-machine tests for pre-freeze retries, post-freeze issue repair, epoch advancement, stale-evidence rejection, and complete final rerun."
+      },
+      {
+        "id": "AC-06",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Historical acceptance is reverified once per final fingerprint",
+        "given": "Shared impact analysis identifies affected historical criteria.",
+        "when": "Implementation and dry-run iterate before the final fingerprint stabilizes.",
+        "then": "OpenATDD reports the pending historical scope but defers formal reverification; finalization batches the affected criteria once after the final source passes, records the fingerprint used, reuses a valid result for the same fingerprint, and invalidates it if relevant source changes.",
+        "evidence": "Multi-task tests proving no early history reruns, one batched final reverification, same-fingerprint reuse, changed-fingerprint invalidation, and readiness blocking when history remains incomplete."
+      },
+      {
+        "id": "AC-07",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "The standard measures and prevents avoidable repetition",
+        "given": "Projects vary greatly in build and UAT duration.",
+        "when": "OpenATDD completes or retries a task.",
+        "then": "It reports wall time, tool/CLI invocations, browser round trips, broad-check runs, final-journey runs, history reruns, and evidence writes by phase; on the happy path each final fingerprint permits one broad suite, one complete UAT journey, and one affected-history pass, while budget excess emits actionable warnings without failing acceptance solely because time elapsed.",
+        "evidence": "Deterministic counters, budget-warning tests, unchanged-source deduplication, retry metrics, and evaluations comparing the same journey with and without bulk finalization."
+      },
+      {
+        "id": "AC-08",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "The optimized workflow remains understandable and backward compatible",
+        "given": "Existing projects and agents use the current individual OpenATDD commands.",
+        "when": "The fast finalization standard is installed or an older task is resumed.",
+        "then": "Existing commands and schema-v1/v2 tasks remain readable and usable; the Skill explains the default fast path, the manifest, dry-run diagnostics, fallback/manual commands, and final report links concisely enough to transfer to another repository without project-specific instructions.",
+        "evidence": "Migration and compatibility tests, official Skill validation, README examples, package dry-run, and representative dev/regression/holdout evaluations."
+      }
+    ]
+  },
+  "solution": {
+    "approvedAt": "2026-07-23T12:18:43.602Z",
+    "sha256": "4a26c71b80472ef2a7c0ebf70bc006963e50daaf3751fefce8708c7c64e53ed3",
+    "impactPaths": [
+      "skills/openatdd/SKILL.md",
+      "skills/openatdd/agents/openai.yaml",
+      "skills/openatdd/references/verification-routing.md",
+      "skills/openatdd/references/fast-finalization.md",
+      "skills/openatdd/scripts/lib.mjs",
+      "skills/openatdd/scripts/profiles.mjs",
+      "skills/openatdd/scripts/manifest.mjs",
+      "skills/openatdd/scripts/finalization.mjs",
+      "skills/openatdd/scripts/workflow.mjs",
+      "skills/openatdd/scripts/openatdd.mjs",
+      "tests",
+      "evals",
+      "README.md",
+      "package.json",
+      ".gitignore",
+      ".openatdd"
+    ],
+    "trace": [
+      {
+        "acceptanceId": "AC-01",
+        "implementation": "Strict reusable project manifest, resolved task snapshot, argv-only runner, and copied/npm/symlink portability",
+        "verification": "CLI/API/Web/mixed clean-project schemas and real-process installation fixtures"
+      },
+      {
+        "acceptanceId": "AC-02",
+        "implementation": "Non-persisting preflight, staged command logs, pure preview handoff/report, secret scan, and task-relative/HTTP link checks",
+        "verification": "Prior CLI-wiring and report-link regressions plus environment, secret, coverage, successful-preview, and state-diff tests"
+      },
+      {
+        "acceptanceId": "AC-03",
+        "implementation": "Git-aware deterministic file inventory, fallback walker, normalized content fingerprint, exclusions, and repeated mutation guards",
+        "verification": "Tracked/untracked/mode/path-order/exclusion/mid-run/unchanged/credential fingerprint tests"
+      },
+      {
+        "acceptanceId": "AC-04",
+        "implementation": "One finalize orchestrator, staged evidence, pure state projections, journaled multi-file commit, and current state committed last",
+        "verification": "Happy path, invalid manifest, failed command, rollback, crash recovery, retry, and granular-command equivalence tests"
+      },
+      {
+        "acceptanceId": "AC-05",
+        "implementation": "Pre-freeze preview diagnostics separated from post-freeze issue/epoch rules",
+        "verification": "Pre-freeze retries, post-freeze issue resolution, stale evidence, and one complete new final run"
+      },
+      {
+        "acceptanceId": "AC-06",
+        "implementation": "Replayable finalization snapshots, legacy overrides, fingerprint-keyed cache, and batched final history commit",
+        "verification": "No-early-rerun, one final replay, cache hit, invalidation, legacy blocking, and current-readiness dependency tests"
+      },
+      {
+        "acceptanceId": "AC-07",
+        "implementation": "Finalization counters, per-phase timing, repetition invariants, idempotent unchanged finalize, and budget warnings",
+        "verification": "Counter/deduplication/retry/budget evaluations comparing granular and bulk execution"
+      },
+      {
+        "acceptanceId": "AC-08",
+        "implementation": "Optional additive state block, wrapper-compatible granular commands, concise Skill reference, metadata/docs, and package versioning",
+        "verification": "v1/v2 migration, old command regression, official Skill validation, package dry-run, and dev/regression/holdout corpus"
+      }
+    ]
+  },
+  "verificationNotBefore": "2026-07-24T03:35:33.733Z",
+  "verification": {
+    "epoch": 5,
+    "startedAt": "2026-07-24T03:35:33.733Z",
+    "clean": true,
+    "reason": "affected by strategy-visibility"
+  },
+  "results": {
+    "AC-01": {
+      "acceptanceId": "AC-01",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    },
+    "AC-02": {
+      "acceptanceId": "AC-02",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    },
+    "AC-03": {
+      "acceptanceId": "AC-03",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    },
+    "AC-04": {
+      "acceptanceId": "AC-04",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    },
+    "AC-05": {
+      "acceptanceId": "AC-05",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    },
+    "AC-06": {
+      "acceptanceId": "AC-06",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    },
+    "AC-07": {
+      "acceptanceId": "AC-07",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    },
+    "AC-08": {
+      "acceptanceId": "AC-08",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    }
+  },
+  "checks": {
+    "focused-finalization": {
+      "id": "focused-finalization",
+      "name": "Finalization focused regression tests",
+      "command": "node --test tests/finalization.test.mjs",
+      "status": "passed",
+      "scope": "focused",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": 1284,
+      "summary": "Final focused group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-24T03:35:33.733Z",
+      "affectedBy": "strategy-visibility"
+    },
+    "module-evaluations": {
+      "id": "module-evaluations",
+      "name": "OpenATDD evaluation corpus",
+      "command": "npm run eval",
+      "status": "passed",
+      "scope": "module",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": 817,
+      "summary": "Final module group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-24T03:35:33.733Z",
+      "affectedBy": "strategy-visibility"
+    },
+    "broad-project": {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "command": "npm run check",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": 1511,
+      "summary": "Final broad group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-24T03:35:33.733Z",
+      "affectedBy": "strategy-visibility"
+    },
+    "finalize-openatdd-1-0": {
+      "id": "finalize-openatdd-1-0",
+      "name": "finalization reverification for openatdd-1-0",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-24T03:35:33.733Z",
+      "affectedBy": "strategy-visibility"
+    },
+    "finalize-strategy-visibility": {
+      "id": "finalize-strategy-visibility",
+      "name": "finalization reverification for strategy-visibility",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z",
+      "epoch": 5
+    }
+  },
+  "checkSequence": [
+    {
+      "id": "focused-finalization",
+      "scope": "focused",
+      "status": "passed",
+      "sourceFingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+      "verifiedAt": "2026-07-23T12:46:30.641Z",
+      "epoch": 3
+    },
+    {
+      "id": "module-evaluations",
+      "scope": "module",
+      "status": "passed",
+      "sourceFingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+      "verifiedAt": "2026-07-23T12:46:31.458Z",
+      "epoch": 3
+    },
+    {
+      "id": "broad-project",
+      "scope": "broad",
+      "status": "passed",
+      "sourceFingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+      "verifiedAt": "2026-07-23T12:46:32.970Z",
+      "epoch": 3
+    }
+  ],
+  "issues": [
+    {
+      "id": "ISSUE-001",
+      "acceptanceId": "AC-06",
+      "status": "resolved",
+      "symptom": "Legacy projects without .openatdd/reverification/index.json fail during deferred historical finalization instead of initializing an empty cache index.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/repair-missing-reverification-index.md",
+          "sha256": "2e07b7ecec827c7a3e4f153e4a6fc3f9ff0401c74f017258a5444077916cbfb2",
+          "size": 432,
+          "modifiedAt": "2026-07-23T12:45:50.976Z",
+          "capturedAt": "2026-07-23T12:46:00.491Z"
+        }
+      ],
+      "openedAt": "2026-07-23T12:45:14.679Z",
+      "rootCause": "The finalizer assumed the v0.3 reverification cache index had already been created, but resumed legacy repositories can predate that runtime artifact.",
+      "regression": [
+        "affected history initializes a missing reverification index and recreates it atomically"
+      ],
+      "invariant": "Historical finalization treats an absent runtime cache as an empty cache; cache presence is never a prerequisite for delivery.",
+      "paths": [
+        "skills/openatdd/scripts/finalization.mjs",
+        "tests/finalization.test.mjs"
+      ],
+      "resolvedAt": "2026-07-23T12:46:00.490Z",
+      "memoryId": "INC-2026-005"
+    }
+  ],
+  "affectedDependencies": [
+    {
+      "taskId": "detailed-uat-handoff",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/SKILL.md",
+          "skills/openatdd/SKILL.md"
+        ],
+        [
+          "skills/openatdd/references/verification-routing.md",
+          "skills/openatdd/references/verification-routing.md"
+        ],
+        [
+          "skills/openatdd/scripts/lib.mjs",
+          "skills/openatdd/scripts/lib.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/profiles.mjs",
+          "skills/openatdd/scripts/profiles.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/workflow.mjs",
+          "skills/openatdd/scripts/workflow.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "tests",
+          "tests"
+        ],
+        [
+          "evals",
+          "evals"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ],
+        [
+          ".gitignore",
+          ".gitignore"
+        ],
+        [
+          ".openatdd",
+          ".openatdd"
+        ]
+      ],
+      "notBefore": "2026-07-23T12:18:43.602Z"
+    },
+    {
+      "taskId": "openatdd-mvp",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08",
+        "AC-09"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/SKILL.md",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/agents/openai.yaml",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/references/verification-routing.md",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/references/fast-finalization.md",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/lib.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/profiles.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/manifest.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/finalization.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/workflow.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "tests",
+          "tests"
+        ],
+        [
+          "evals",
+          "evals"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ],
+        [
+          ".openatdd",
+          ".openatdd"
+        ]
+      ],
+      "notBefore": "2026-07-23T12:18:43.602Z"
+    }
+  ],
+  "preflight": {
+    "schemaVersion": 1,
+    "environment": "local",
+    "profile": ".openatdd/environments/local.yaml",
+    "status": "affected",
+    "checkedAt": "2026-07-23T12:46:29.356Z",
+    "durationMs": 0,
+    "checks": [
+      {
+        "name": "workspace",
+        "status": "passed",
+        "detail": "."
+      },
+      {
+        "name": "project",
+        "status": "passed",
+        "detail": "configured OpenATDD; expected openatdd or openatdd"
+      },
+      {
+        "name": "start_command",
+        "status": "passed",
+        "detail": "npm run check"
+      },
+      {
+        "name": "application_version",
+        "status": "passed",
+        "detail": "expected 0.3.0; observed 0.3.0"
+      },
+      {
+        "name": "services",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "entry_url",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "credential_variables",
+        "status": "passed",
+        "detail": "0 runtime value(s) loaded and redacted"
+      },
+      {
+        "name": "login",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "organization",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "integration",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "fixture",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "known_workarounds",
+        "status": "not_applicable",
+        "detail": "none"
+      }
+    ],
+    "warnings": [],
+    "credentialVariables": []
+  },
+  "uat": {
+    "planStatus": "planned",
+    "plannedAt": "2026-07-23T12:46:32.970Z",
+    "batches": {
+      "portable-contract": {
+        "id": "portable-contract",
+        "status": "affected",
+        "summary": "Portable manifest and CLI contract passed.",
+        "evidence": [],
+        "verifiedAt": null,
+        "epoch": 3,
+        "previousStatus": "passed"
+      },
+      "rehearsal-and-freeze": {
+        "id": "rehearsal-and-freeze",
+        "status": "affected",
+        "summary": "Non-mutating rehearsal and complete freeze passed.",
+        "evidence": [],
+        "verifiedAt": null,
+        "epoch": 3,
+        "previousStatus": "passed"
+      },
+      "atomic-history-metrics": {
+        "id": "atomic-history-metrics",
+        "status": "affected",
+        "summary": "Atomic finalization, history, and repetition metrics passed.",
+        "evidence": [],
+        "verifiedAt": null,
+        "epoch": 3,
+        "previousStatus": "passed"
+      }
+    },
+    "warnings": [],
+    "estimatedRoundTrips": 3
+  },
+  "handoff": {
+    "status": "not_prepared",
+    "preparedAt": null
+  },
+  "timing": {
+    "currentPhase": "PRE_UAT",
+    "phaseStartedAt": "2026-07-24T03:35:33.733Z",
+    "phases": [
+      {
+        "phase": "ACCEPTANCE_DRAFT",
+        "startedAt": "2026-07-23T10:57:03.641Z",
+        "endedAt": "2026-07-23T10:59:27.144Z",
+        "durationMs": 143503
+      },
+      {
+        "phase": "ACCEPTANCE_APPROVED",
+        "startedAt": "2026-07-23T10:59:27.144Z",
+        "endedAt": "2026-07-23T10:59:27.176Z",
+        "durationMs": 32
+      },
+      {
+        "phase": "SOLUTION_DRAFT",
+        "startedAt": "2026-07-23T10:59:27.176Z",
+        "endedAt": "2026-07-23T12:18:43.602Z",
+        "durationMs": 4756426
+      },
+      {
+        "phase": "CONTRACT_APPROVED",
+        "startedAt": "2026-07-23T12:18:43.602Z",
+        "endedAt": "2026-07-23T12:18:43.645Z",
+        "durationMs": 43
+      },
+      {
+        "phase": "IMPLEMENTING",
+        "startedAt": "2026-07-23T12:18:43.645Z",
+        "endedAt": "2026-07-23T12:45:14.679Z",
+        "durationMs": 1591034
+      },
+      {
+        "phase": "REPAIRING",
+        "startedAt": "2026-07-23T12:45:14.679Z",
+        "endedAt": "2026-07-23T12:46:00.490Z",
+        "durationMs": 45811
+      },
+      {
+        "phase": "PRE_UAT",
+        "startedAt": "2026-07-23T12:46:00.490Z",
+        "endedAt": "2026-07-23T12:46:34.922Z",
+        "durationMs": 34432
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-23T12:46:34.922Z",
+        "endedAt": "2026-07-24T00:01:57.245Z",
+        "durationMs": 40522323
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-24T00:01:57.245Z",
+        "endedAt": "2026-07-24T03:35:33.733Z",
+        "durationMs": 12816488
+      }
+    ]
+  },
+  "readyAt": "2026-07-24T03:56:39.977Z",
+  "history": [
+    {
+      "event": "TASK_CREATED",
+      "at": "2026-07-23T10:57:03.641Z",
+      "details": {
+        "requirement": "Standardize a portable fast OpenATDD execution path that completes pre-freeze validation, batch finalization, and one-time historical reverification without weakening evidence."
+      }
+    },
+    {
+      "event": "ACCEPTANCE_APPROVED",
+      "at": "2026-07-23T10:59:27.144Z",
+      "details": {
+        "sha256": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7"
+      }
+    },
+    {
+      "event": "SOLUTION_DRAFTED",
+      "at": "2026-07-23T10:59:27.176Z"
+    },
+    {
+      "event": "SOLUTION_APPROVED",
+      "at": "2026-07-23T12:18:43.602Z",
+      "details": {
+        "sha256": "4a26c71b80472ef2a7c0ebf70bc006963e50daaf3751fefce8708c7c64e53ed3"
+      }
+    },
+    {
+      "event": "IMPLEMENTATION_STARTED",
+      "at": "2026-07-23T12:18:43.645Z"
+    },
+    {
+      "event": "ISSUE_OPENED",
+      "at": "2026-07-23T12:45:14.679Z",
+      "details": {
+        "issueId": "ISSUE-001",
+        "acceptanceId": "AC-06"
+      }
+    },
+    {
+      "event": "ISSUE_RESOLVED",
+      "at": "2026-07-23T12:46:00.490Z",
+      "details": {
+        "issueId": "ISSUE-001",
+        "memoryId": "INC-2026-005"
+      }
+    },
+    {
+      "event": "FINALIZATION_COMPLETED",
+      "at": "2026-07-23T12:46:34.922Z",
+      "details": {
+        "sourceFingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+        "manifestDigest": "c7ba7a3d607305761aab91cce07a58b65333165001d7375d07b6efa4366054cc"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-24T00:01:57.245Z",
+      "details": {
+        "byTask": "openatdd-1-0",
+        "overlaps": [
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ],
+          [
+            "skills/openatdd/agents/openai.yaml",
+            "skills/openatdd/agents/openai.yaml"
+          ],
+          [
+            "skills/openatdd/references",
+            "skills/openatdd/references/verification-routing.md"
+          ],
+          [
+            "skills/openatdd/references",
+            "skills/openatdd/references/fast-finalization.md"
+          ],
+          [
+            "skills/openatdd/scripts/workflow.mjs",
+            "skills/openatdd/scripts/workflow.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/finalization.mjs",
+            "skills/openatdd/scripts/finalization.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/manifest.mjs",
+            "skills/openatdd/scripts/manifest.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/lib.mjs",
+            "skills/openatdd/scripts/lib.mjs"
+          ],
+          [
+            "tests",
+            "tests"
+          ],
+          [
+            "evals",
+            "evals"
+          ],
+          [
+            ".openatdd/finalization.json",
+            ".openatdd"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ],
+          [
+            "package.json",
+            "package.json"
+          ]
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-24T03:35:33.733Z",
+      "details": {
+        "byTask": "strategy-visibility",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/workflow.mjs",
+            "skills/openatdd/scripts/workflow.mjs"
+          ],
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ],
+          [
+            "tests",
+            "tests"
+          ],
+          [
+            "evals/agent",
+            "evals"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:evals/agent:evals",
+          "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd/scripts/workflow.mjs",
+          "path-overlap:tests:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ]
+      }
+    }
+  ],
+  "finalization": {
+    "status": "complete",
+    "version": 1,
+    "completedAt": "2026-07-23T12:46:34.922Z",
+    "sourceFingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+    "manifestDigest": "c7ba7a3d607305761aab91cce07a58b65333165001d7375d07b6efa4366054cc",
+    "metrics": {
+      "mode": "final",
+      "startedAt": "2026-07-23T12:46:29.355Z",
+      "wallTimeMs": 5580,
+      "dryRunRuns": 1,
+      "finalRuns": 1,
+      "commandInvocations": 8,
+      "cliInvocations": 8,
+      "commandDurationMs": 5530,
+      "checkGroupRuns": {
+        "focused": 1,
+        "module": 1,
+        "broad": 1
+      },
+      "uatJourneyRuns": 1,
+      "uatBatchRuns": 3,
+      "browserRoundTrips": 3,
+      "affectedHistoryPasses": 1,
+      "historyRuns": 2,
+      "historyCacheHits": 0,
+      "evidenceWrites": 8,
+      "evidenceWritesByPhase": {
+        "checks": 3,
+        "uat": 5
+      },
+      "phaseDurationsMs": {
+        "preflight": 0,
+        "checks": 3614,
+        "uat": 1920,
+        "acceptance-mapping": 0,
+        "history": 1,
+        "handoff-readiness": 31
+      },
+      "linkChecks": 0,
+      "warnings": []
+    }
+  },
+  "sourceFingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+  "routing": {
+    "status": "not_assessed",
+    "lane": null,
+    "reasons": [],
+    "investigation": {
+      "externalResearch": false
+    },
+    "agents": {
+      "roles": []
+    }
+  },
+  "decisions": [],
+  "reviews": {
+    "solution": null
+  },
+  "agents": {
+    "dispatches": []
+  },
+  "context": {
+    "status": "not_prepared",
+    "path": null,
+    "digest": null,
+    "sourceDigests": {}
+  },
+  "repair": {
+    "attempts": [],
+    "lastProgressFingerprint": null,
+    "lastHypothesis": null,
+    "consecutiveNoProgress": 0
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "name": "OpenATDD 1.0 agent behavior rubric",
+  "passScore": 80,
+  "penalties": {
+    "excessHumanTurns": 5,
+    "unnecessaryQuestions": 10,
+    "researchMisroutes": 15,
+    "missedDecisions": 20,
+    "overEngineeringMarkers": 10,
+    "contractViolations": 25,
+    "hiddenCheckFailures": 30
+  },
+  "gates": {
+    "requireHiddenChecks": true,
+    "requireNoContractViolations": true,
+    "requireNoMissedDecisions": true,
+    "requireNoResearchMisroutes": true
+  }
+}

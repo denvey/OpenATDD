@@ -1,0 +1,268 @@
+{
+  "schemaVersion": 1,
+  "surface": "cli",
+  "environment": "local",
+  "source": {
+    "include": [
+      "**/*"
+    ],
+    "exclude": [
+      "evals/reports/**"
+    ]
+  },
+  "dryRun": {
+    "commands": [
+      {
+        "id": "cli-help-smoke",
+        "argv": [
+          "node",
+          "skills/openatdd/scripts/openatdd.mjs",
+          "help"
+        ],
+        "timeoutMs": 30000
+      },
+      {
+        "id": "cli-status-smoke",
+        "argv": [
+          "node",
+          "skills/openatdd/scripts/openatdd.mjs",
+          "status",
+          "fast-portable-finalization",
+          "--json"
+        ],
+        "timeoutMs": 30000
+      }
+    ],
+    "checkHttpLinks": false,
+    "linkTimeoutMs": 3000
+  },
+  "checks": [
+    {
+      "id": "focused-finalization",
+      "name": "Finalization focused regression tests",
+      "scope": "focused",
+      "commands": [
+        {
+          "id": "focused-finalization-tests",
+          "argv": [
+            "node",
+            "--test",
+            "tests/finalization.test.mjs"
+          ],
+          "timeoutMs": 120000
+        }
+      ]
+    },
+    {
+      "id": "module-evaluations",
+      "name": "OpenATDD evaluation corpus",
+      "scope": "module",
+      "commands": [
+        {
+          "id": "module-eval-suite",
+          "argv": [
+            "npm",
+            "run",
+            "eval"
+          ],
+          "timeoutMs": 120000
+        }
+      ]
+    },
+    {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "scope": "broad",
+      "commands": [
+        {
+          "id": "broad-project-check",
+          "argv": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "timeoutMs": 180000
+        }
+      ]
+    }
+  ],
+  "uat": {
+    "estimatedRoundTrips": 3,
+    "batches": [
+      {
+        "id": "portable-contract",
+        "name": "Portable manifest and CLI contract",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-08"
+        ],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-portable-contract",
+            "argv": [
+              "node",
+              "--test",
+              "--test-name-pattern",
+              "strict manifests|CLI exposes",
+              "tests/finalization.test.mjs"
+            ],
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-package-dry-run",
+            "argv": [
+              "npm",
+              "pack",
+              "--dry-run",
+              "--json"
+            ],
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-official-skill-validation",
+            "argv": [
+              "node",
+              "-e",
+              "const {spawnSync}=require('node:child_process');const path=require('node:path');const os=require('node:os');const script=path.join(os.homedir(),'.codex','skills','.system','skill-creator','scripts','quick_validate.py');const result=spawnSync('uv',['run','--with','pyyaml','python',script,'skills/openatdd'],{stdio:'inherit'});process.exit(result.status??1)"
+            ],
+            "timeoutMs": 120000
+          }
+        ]
+      },
+      {
+        "id": "rehearsal-and-freeze",
+        "name": "Non-mutating rehearsal and complete freeze",
+        "acceptanceIds": [
+          "AC-02",
+          "AC-03"
+        ],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-rehearsal-freeze",
+            "argv": [
+              "node",
+              "--test",
+              "--test-name-pattern",
+              "dry-run|fingerprints",
+              "tests/finalization.test.mjs"
+            ],
+            "timeoutMs": 120000
+          }
+        ]
+      },
+      {
+        "id": "atomic-history-metrics",
+        "name": "Atomic finalization, history, and repetition metrics",
+        "acceptanceIds": [
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-atomic-history-metrics",
+            "argv": [
+              "node",
+              "--test",
+              "--test-name-pattern",
+              "formal finalization|failed formal|multi-file|affected history|credentials",
+              "tests/finalization.test.mjs"
+            ],
+            "timeoutMs": 120000
+          }
+        ]
+      }
+    ]
+  },
+  "acceptance": {
+    "AC-01": [
+      "check:broad-project",
+      "batch:portable-contract"
+    ],
+    "AC-02": [
+      "check:broad-project",
+      "batch:rehearsal-and-freeze"
+    ],
+    "AC-03": [
+      "check:broad-project",
+      "batch:rehearsal-and-freeze"
+    ],
+    "AC-04": [
+      "check:broad-project",
+      "batch:atomic-history-metrics"
+    ],
+    "AC-05": [
+      "check:broad-project",
+      "batch:atomic-history-metrics"
+    ],
+    "AC-06": [
+      "check:broad-project",
+      "batch:atomic-history-metrics"
+    ],
+    "AC-07": [
+      "check:broad-project",
+      "batch:atomic-history-metrics"
+    ],
+    "AC-08": [
+      "check:module-evaluations",
+      "check:broad-project",
+      "batch:portable-contract"
+    ]
+  },
+  "history": {
+    "mode": "deferred",
+    "overrides": [
+      {
+        "taskId": "detailed-uat-handoff",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:portable-contract",
+          "batch:rehearsal-and-freeze",
+          "batch:atomic-history-metrics"
+        ]
+      },
+      {
+        "taskId": "openatdd-mvp",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08",
+          "AC-09"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:portable-contract",
+          "batch:rehearsal-and-freeze",
+          "batch:atomic-history-metrics"
+        ]
+      }
+    ]
+  },
+  "handoff": {
+    "estimatedMinutes": 12
+  },
+  "budgets": {
+    "wallTimeMs": 300000,
+    "commandInvocations": 8,
+    "browserRoundTrips": 3,
+    "evidenceWrites": 24
+  }
+}

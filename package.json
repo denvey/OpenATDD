@@ -1,7 +1,7 @@
 {
   "name": "openatdd",
-  "version": "0.1.0",
-  "description": "An open-source, AI-native ATDD workflow for verified software delivery.",
+  "version": "1.0.0",
+  "description": "A simple acceptance-first AI delivery framework from natural-language requirement to verified UAT handoff.",
   "type": "module",
   "bin": {
     "openatdd": "./bin/openatdd.mjs"
@@ -9,13 +9,18 @@
   "files": [
     "bin",
     "skills/openatdd",
+    "evals/agent/rubrics",
+    "evals/agent/scenarios",
     "LICENSE",
     "README.md"
   ],
   "scripts": {
     "test": "node --test",
-    "eval": "node --test tests/evals.test.mjs",
-    "check": "node --check bin/openatdd.mjs && node --check skills/openatdd/scripts/openatdd.mjs && node --test"
+    "eval": "node --test tests/evals.test.mjs tests/agent-eval.test.mjs tests/strategy.test.mjs",
+    "eval:agent": "node skills/openatdd/scripts/agent-eval.mjs --scenario evals/agent/scenarios/simplicity.v1.json --bare-agent",
+    "eval:agent:real": "node skills/openatdd/scripts/agent-eval.mjs --scenario evals/agent/scenarios/simplicity.v1.json --adapter codex --bare-agent --runs 2 --report evals/reports/openatdd-1.0-real.json",
+    "eval:agent:verify": "node skills/openatdd/scripts/agent-eval.mjs --verify-report evals/reports/openatdd-1.0-real.json --min-runs 2 --require-baseline",
+    "check": "node --check bin/openatdd.mjs && node --check skills/openatdd/scripts/openatdd.mjs && node --check skills/openatdd/scripts/workflow.mjs && node --check skills/openatdd/scripts/graph.mjs && node --check skills/openatdd/scripts/context.mjs && node --check skills/openatdd/scripts/strategy.mjs && node --check skills/openatdd/scripts/agent-eval.mjs && node --check skills/openatdd/scripts/codex-agent-adapter.mjs && node --test"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "taskId": "openatdd-1-0",
+  "createdAt": "2026-07-24T02:51:30.265Z",
+  "acceptanceSha256": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+  "solutionSha256": "d78dd292c2869d30e77fcb420e5c454921275a38de503918ca51eb1c5857002a",
+  "manifestDigest": "b2e5a76c207591dbd69217bed4efbf9cc34a29b3cdcd62c1dd3ca606f93766cd",
+  "sourceFingerprint": "b256b0074dbf19a0ec1336d88851286bd43a436def54b351c7addf8831c73ba8",
+  "replay": {
+    "commands": [
+      {
+        "id": "broad-project-check",
+        "argv": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "timeoutMs": 180000
+      }
+    ],
+    "acceptanceIds": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06",
+      "AC-07",
+      "AC-08"
+    ]
+  }
+}

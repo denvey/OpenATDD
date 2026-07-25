@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "taskId": "fast-portable-finalization",
+  "preparedAt": "2026-07-23T12:46:34.892Z",
+  "context": {
+    "version": "0.3.0",
+    "environment": "local",
+    "role": "n/a",
+    "prerequisites": [
+      "Start or verify with: npm run check"
+    ],
+    "accountReference": "n/a (no login required)",
+    "entryPoint": "Open report.md.",
+    "estimatedMinutes": 12
+  },
+  "steps": [
+    {
+      "number": 1,
+      "acceptanceId": "AC-01",
+      "title": "Every project receives the same portable execution contract",
+      "precondition": "A CLI, API, Web, file, or mixed-surface repository has initialized OpenATDD.",
+      "action": "A task enters implementation after the two existing approvals.",
+      "expected": "OpenATDD resolves a versioned project-local finalization manifest with applicable commands, surfaces, paths, evidence routes, budgets, and explicit not-applicable reasons; the contract works from a copied or symlinked Skill with Node.js 20+ and no new runtime dependency.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-portable-contract-uat-portable-contract.md",
+        "evidence/finalize/epoch-3/batch-portable-contract-uat-package-dry-run.md",
+        "evidence/finalize/epoch-3/batch-portable-contract-uat-official-skill-validation.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    },
+    {
+      "number": 2,
+      "acceptanceId": "AC-02",
+      "title": "Dry-run catches delivery defects before formal evidence",
+      "precondition": "Implementation appears complete but the source has not been formally frozen.",
+      "action": "OpenATDD runs `finalize --dry-run`.",
+      "expected": "It invokes the real configured entry points in a disposable or non-mutating context, validates CLI option wiring, environment and credential references, UAT coverage, report rendering, secret scanning, and every applicable local/URL link; it writes actionable preview diagnostics but creates no formal passes, clean epoch, READY state, notification, or affected-history reverification.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-rehearsal-and-freeze-uat-rehearsal-freeze.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    },
+    {
+      "number": 3,
+      "acceptanceId": "AC-03",
+      "title": "The freeze fingerprint represents the complete deliverable",
+      "precondition": "Dry-run is green and the implementation is ready for final verification.",
+      "action": "OpenATDD freezes the source for finalization.",
+      "expected": "The fingerprint deterministically covers relevant tracked, modified, and untracked deliverable files while excluding Git metadata, local credentials, caches, and OpenATDD runtime evidence; any included-file change during or after finalization aborts or invalidates that run before READY.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-rehearsal-and-freeze-uat-rehearsal-freeze.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    },
+    {
+      "number": 4,
+      "acceptanceId": "AC-04",
+      "title": "One validated manifest replaces serial evidence bookkeeping",
+      "precondition": "The final source fingerprint is stable.",
+      "action": "OpenATDD runs `finalize` with the validated manifest.",
+      "expected": "A single top-level operation executes final preflight, required focused/module/broad checks, cohesive UAT batches, acceptance mapping, evidence capture, secret scan, handoff preparation, and readiness validation; all inputs are validated before state is committed, and a failed operation cannot leave a partially passed finalization.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    },
+    {
+      "number": 5,
+      "acceptanceId": "AC-05",
+      "title": "Repairs occur at the cheapest safe stage",
+      "precondition": "A defect is found before or after the freeze boundary.",
+      "action": "OpenATDD routes the repair.",
+      "expected": "Pre-freeze failures return to focused repair without invalidating formal evidence that does not yet exist; post-freeze failures use the issue/root-cause/regression/invariant flow, advance the epoch, and require exactly one new final run of the complete journey for the changed fingerprint.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    },
+    {
+      "number": 6,
+      "acceptanceId": "AC-06",
+      "title": "Historical acceptance is reverified once per final fingerprint",
+      "precondition": "Shared impact analysis identifies affected historical criteria.",
+      "action": "Implementation and dry-run iterate before the final fingerprint stabilizes.",
+      "expected": "OpenATDD reports the pending historical scope but defers formal reverification; finalization batches the affected criteria once after the final source passes, records the fingerprint used, reuses a valid result for the same fingerprint, and invalidates it if relevant source changes.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    },
+    {
+      "number": 7,
+      "acceptanceId": "AC-07",
+      "title": "The standard measures and prevents avoidable repetition",
+      "precondition": "Projects vary greatly in build and UAT duration.",
+      "action": "OpenATDD completes or retries a task.",
+      "expected": "It reports wall time, tool/CLI invocations, browser round trips, broad-check runs, final-journey runs, history reruns, and evidence writes by phase; on the happy path each final fingerprint permits one broad suite, one complete UAT journey, and one affected-history pass, while budget excess emits actionable warnings without failing acceptance solely because time elapsed.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    },
+    {
+      "number": 8,
+      "acceptanceId": "AC-08",
+      "title": "The optimized workflow remains understandable and backward compatible",
+      "precondition": "Existing projects and agents use the current individual OpenATDD commands.",
+      "action": "The fast finalization standard is installed or an older task is resumed.",
+      "expected": "Existing commands and schema-v1/v2 tasks remain readable and usable; the Skill explains the default fast path, the manifest, dry-run diagnostics, fallback/manual commands, and final report links concisely enough to transfer to another repository without project-specific instructions.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-module-evaluations-module-eval-suite.md",
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-portable-contract-uat-portable-contract.md",
+        "evidence/finalize/epoch-3/batch-portable-contract-uat-package-dry-run.md",
+        "evidence/finalize/epoch-3/batch-portable-contract-uat-official-skill-validation.md"
+      ],
+      "judgment": "Confirm prepared evidence and observable result."
+    }
+  ],
+  "links": [
+    {
+      "label": "Detailed UAT report",
+      "target": "report.md",
+      "applicable": true
+    },
+    {
+      "label": "Approved acceptance card",
+      "target": "acceptance.md",
+      "applicable": true
+    },
+    {
+      "label": "Approved solution card",
+      "target": "solution.md",
+      "applicable": true
+    },
+    {
+      "label": "Issue and repair log",
+      "target": "issues.md",
+      "applicable": true
+    },
+    {
+      "label": "local environment profile",
+      "target": "../../environments/local.yaml",
+      "applicable": true
+    },
+    {
+      "label": "Finalization manifest",
+      "target": "../../finalization.json",
+      "applicable": true
+    },
+    {
+      "label": "Project documentation",
+      "target": "../../../README.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 evidence: batch-portable-contract-uat-portable-contract.md",
+      "target": "evidence/finalize/epoch-3/batch-portable-contract-uat-portable-contract.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 evidence: batch-portable-contract-uat-package-dry-run.md",
+      "target": "evidence/finalize/epoch-3/batch-portable-contract-uat-package-dry-run.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 evidence: batch-portable-contract-uat-official-skill-validation.md",
+      "target": "evidence/finalize/epoch-3/batch-portable-contract-uat-official-skill-validation.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 evidence: batch-rehearsal-and-freeze-uat-rehearsal-freeze.md",
+      "target": "evidence/finalize/epoch-3/batch-rehearsal-and-freeze-uat-rehearsal-freeze.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 evidence: batch-rehearsal-and-freeze-uat-rehearsal-freeze.md",
+      "target": "evidence/finalize/epoch-3/batch-rehearsal-and-freeze-uat-rehearsal-freeze.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 evidence: batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "target": "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 evidence: batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "target": "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-06 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-06 evidence: batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "target": "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 evidence: batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "target": "evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 evidence: check-module-evaluations-module-eval-suite.md",
+      "target": "evidence/finalize/epoch-3/check-module-evaluations-module-eval-suite.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 evidence: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 evidence: batch-portable-contract-uat-portable-contract.md",
+      "target": "evidence/finalize/epoch-3/batch-portable-contract-uat-portable-contract.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 evidence: batch-portable-contract-uat-package-dry-run.md",
+      "target": "evidence/finalize/epoch-3/batch-portable-contract-uat-package-dry-run.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 evidence: batch-portable-contract-uat-official-skill-validation.md",
+      "target": "evidence/finalize/epoch-3/batch-portable-contract-uat-official-skill-validation.md",
+      "applicable": true
+    }
+  ]
+}

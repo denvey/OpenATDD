@@ -6,6 +6,11 @@ coverage/
 # Consumer-project runtime evidence can contain screenshots, logs, and exports.
 .openatdd/tasks/*/evidence/*
 !.openatdd/tasks/*/evidence/.gitkeep
+.openatdd/tasks/*/preview/
+.openatdd/transactions/
 
 # Evaluation reports are reproducible outputs.
 evals/reports/
+
+# OpenATDD local-only test credentials
+.env.openatdd.local

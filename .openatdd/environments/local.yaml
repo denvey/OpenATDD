@@ -1,0 +1,19 @@
+schema_version: 1
+environment: local
+project_id: OpenATDD
+workspace: .
+surface: cli
+application_version: 1.0.0
+start_command: npm run check
+service_urls: n/a
+entry_url: n/a
+role: n/a
+organization: n/a
+fixture: n/a
+integration: n/a
+known_workarounds: none
+credential_variables: ""
+source: package.json and successful npm pack dry-run
+last_verified_at: "2026-07-24T00:34:43.872Z"
+discovery_budget_seconds: 300
+browser_round_trip_budget: 12

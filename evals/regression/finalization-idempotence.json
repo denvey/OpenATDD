@@ -1,0 +1,14 @@
+{
+  "id": "regression-finalization-idempotence-001",
+  "set": "regression",
+  "scenario": "fast-finalization",
+  "input": "Retry finalization for an already completed unchanged source fingerprint",
+  "expected": {
+    "preview_non_mutating": true,
+    "same_fingerprint_idempotent": true
+  },
+  "forbidden": [
+    "Repeat the broad suite for an unchanged completed fingerprint",
+    "Advance the verification epoch during dry-run"
+  ]
+}

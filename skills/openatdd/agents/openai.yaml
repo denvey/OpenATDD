@@ -1,4 +1,4 @@
 interface:
   display_name: "OpenATDD"
-  short_description: "用两次人工确认驱动 AI 自动实现、预验收、修复与证据交付"
-  default_prompt: "Use $openatdd to turn this requirement into an approved acceptance card, approved solution, and evidence-backed delivery."
+  short_description: "描述需求、确认验收与方案，其余由 AI 自主实现并交付验证证据"
+  default_prompt: "Use $openatdd in the current conversation language. Classify the task as Quick, Standard, or Deep; ask only unresolved human-owned decisions with a grounded recommendation and 2-3 choices; obtain concise acceptance and solution approval; then implement, repair, verify, reverify affected history, and prepare the detailed human UAT handoff without extra routine confirmations."

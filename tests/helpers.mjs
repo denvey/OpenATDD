@@ -2,10 +2,12 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
+  assessTask,
   approveAcceptance,
   approveSolution,
   createTask,
   draftSolution,
+  recordSolutionReview,
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
 
@@ -65,6 +67,36 @@ export function solutionMarkdown(taskId, criteria = [criterion("AC-01")], impact
   const rows = criteria.map((item) => `| ${item.id} | Implement ${item.title.toLowerCase()} | Execute deterministic verification |`).join("\n");
   return `# Solution card: ${taskId}
 
+<!-- openatdd:recommendation -->
+## Recommendation
+
+Reuse the current architecture and add the smallest complete behavior.
+<!-- /openatdd:recommendation -->
+
+<!-- openatdd:rationale -->
+## Why this fits
+
+- It preserves existing boundaries and avoids unrelated infrastructure.
+<!-- /openatdd:rationale -->
+
+<!-- openatdd:changes -->
+## Main changes
+
+- Add the approved behavior and its deterministic verification.
+<!-- /openatdd:changes -->
+
+<!-- openatdd:risks -->
+## Risks
+
+- Guard contract order and retain fresh evidence.
+<!-- /openatdd:risks -->
+
+<!-- openatdd:exclusions -->
+## Deliberate exclusions
+
+- Do not deploy or notify external systems.
+<!-- /openatdd:exclusions -->
+
 ## Implementation
 
 - Reuse the project architecture and add the smallest complete behavior.
@@ -78,14 +110,6 @@ ${impactPaths.map((item) => `- \`${item}\``).join("\n")}
 | Acceptance | Implementation | Verification |
 |---|---|---|
 ${rows}
-
-## Risks
-
-- Guard contract order and retain fresh evidence.
-
-## Deliberate exclusions
-
-- Do not deploy or notify external systems.
 `;
 }
 
@@ -107,10 +131,22 @@ export async function prepareApprovedTask(root, taskId, options = {}) {
   const acceptanceAt = options.acceptanceAt ?? "2020-01-01T00:01:00.000Z";
   const solutionAt = options.solutionAt ?? "2020-01-01T00:02:00.000Z";
   await createTask(root, taskId, options.requirement ?? `Deliver ${taskId}`, clock(createdAt));
+  await assessTask(root, taskId, options.assessment ?? {
+    scope: "local",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "low",
+  }, clock(createdAt));
   await writeAcceptance(root, taskId, criteria);
   await approveAcceptance(root, taskId, clock(acceptanceAt));
   await draftSolution(root, taskId, clock(acceptanceAt));
   await writeSolution(root, taskId, criteria, options.impactPaths ?? ["src/feature"]);
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The solution is the smallest project-fitting implementation for the approved acceptance.",
+    checks: "all",
+  }, clock(solutionAt));
   const approved = await approveSolution(root, taskId, clock(solutionAt));
   return { ...approved, criteria };
 }

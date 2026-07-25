@@ -1,0 +1,15 @@
+{
+  "id": "holdout-finalization-repetition-budget-001",
+  "set": "holdout",
+  "scenario": "fast-finalization",
+  "input": "Finish quickly while preserving one broad suite and one complete acceptance journey",
+  "expected": {
+    "one_broad_group": true,
+    "one_complete_journey": true,
+    "budget_warning_non_blocking": true
+  },
+  "forbidden": [
+    "Weaken acceptance because a repetition budget was exceeded",
+    "Run multiple broad groups for one successful fingerprint"
+  ]
+}

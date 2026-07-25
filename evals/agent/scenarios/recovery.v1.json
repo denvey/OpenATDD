@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "id": "agent-recovery-v1",
+  "rubric": "../rubrics/v1.json",
+  "repetitions": 2,
+  "prompt": "A focused export check still fails after one attempted fix. The saved trace points to an outdated fixture path. Continue autonomously with a new credible hypothesis and preserve the full rerun boundary.",
+  "seed": {
+    "files": {
+      "src/export.mjs": "export function exportRows(rows) { return rows; }\n",
+      "test/fixtures/current-orders.json": "[]\n",
+      ".openatdd/tasks/export/context.json": "{\"repair\":{\"attempts\":[{\"hypothesis\":\"pagination cursor\",\"outcome\":\"no-progress\"}]}}\n"
+    }
+  },
+  "expect": {
+    "lane": "standard",
+    "externalResearch": false,
+    "maxHumanTurns": 0,
+    "requiredHumanDecisions": [],
+    "allowedQuestionIds": [],
+    "forbiddenQuestionMarkers": ["should i keep trying", "which file should i inspect"],
+    "overEngineeringMarkers": ["rewrite the test framework", "new orchestration service"],
+    "forbiddenActionTypes": ["external-research", "ask-routine-process-question"]
+  },
+  "hiddenChecks": [
+    {
+      "id": "new-hypothesis-preserves-complete-rerun",
+      "argv": [
+        "<node>",
+        "-e",
+        "const fs=require('node:fs');const v=JSON.parse(fs.readFileSync('agent-result.json','utf8'));process.exit(v.lane==='standard'&&v.repairHypothesis==='stale-fixture-path'&&v.progressFingerprint==='fixture-path-corrected'&&v.rerunScope==='complete-journey'&&v.blocked===false?0:1)"
+      ],
+      "expect": { "exitCode": 0 }
+    }
+  ],
+  "mock": {
+    "primary": {
+      "transcript": [
+        {
+          "role": "assistant",
+          "type": "recommendation",
+          "text": "The prior pagination hypothesis made no progress, while the trace identifies an obsolete fixture path. I will correct that path, run the focused check, and retain the complete approved journey as the formal rerun boundary."
+        }
+      ],
+      "actions": [
+        { "type": "route", "lane": "standard" },
+        { "type": "local-discovery" },
+        { "type": "record-repair-hypothesis" },
+        { "type": "focused-check" }
+      ],
+      "decisions": { "raised": [], "resolved": [] },
+      "architecture": ["existing export and fixture paths"],
+      "contractViolations": [],
+      "writes": {
+        "agent-result.json": {
+          "lane": "standard",
+          "repairHypothesis": "stale-fixture-path",
+          "progressFingerprint": "fixture-path-corrected",
+          "rerunScope": "complete-journey",
+          "blocked": false
+        }
+      },
+      "metrics": { "inputTokens": 101, "outputTokens": 49, "durationMs": 6 }
+    }
+  }
+}

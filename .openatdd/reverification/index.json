@@ -1,0 +1,897 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "key": "b3282107a77a77dd3d40b6a399b0b2216053846200f3fa074ea799b80b27550f",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "7d1035bde36b175554bba40f96d6ed3efc8ef4a31828a322c9204228ffac6461",
+      "fingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "77b99f27890212ecf59bc77af11da701c52adc33d2132305b8a0369b27406506",
+          "size": 3832,
+          "modifiedAt": "2026-07-23T12:46:32.969Z",
+          "capturedAt": "2026-07-23T12:46:32.969Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-portable-contract-uat-portable-contract.md",
+          "sha256": "54f4d7ec2c89d61d8c34cce42baab43bd1c40b521ac4595fe00828d9f9f78547",
+          "size": 633,
+          "modifiedAt": "2026-07-23T12:46:33.289Z",
+          "capturedAt": "2026-07-23T12:46:33.659Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-portable-contract-uat-package-dry-run.md",
+          "sha256": "34ec9c974660dca445725bdb6c053430023fe29828b0c5a61af789b10b85ff7b",
+          "size": 2928,
+          "modifiedAt": "2026-07-23T12:46:33.547Z",
+          "capturedAt": "2026-07-23T12:46:33.659Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-portable-contract-uat-official-skill-validation.md",
+          "sha256": "81235b70db8642e89ee43e91ac9ad258a0cbf9842bb12d85da0b5ccc27bc5834",
+          "size": 633,
+          "modifiedAt": "2026-07-23T12:46:33.658Z",
+          "capturedAt": "2026-07-23T12:46:33.659Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-rehearsal-and-freeze-uat-rehearsal-freeze.md",
+          "sha256": "70c10fc83035e683e3d23bde4e1a3787d82ea5bf8af4d08988b3579662172035",
+          "size": 817,
+          "modifiedAt": "2026-07-23T12:46:33.922Z",
+          "capturedAt": "2026-07-23T12:46:33.922Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+          "sha256": "7186bfcd24282d3e01ab913e9f47efdfce4e32847a054eea3fb27c8294d52b3b",
+          "size": 1094,
+          "modifiedAt": "2026-07-23T12:46:34.889Z",
+          "capturedAt": "2026-07-23T12:46:34.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T12:46:34.891Z"
+    },
+    {
+      "key": "8ea67eb6c574d3b44183ec745e531bacdc53856546601d258fae59315bc702e2",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "2fb530899ce6261d9bf1c43418888fdcfc1fd3f293dfa039c0de3aefefb4c948",
+      "fingerprint": "5c4737ea77505f3ed654dbb56c34b0bf76ead9369f8598b53af99c7a74650295",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "77b99f27890212ecf59bc77af11da701c52adc33d2132305b8a0369b27406506",
+          "size": 3832,
+          "modifiedAt": "2026-07-23T12:46:32.969Z",
+          "capturedAt": "2026-07-23T12:46:32.969Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-portable-contract-uat-portable-contract.md",
+          "sha256": "54f4d7ec2c89d61d8c34cce42baab43bd1c40b521ac4595fe00828d9f9f78547",
+          "size": 633,
+          "modifiedAt": "2026-07-23T12:46:33.289Z",
+          "capturedAt": "2026-07-23T12:46:33.659Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-portable-contract-uat-package-dry-run.md",
+          "sha256": "34ec9c974660dca445725bdb6c053430023fe29828b0c5a61af789b10b85ff7b",
+          "size": 2928,
+          "modifiedAt": "2026-07-23T12:46:33.547Z",
+          "capturedAt": "2026-07-23T12:46:33.659Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-portable-contract-uat-official-skill-validation.md",
+          "sha256": "81235b70db8642e89ee43e91ac9ad258a0cbf9842bb12d85da0b5ccc27bc5834",
+          "size": 633,
+          "modifiedAt": "2026-07-23T12:46:33.658Z",
+          "capturedAt": "2026-07-23T12:46:33.659Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-rehearsal-and-freeze-uat-rehearsal-freeze.md",
+          "sha256": "70c10fc83035e683e3d23bde4e1a3787d82ea5bf8af4d08988b3579662172035",
+          "size": 817,
+          "modifiedAt": "2026-07-23T12:46:33.922Z",
+          "capturedAt": "2026-07-23T12:46:33.922Z"
+        },
+        {
+          "path": ".openatdd/tasks/fast-portable-finalization/evidence/finalize/epoch-3/batch-atomic-history-metrics-uat-atomic-history-metrics.md",
+          "sha256": "7186bfcd24282d3e01ab913e9f47efdfce4e32847a054eea3fb27c8294d52b3b",
+          "size": 1094,
+          "modifiedAt": "2026-07-23T12:46:34.889Z",
+          "capturedAt": "2026-07-23T12:46:34.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-23T12:46:34.891Z"
+    },
+    {
+      "key": "a9b78479b61765f9eed90bb5dbbf38745c2a4312c0937d4897752ca9ff17ad04",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "0593aafc9feafc77fff1bd8529268858945cc172ab7ae94c7ab259de51bf9344",
+      "fingerprint": "de65fae1e1fa6904e6dcf299413ba197f112ebd8e7d516f53ed6d708a2738d57",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "d6b2177b978ca55133a6f5f3a667cff009e33e217eb77894d73fa5f17ca7fe4c",
+          "size": 6714,
+          "modifiedAt": "2026-07-24T00:36:58.297Z",
+          "capturedAt": "2026-07-24T00:36:58.297Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "a20e3aa0e863a291f45bb892385ba9b3e510774b59714e94a5d0307cab2139ec",
+          "size": 1907,
+          "modifiedAt": "2026-07-24T00:37:01.706Z",
+          "capturedAt": "2026-07-24T00:37:01.709Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "65fba5d4a7cc83f1b4d6ad5d51cd3b36ed51ed5ff2ce1f50e4aeb20ad818ed74",
+          "size": 849,
+          "modifiedAt": "2026-07-24T00:37:01.860Z",
+          "capturedAt": "2026-07-24T00:37:04.038Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "b474c3a88586d20e4632c213b51583d66edb8e0bb8b12b25c92604ccf0621c3e",
+          "size": 2289,
+          "modifiedAt": "2026-07-24T00:37:04.038Z",
+          "capturedAt": "2026-07-24T00:37:04.038Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "bbcf27d04938418fc87e15384b4d05b5375d3667d3307736bd6dbc2b3805e50a",
+          "size": 1137,
+          "modifiedAt": "2026-07-24T00:37:05.390Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "e5dd83d90ab1363fdab8e6ae106737386a61df43aff6dcad910d5c390c20d9ac",
+          "size": 4224,
+          "modifiedAt": "2026-07-24T00:37:06.567Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "03f006c7d28dd7533b94c31d6cfb0ba834961291bbb514cb26868b4f82fa4bdd",
+          "size": 634,
+          "modifiedAt": "2026-07-24T00:37:08.222Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T00:37:08.226Z"
+    },
+    {
+      "key": "15b59e1ba7c5fe71ffaf5638a36553f114067f5e8e1b7a52415004f8511f4da6",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "748bc60fd76c37e7f8a37ee1f24c6c8b67a442a84fb4db834edf64e0b5dbd750",
+      "fingerprint": "de65fae1e1fa6904e6dcf299413ba197f112ebd8e7d516f53ed6d708a2738d57",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "d6b2177b978ca55133a6f5f3a667cff009e33e217eb77894d73fa5f17ca7fe4c",
+          "size": 6714,
+          "modifiedAt": "2026-07-24T00:36:58.297Z",
+          "capturedAt": "2026-07-24T00:36:58.297Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "a20e3aa0e863a291f45bb892385ba9b3e510774b59714e94a5d0307cab2139ec",
+          "size": 1907,
+          "modifiedAt": "2026-07-24T00:37:01.706Z",
+          "capturedAt": "2026-07-24T00:37:01.709Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "65fba5d4a7cc83f1b4d6ad5d51cd3b36ed51ed5ff2ce1f50e4aeb20ad818ed74",
+          "size": 849,
+          "modifiedAt": "2026-07-24T00:37:01.860Z",
+          "capturedAt": "2026-07-24T00:37:04.038Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "b474c3a88586d20e4632c213b51583d66edb8e0bb8b12b25c92604ccf0621c3e",
+          "size": 2289,
+          "modifiedAt": "2026-07-24T00:37:04.038Z",
+          "capturedAt": "2026-07-24T00:37:04.038Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "bbcf27d04938418fc87e15384b4d05b5375d3667d3307736bd6dbc2b3805e50a",
+          "size": 1137,
+          "modifiedAt": "2026-07-24T00:37:05.390Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "e5dd83d90ab1363fdab8e6ae106737386a61df43aff6dcad910d5c390c20d9ac",
+          "size": 4224,
+          "modifiedAt": "2026-07-24T00:37:06.567Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "03f006c7d28dd7533b94c31d6cfb0ba834961291bbb514cb26868b4f82fa4bdd",
+          "size": 634,
+          "modifiedAt": "2026-07-24T00:37:08.222Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T00:37:08.227Z"
+    },
+    {
+      "key": "eeaf95edc68009d57ef3fffbc583959008410cdb0abf4daef75f8948b5a167d3",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "34b874f44b9e949b266221114eb745c4abc238f65df239ebfa61ff895633c46e",
+      "fingerprint": "de65fae1e1fa6904e6dcf299413ba197f112ebd8e7d516f53ed6d708a2738d57",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "d6b2177b978ca55133a6f5f3a667cff009e33e217eb77894d73fa5f17ca7fe4c",
+          "size": 6714,
+          "modifiedAt": "2026-07-24T00:36:58.297Z",
+          "capturedAt": "2026-07-24T00:36:58.297Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "a20e3aa0e863a291f45bb892385ba9b3e510774b59714e94a5d0307cab2139ec",
+          "size": 1907,
+          "modifiedAt": "2026-07-24T00:37:01.706Z",
+          "capturedAt": "2026-07-24T00:37:01.709Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "65fba5d4a7cc83f1b4d6ad5d51cd3b36ed51ed5ff2ce1f50e4aeb20ad818ed74",
+          "size": 849,
+          "modifiedAt": "2026-07-24T00:37:01.860Z",
+          "capturedAt": "2026-07-24T00:37:04.038Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "b474c3a88586d20e4632c213b51583d66edb8e0bb8b12b25c92604ccf0621c3e",
+          "size": 2289,
+          "modifiedAt": "2026-07-24T00:37:04.038Z",
+          "capturedAt": "2026-07-24T00:37:04.038Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "bbcf27d04938418fc87e15384b4d05b5375d3667d3307736bd6dbc2b3805e50a",
+          "size": 1137,
+          "modifiedAt": "2026-07-24T00:37:05.390Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "e5dd83d90ab1363fdab8e6ae106737386a61df43aff6dcad910d5c390c20d9ac",
+          "size": 4224,
+          "modifiedAt": "2026-07-24T00:37:06.567Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-2/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "03f006c7d28dd7533b94c31d6cfb0ba834961291bbb514cb26868b4f82fa4bdd",
+          "size": 634,
+          "modifiedAt": "2026-07-24T00:37:08.222Z",
+          "capturedAt": "2026-07-24T00:37:08.222Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T00:37:08.229Z"
+    },
+    {
+      "key": "b16d007f789ea863685666fce7033b6f40134f771b86bdef26cc20bc84823de7",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "0593aafc9feafc77fff1bd8529268858945cc172ab7ae94c7ab259de51bf9344",
+      "fingerprint": "8d9bb2ec27fdf1599db19745a5927ba6e2411f4c2b463cb0ef3986bcfc2c6dab",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "ca7bfa6bc2df7d4f2b875a07a688ea63c3abfad8b49b5f38866f66d08af49c33",
+          "size": 6790,
+          "modifiedAt": "2026-07-24T00:46:50.128Z",
+          "capturedAt": "2026-07-24T00:46:50.128Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "38b4649427c58ab7afef1638a00a9d6a01718ff1074a264eb4b033557d3afa21",
+          "size": 1896,
+          "modifiedAt": "2026-07-24T00:46:50.869Z",
+          "capturedAt": "2026-07-24T00:46:50.869Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "89acf48b2531105a1b3fcd4646b8c4eb77a135625fdabbf48fa346673fcf628f",
+          "size": 842,
+          "modifiedAt": "2026-07-24T00:46:50.971Z",
+          "capturedAt": "2026-07-24T00:46:52.368Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "55f1e2fd0faf2d9c149fc5a99143bcd3f1ba182fe60210c13406ef41d5b6a98b",
+          "size": 2294,
+          "modifiedAt": "2026-07-24T00:46:52.368Z",
+          "capturedAt": "2026-07-24T00:46:52.368Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "324c08dde60e0a98697fb86a4ec1ff868ca4d956c7d53e63f90cba5f3dbc1dee",
+          "size": 1133,
+          "modifiedAt": "2026-07-24T00:46:52.781Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "849029268925eefb8b2c51b2ac6155447e5c4d10e955ccb54fe9f9f196e37c71",
+          "size": 4224,
+          "modifiedAt": "2026-07-24T00:46:53.062Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "0e3e9d929efe7cbb0c327c583868c1d0e2b319d8a51e75b41998b57d87637d73",
+          "size": 633,
+          "modifiedAt": "2026-07-24T00:46:53.238Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T00:46:53.240Z"
+    },
+    {
+      "key": "802346fdfd091430fcd340b432d4af3bfc451f24480e19f98b0ef3b81e04b4c1",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "748bc60fd76c37e7f8a37ee1f24c6c8b67a442a84fb4db834edf64e0b5dbd750",
+      "fingerprint": "8d9bb2ec27fdf1599db19745a5927ba6e2411f4c2b463cb0ef3986bcfc2c6dab",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "ca7bfa6bc2df7d4f2b875a07a688ea63c3abfad8b49b5f38866f66d08af49c33",
+          "size": 6790,
+          "modifiedAt": "2026-07-24T00:46:50.128Z",
+          "capturedAt": "2026-07-24T00:46:50.128Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "38b4649427c58ab7afef1638a00a9d6a01718ff1074a264eb4b033557d3afa21",
+          "size": 1896,
+          "modifiedAt": "2026-07-24T00:46:50.869Z",
+          "capturedAt": "2026-07-24T00:46:50.869Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "89acf48b2531105a1b3fcd4646b8c4eb77a135625fdabbf48fa346673fcf628f",
+          "size": 842,
+          "modifiedAt": "2026-07-24T00:46:50.971Z",
+          "capturedAt": "2026-07-24T00:46:52.368Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "55f1e2fd0faf2d9c149fc5a99143bcd3f1ba182fe60210c13406ef41d5b6a98b",
+          "size": 2294,
+          "modifiedAt": "2026-07-24T00:46:52.368Z",
+          "capturedAt": "2026-07-24T00:46:52.368Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "324c08dde60e0a98697fb86a4ec1ff868ca4d956c7d53e63f90cba5f3dbc1dee",
+          "size": 1133,
+          "modifiedAt": "2026-07-24T00:46:52.781Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "849029268925eefb8b2c51b2ac6155447e5c4d10e955ccb54fe9f9f196e37c71",
+          "size": 4224,
+          "modifiedAt": "2026-07-24T00:46:53.062Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "0e3e9d929efe7cbb0c327c583868c1d0e2b319d8a51e75b41998b57d87637d73",
+          "size": 633,
+          "modifiedAt": "2026-07-24T00:46:53.238Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T00:46:53.241Z"
+    },
+    {
+      "key": "a24324883ebe82af50a57fc81ad30090329175e6bcfb0adb70613bfd9b9f56d6",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "34b874f44b9e949b266221114eb745c4abc238f65df239ebfa61ff895633c46e",
+      "fingerprint": "8d9bb2ec27fdf1599db19745a5927ba6e2411f4c2b463cb0ef3986bcfc2c6dab",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "ca7bfa6bc2df7d4f2b875a07a688ea63c3abfad8b49b5f38866f66d08af49c33",
+          "size": 6790,
+          "modifiedAt": "2026-07-24T00:46:50.128Z",
+          "capturedAt": "2026-07-24T00:46:50.128Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "38b4649427c58ab7afef1638a00a9d6a01718ff1074a264eb4b033557d3afa21",
+          "size": 1896,
+          "modifiedAt": "2026-07-24T00:46:50.869Z",
+          "capturedAt": "2026-07-24T00:46:50.869Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "89acf48b2531105a1b3fcd4646b8c4eb77a135625fdabbf48fa346673fcf628f",
+          "size": 842,
+          "modifiedAt": "2026-07-24T00:46:50.971Z",
+          "capturedAt": "2026-07-24T00:46:52.368Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "55f1e2fd0faf2d9c149fc5a99143bcd3f1ba182fe60210c13406ef41d5b6a98b",
+          "size": 2294,
+          "modifiedAt": "2026-07-24T00:46:52.368Z",
+          "capturedAt": "2026-07-24T00:46:52.368Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "324c08dde60e0a98697fb86a4ec1ff868ca4d956c7d53e63f90cba5f3dbc1dee",
+          "size": 1133,
+          "modifiedAt": "2026-07-24T00:46:52.781Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "849029268925eefb8b2c51b2ac6155447e5c4d10e955ccb54fe9f9f196e37c71",
+          "size": 4224,
+          "modifiedAt": "2026-07-24T00:46:53.062Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-4/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "0e3e9d929efe7cbb0c327c583868c1d0e2b319d8a51e75b41998b57d87637d73",
+          "size": 633,
+          "modifiedAt": "2026-07-24T00:46:53.238Z",
+          "capturedAt": "2026-07-24T00:46:53.239Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T00:46:53.242Z"
+    },
+    {
+      "key": "21ab555fbb19f827b6586d9a73ad025d97a6a0ed81f080052b6a6f44532e5406",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "0593aafc9feafc77fff1bd8529268858945cc172ab7ae94c7ab259de51bf9344",
+      "fingerprint": "b256b0074dbf19a0ec1336d88851286bd43a436def54b351c7addf8831c73ba8",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+          "sha256": "ec5e4ad6a4cf6e331360774ed15531f8590e69a03b206bf5c33c1e3c1293951b",
+          "size": 7407,
+          "modifiedAt": "2026-07-24T02:51:25.983Z",
+          "capturedAt": "2026-07-24T02:51:25.983Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "63562ca3b943229fce8d816737fc563cccdf525cd516c30fc2c7222beea96b91",
+          "size": 1979,
+          "modifiedAt": "2026-07-24T02:51:26.927Z",
+          "capturedAt": "2026-07-24T02:51:26.927Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "baf2ead70c54d4ef7454da973f3d66fec08c507221cd656cfa0b54004056a6e8",
+          "size": 943,
+          "modifiedAt": "2026-07-24T02:51:27.049Z",
+          "capturedAt": "2026-07-24T02:51:28.702Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "6db9ccf54be2dad25f167140e9f542fad7561efd894da16a39f11f98cceb0abb",
+          "size": 2399,
+          "modifiedAt": "2026-07-24T02:51:28.702Z",
+          "capturedAt": "2026-07-24T02:51:28.702Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-real-agent-report.md",
+          "sha256": "e606d29b9f4a6743389bb61dd1b83561cffdc4954bbd1038edc182318c5270c3",
+          "size": 1457,
+          "modifiedAt": "2026-07-24T02:51:28.732Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "a81c11024e0eda19a8151b2b163ef202ed7578c52f20bc87281d80776033b6ba",
+          "size": 1327,
+          "modifiedAt": "2026-07-24T02:51:29.317Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "fb7d910aced8d23374487b4e94717aab066b37bb997a4503bd4062b46569600b",
+          "size": 4350,
+          "modifiedAt": "2026-07-24T02:51:29.598Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "af68dd28b529e533f5f94e9c46232f359bf47fe4650e1bdf7d4faa138e43f1e7",
+          "size": 633,
+          "modifiedAt": "2026-07-24T02:51:30.192Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T02:51:30.196Z"
+    },
+    {
+      "key": "a6238a7086f07552a8376a4ef14136280709150c7b7ead57bc9ea9cc27aaec01",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "748bc60fd76c37e7f8a37ee1f24c6c8b67a442a84fb4db834edf64e0b5dbd750",
+      "fingerprint": "b256b0074dbf19a0ec1336d88851286bd43a436def54b351c7addf8831c73ba8",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+          "sha256": "ec5e4ad6a4cf6e331360774ed15531f8590e69a03b206bf5c33c1e3c1293951b",
+          "size": 7407,
+          "modifiedAt": "2026-07-24T02:51:25.983Z",
+          "capturedAt": "2026-07-24T02:51:25.983Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "63562ca3b943229fce8d816737fc563cccdf525cd516c30fc2c7222beea96b91",
+          "size": 1979,
+          "modifiedAt": "2026-07-24T02:51:26.927Z",
+          "capturedAt": "2026-07-24T02:51:26.927Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "baf2ead70c54d4ef7454da973f3d66fec08c507221cd656cfa0b54004056a6e8",
+          "size": 943,
+          "modifiedAt": "2026-07-24T02:51:27.049Z",
+          "capturedAt": "2026-07-24T02:51:28.702Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "6db9ccf54be2dad25f167140e9f542fad7561efd894da16a39f11f98cceb0abb",
+          "size": 2399,
+          "modifiedAt": "2026-07-24T02:51:28.702Z",
+          "capturedAt": "2026-07-24T02:51:28.702Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-real-agent-report.md",
+          "sha256": "e606d29b9f4a6743389bb61dd1b83561cffdc4954bbd1038edc182318c5270c3",
+          "size": 1457,
+          "modifiedAt": "2026-07-24T02:51:28.732Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "a81c11024e0eda19a8151b2b163ef202ed7578c52f20bc87281d80776033b6ba",
+          "size": 1327,
+          "modifiedAt": "2026-07-24T02:51:29.317Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "fb7d910aced8d23374487b4e94717aab066b37bb997a4503bd4062b46569600b",
+          "size": 4350,
+          "modifiedAt": "2026-07-24T02:51:29.598Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "af68dd28b529e533f5f94e9c46232f359bf47fe4650e1bdf7d4faa138e43f1e7",
+          "size": 633,
+          "modifiedAt": "2026-07-24T02:51:30.192Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T02:51:30.196Z"
+    },
+    {
+      "key": "da8d4ea219c21aa03c1e12f111ed51612cb0d2710d3f3fdf48cabbd0d1f6b8d0",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "34b874f44b9e949b266221114eb745c4abc238f65df239ebfa61ff895633c46e",
+      "fingerprint": "b256b0074dbf19a0ec1336d88851286bd43a436def54b351c7addf8831c73ba8",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+          "sha256": "ec5e4ad6a4cf6e331360774ed15531f8590e69a03b206bf5c33c1e3c1293951b",
+          "size": 7407,
+          "modifiedAt": "2026-07-24T02:51:25.983Z",
+          "capturedAt": "2026-07-24T02:51:25.983Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md",
+          "sha256": "63562ca3b943229fce8d816737fc563cccdf525cd516c30fc2c7222beea96b91",
+          "size": 1979,
+          "modifiedAt": "2026-07-24T02:51:26.927Z",
+          "capturedAt": "2026-07-24T02:51:26.927Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+          "sha256": "baf2ead70c54d4ef7454da973f3d66fec08c507221cd656cfa0b54004056a6e8",
+          "size": 943,
+          "modifiedAt": "2026-07-24T02:51:27.049Z",
+          "capturedAt": "2026-07-24T02:51:28.702Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md",
+          "sha256": "6db9ccf54be2dad25f167140e9f542fad7561efd894da16a39f11f98cceb0abb",
+          "size": 2399,
+          "modifiedAt": "2026-07-24T02:51:28.702Z",
+          "capturedAt": "2026-07-24T02:51:28.702Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-real-agent-report.md",
+          "sha256": "e606d29b9f4a6743389bb61dd1b83561cffdc4954bbd1038edc182318c5270c3",
+          "size": 1457,
+          "modifiedAt": "2026-07-24T02:51:28.732Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-agent-evaluation.md",
+          "sha256": "a81c11024e0eda19a8151b2b163ef202ed7578c52f20bc87281d80776033b6ba",
+          "size": 1327,
+          "modifiedAt": "2026-07-24T02:51:29.317Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-package-dry-run.md",
+          "sha256": "fb7d910aced8d23374487b4e94717aab066b37bb997a4503bd4062b46569600b",
+          "size": 4350,
+          "modifiedAt": "2026-07-24T02:51:29.598Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-1-0/evidence/finalize/epoch-10/batch-agent-portability-uat-official-skill-validation.md",
+          "sha256": "af68dd28b529e533f5f94e9c46232f359bf47fe4650e1bdf7d4faa138e43f1e7",
+          "size": 633,
+          "modifiedAt": "2026-07-24T02:51:30.192Z",
+          "capturedAt": "2026-07-24T02:51:30.193Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T02:51:30.197Z"
+    },
+    {
+      "key": "d8aefbaeb450489fe3a6c87cda6fd31fc7a1ac848391c0db507856c74bf5a578",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "c3fb2a07b222573a7aedba6fb26dc27b4d79c73318d33f037d1362fb139b3c5d",
+      "fingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z"
+    },
+    {
+      "key": "0c4e496ec7f83cefad39af246b7d26677f09e84962e6be5b89a79ebbc17006af",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "60225b7c00873403d7ea7426230977faf4c8cfd0d5d4485423e353bde7979842",
+      "fingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.977Z"
+    },
+    {
+      "key": "436f87eb2ebeed3798fa318bd5ad8ed91253902b358d5d2c662be731a86726d2",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "16dc76bc32c1e50991bb3d8c91921a26a4e51bc93873784255d1af9e84155244",
+      "fingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.978Z"
+    },
+    {
+      "key": "6a56aaa5dd96a445dbd987fd59de67766fe467f6d01ba1962183d1608f2fc931",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "65bad98cfd7d2d3c68aaeb5dbefe5f630151dcc31a46a3c6c30f0010966da494",
+      "fingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.979Z"
+    }
+  ]
+}

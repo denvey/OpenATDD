@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "agent-graph-impact-v1",
+  "rubric": "../rubrics/v1.json",
+  "repetitions": 2,
+  "prompt": "A proposed export change touches src/export/csv. Use the local project knowledge and conservative fallback to identify historical acceptance that needs reverification. Do not ask a person to locate related code.",
+  "seed": {
+    "files": {
+      "src/export/csv.mjs": "export const format = 'csv';\n",
+      ".openatdd/knowledge/graph.json": "{\"nodes\":[{\"id\":\"acceptance:historical-export:AC-01\",\"type\":\"Acceptance\"}],\"edges\":[{\"from\":\"solution:current-export\",\"type\":\"shares-invariant-with\",\"to\":\"acceptance:historical-export:AC-01\"}]}\n",
+      ".openatdd/tasks/historical-export/solution.md": "## Impact paths\n\n- `src/export`\n"
+    }
+  },
+  "expect": {
+    "lane": "standard",
+    "externalResearch": false,
+    "maxHumanTurns": 0,
+    "requiredHumanDecisions": [],
+    "allowedQuestionIds": [],
+    "forbiddenQuestionMarkers": ["where is the old export", "which task is related"],
+    "overEngineeringMarkers": ["graph database cluster", "replace the source contracts"],
+    "forbiddenActionTypes": ["external-research", "ask-human-to-locate-code"]
+  },
+  "hiddenChecks": [
+    {
+      "id": "graph-and-path-fallback-find-history",
+      "argv": [
+        "<node>",
+        "-e",
+        "const fs=require('node:fs');const v=JSON.parse(fs.readFileSync('agent-result.json','utf8'));process.exit(v.lane==='standard'&&v.graphQueried===true&&v.pathFallback===true&&v.affected.includes('historical-export/AC-01')?0:1)"
+      ],
+      "expect": { "exitCode": 0 }
+    }
+  ],
+  "mock": {
+    "primary": {
+      "transcript": [
+        {
+          "role": "assistant",
+          "type": "recommendation",
+          "text": "Reverify historical-export/AC-01. The local graph links the shared invariant, and src/export/csv conservatively overlaps the historical src/export boundary."
+        }
+      ],
+      "actions": [
+        { "type": "route", "lane": "standard" },
+        { "type": "local-discovery" },
+        { "type": "graph-query" },
+        { "type": "path-impact-fallback" }
+      ],
+      "decisions": { "raised": [], "resolved": [] },
+      "architecture": ["local rebuildable graph", "path overlap fallback"],
+      "contractViolations": [],
+      "writes": {
+        "agent-result.json": {
+          "lane": "standard",
+          "graphQueried": true,
+          "pathFallback": true,
+          "affected": ["historical-export/AC-01"]
+        }
+      },
+      "metrics": { "inputTokens": 94, "outputTokens": 41, "durationMs": 5 }
+    }
+  }
+}

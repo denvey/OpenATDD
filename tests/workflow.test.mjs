@@ -6,6 +6,7 @@ import { promisify } from "node:util";
 import test from "node:test";
 import {
   approveAcceptance,
+  assessTask,
   beginImplementation,
   beginPreUat,
   draftSolution,
@@ -14,6 +15,7 @@ import {
   recordAcceptanceResult,
   recordCheck,
   recordIssue,
+  recordSolutionReview,
   searchMemory,
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
@@ -34,6 +36,12 @@ test("enforces acceptance approval before solution and solution approval before 
   const criteria = [criterion("AC-01")];
   const { createTask, approveSolution } = await import("../skills/openatdd/scripts/workflow.mjs");
   await createTask(root, "gate-order", "Deliver a gated feature", clock("2020-01-01T00:00:00.000Z"));
+  await assessTask(root, "gate-order", {
+    scope: "local",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "low",
+  }, clock("2020-01-01T00:00:30.000Z"));
 
   await assert.rejects(() => draftSolution(root, "gate-order"), (error) => error.code === "INVALID_PHASE");
   await writeAcceptance(root, "gate-order", criteria);
@@ -44,6 +52,12 @@ test("enforces acceptance approval before solution and solution approval before 
   const files = taskFiles(root, "gate-order");
   const { solutionMarkdown } = await import("./helpers.mjs");
   await writeFile(files.solution, solutionMarkdown("gate-order", criteria));
+  await recordSolutionReview(root, "gate-order", {
+    status: "passed",
+    reviewer: "main",
+    summary: "The solution is concise and follows the established project architecture.",
+    checks: "all",
+  }, clock("2020-01-01T00:01:30.000Z"));
   await approveSolution(root, "gate-order", clock("2020-01-01T00:02:00.000Z"));
   const started = await beginImplementation(root, "gate-order");
   assert.equal(started.state.phase, "IMPLEMENTING");
@@ -96,6 +110,29 @@ test("requires fresh evidence and a passing project check before readiness", asy
   const validation = await import("../skills/openatdd/scripts/workflow.mjs").then(({ validateTask }) => validateTask(root, "evidence-gate"));
   assert.equal(validation.valid, false);
   assert(validation.errors.some((error) => error.includes("changed after it was recorded")));
+});
+
+test("schema v3 assisted acceptance cannot be self-declared passed", async (t) => {
+  const root = await temporaryProject(t);
+  const criteria = [criterion("AC-01", {
+    classification: "ASSISTED",
+    title: "A person judges the prepared experience",
+  })];
+  await prepareApprovedTask(root, "assisted-boundary", { criteria });
+  await beginImplementation(root, "assisted-boundary");
+  await beginPreUat(root, "assisted-boundary");
+  const evidence = await writeEvidence(root, "assisted-boundary", "prepared.txt", "prepared evidence");
+  await assert.rejects(
+    () => recordAcceptanceResult(root, "assisted-boundary", { acceptanceId: "AC-01", status: "passed", evidence }),
+    (error) => error.code === "ASSISTED_REQUIRES_HUMAN_JUDGMENT",
+  );
+  const recorded = await recordAcceptanceResult(root, "assisted-boundary", {
+    acceptanceId: "AC-01",
+    status: "manual",
+    summary: "Prepared for explicit human judgment",
+    evidence,
+  });
+  assert.equal(recorded.state.results["AC-01"].status, "manual");
 });
 
 test("resolving an issue writes memory and invalidates the complete verification chain", async (t) => {
@@ -201,4 +238,119 @@ test("acceptance validation rejects placeholders and duplicate IDs", async () =>
   const result = validateAcceptance(duplicate);
   assert(result.errors.some((error) => error.includes("Duplicate acceptance ID")));
   assert(validateAcceptance(acceptanceMarkdown("todo", [criterion("AC-01", { title: "TODO" })])).errors.length > 0);
+});
+
+test("human-facing templates and reports infer Chinese without a language option", async () => {
+  const {
+    acceptanceTemplate,
+    solutionTemplate,
+    validateAcceptance,
+    validateSolution,
+  } = await import("../skills/openatdd/scripts/contracts.mjs");
+  const { renderTaskReport } = await import("../skills/openatdd/scripts/workflow.mjs");
+  const template = acceptanceTemplate("chinese-flow", "让财务导出筛选后的订单");
+  assert.match(template, /## 目标/);
+  assert.doesNotMatch(template, /## Goal/);
+
+  const chineseAcceptance = `# 验收卡：chinese-flow
+
+## 目标
+
+让财务导出筛选后的订单。
+
+## 建议用户旅程
+
+1. 财务人员筛选订单。
+2. 财务人员导出并核对结果。
+
+## 验收标准
+
+### AC-01 [AUTO] [BLOCKING] 导出全部筛选结果
+- 前提：财务人员已经筛选订单。
+- 操作：财务人员执行导出。
+- 结果：文件包含全部筛选结果且没有重复。
+- 证据：解析导出文件并核对行数。
+
+## 边界
+
+- 不增加新的导出基础设施。
+`;
+  const acceptance = validateAcceptance(chineseAcceptance);
+  assert.deepEqual(acceptance.errors, []);
+  const solutionDraft = solutionTemplate("chinese-flow", acceptance.parsed.criteria);
+  assert.match(solutionDraft, /## 推荐方案/);
+  assert.doesNotMatch(solutionDraft, /## Recommendation/);
+
+  const chineseSolution = `# 方案卡：chinese-flow
+
+<!-- openatdd:recommendation -->
+## 推荐方案
+
+复用现有订单查询与 CSV 导出路径。
+<!-- /openatdd:recommendation -->
+
+<!-- openatdd:rationale -->
+## 为什么适合当前项目
+
+- 沿用现有边界，不增加新基础设施。
+<!-- /openatdd:rationale -->
+
+<!-- openatdd:changes -->
+## 主要改动
+
+- 增加筛选结果导出与确定性验证。
+<!-- /openatdd:changes -->
+
+<!-- openatdd:risks -->
+## 风险
+
+- 使用分页回归测试避免遗漏最后一页。
+<!-- /openatdd:risks -->
+
+<!-- openatdd:exclusions -->
+## 明确排除
+
+- 不增加队列或对象存储。
+<!-- /openatdd:exclusions -->
+
+## 实现细节
+
+- 将当前筛选条件传给现有导出器。
+
+## 影响路径
+
+- \`src/export\`
+
+## 验收追踪
+
+| 验收 | 实现 | 验证 |
+|---|---|---|
+| AC-01 | 复用现有导出器 | 解析文件并核对全部行 |
+`;
+  assert.deepEqual(validateSolution(chineseSolution, acceptance.parsed.criteria, { progressive: true }).errors, []);
+  const nonProgressiveOrder = `${chineseSolution
+    .replace(/<!-- openatdd:risks -->[\s\S]*?<!-- \/openatdd:exclusions -->\n\n/, "")
+    .trimEnd()}\n\n## 风险\n\n- 风险后置。\n\n## 明确排除\n\n- 排除项后置。\n`;
+  assert(validateSolution(nonProgressiveOrder, acceptance.parsed.criteria, { progressive: true }).errors.some((error) => error.includes("progressive solution")));
+
+  const state = {
+    taskId: "chinese-flow",
+    requirement: "让财务导出筛选后的订单",
+    phase: "PRE_UAT",
+    acceptance: { approvedAt: "2026-01-01T00:00:00.000Z", items: acceptance.parsed.criteria },
+    solution: { approvedAt: "2026-01-01T00:01:00.000Z" },
+    verification: { epoch: 1 },
+    results: {},
+    checks: {},
+    issues: [],
+    affectedDependencies: [],
+    preflight: {},
+    uat: {},
+    timing: { phases: [] },
+    readyAt: null,
+  };
+  const report = renderTaskReport(state);
+  assert.match(report, /^# UAT 前报告：/);
+  assert.match(report, /### 验收结果/);
+  assert.doesNotMatch(report, /# Pre-UAT report/);
 });

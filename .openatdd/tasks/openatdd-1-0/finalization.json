@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 1,
+  "surface": "cli",
+  "environment": "local",
+  "source": {
+    "include": [
+      "**/*"
+    ],
+    "exclude": [
+      "evals/reports/**"
+    ]
+  },
+  "dryRun": {
+    "commands": [
+      {
+        "id": "cli-help-smoke",
+        "argv": [
+          "node",
+          "skills/openatdd/scripts/openatdd.mjs",
+          "help"
+        ],
+        "timeoutMs": 30000
+      },
+      {
+        "id": "cli-status-smoke",
+        "argv": [
+          "node",
+          "skills/openatdd/scripts/openatdd.mjs",
+          "status",
+          "openatdd-1-0",
+          "--json"
+        ],
+        "timeoutMs": 30000
+      }
+    ],
+    "checkHttpLinks": false,
+    "linkTimeoutMs": 3000
+  },
+  "checks": [
+    {
+      "id": "focused-intelligence",
+      "name": "OpenATDD 1.0 intelligence and knowledge regressions",
+      "scope": "focused",
+      "commands": [
+        {
+          "id": "focused-intelligence-tests",
+          "argv": [
+            "node",
+            "--test",
+            "tests/intelligence.test.mjs",
+            "tests/intelligence-integration.test.mjs",
+            "tests/knowledge.test.mjs",
+            "tests/agent-eval.test.mjs"
+          ],
+          "timeoutMs": 120000
+        }
+      ]
+    },
+    {
+      "id": "module-evaluations",
+      "name": "OpenATDD deterministic and Agent evaluation corpus",
+      "scope": "module",
+      "commands": [
+        {
+          "id": "module-eval-suite",
+          "argv": [
+            "npm",
+            "run",
+            "eval"
+          ],
+          "timeoutMs": 120000
+        }
+      ]
+    },
+    {
+      "id": "broad-project",
+      "name": "Complete OpenATDD 1.0 project checks",
+      "scope": "broad",
+      "commands": [
+        {
+          "id": "broad-project-check",
+          "argv": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "timeoutMs": 180000
+        }
+      ]
+    }
+  ],
+  "uat": {
+    "estimatedRoundTrips": 3,
+    "batches": [
+      {
+        "id": "journey-routing-solution",
+        "name": "Two-confirmation journey, adaptive routing, decisions, and concise solution",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03"
+        ],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-journey-routing-solution",
+            "argv": [
+              "node",
+              "--test",
+              "tests/intelligence.test.mjs",
+              "tests/intelligence-integration.test.mjs"
+            ],
+            "timeoutMs": 120000
+          }
+        ]
+      },
+      {
+        "id": "knowledge-context",
+        "name": "Semantic knowledge, scoped context, compatibility, and deterministic recovery",
+        "acceptanceIds": [
+          "AC-04",
+          "AC-05",
+          "AC-06"
+        ],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-knowledge-context",
+            "argv": [
+              "node",
+              "--test",
+              "tests/knowledge.test.mjs"
+            ],
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-compatibility-recovery",
+            "argv": [
+              "node",
+              "--test",
+              "tests/delivery-v2.test.mjs",
+              "tests/finalization.test.mjs"
+            ],
+            "timeoutMs": 120000
+          }
+        ]
+      },
+      {
+        "id": "agent-portability",
+        "name": "Agent evaluation, standalone CLI, Skill metadata, and distributable package",
+        "acceptanceIds": [
+          "AC-07",
+          "AC-08"
+        ],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-real-agent-report",
+            "argv": [
+              "node",
+              "skills/openatdd/scripts/agent-eval.mjs",
+              "--verify-report",
+              "evals/reports/openatdd-1.0-real.json",
+              "--min-runs",
+              "2",
+              "--require-baseline"
+            ],
+            "timeoutMs": 30000
+          },
+          {
+            "id": "uat-agent-evaluation",
+            "argv": [
+              "node",
+              "--test",
+              "tests/agent-eval.test.mjs"
+            ],
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-package-dry-run",
+            "argv": [
+              "npm",
+              "pack",
+              "--dry-run",
+              "--json"
+            ],
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-official-skill-validation",
+            "argv": [
+              "node",
+              "-e",
+              "const {spawnSync}=require('node:child_process');const path=require('node:path');const os=require('node:os');const script=path.join(os.homedir(),'.codex','skills','.system','skill-creator','scripts','quick_validate.py');const result=spawnSync('uv',['run','--with','pyyaml','python',script,'skills/openatdd'],{stdio:'inherit'});process.exit(result.status??1)"
+            ],
+            "timeoutMs": 120000
+          }
+        ]
+      }
+    ]
+  },
+  "acceptance": {
+    "AC-01": [
+      "check:broad-project",
+      "batch:journey-routing-solution"
+    ],
+    "AC-02": [
+      "check:broad-project",
+      "batch:journey-routing-solution"
+    ],
+    "AC-03": [
+      "check:broad-project",
+      "batch:journey-routing-solution"
+    ],
+    "AC-04": [
+      "check:broad-project",
+      "batch:knowledge-context"
+    ],
+    "AC-05": [
+      "check:broad-project",
+      "batch:knowledge-context"
+    ],
+    "AC-06": [
+      "check:broad-project",
+      "batch:knowledge-context"
+    ],
+    "AC-07": [
+      "check:module-evaluations",
+      "check:broad-project",
+      "batch:agent-portability"
+    ],
+    "AC-08": [
+      "check:broad-project",
+      "batch:agent-portability"
+    ]
+  },
+  "history": {
+    "mode": "deferred",
+    "overrides": [
+      {
+        "taskId": "detailed-uat-handoff",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:journey-routing-solution",
+          "batch:knowledge-context",
+          "batch:agent-portability"
+        ]
+      },
+      {
+        "taskId": "fast-portable-finalization",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:journey-routing-solution",
+          "batch:knowledge-context",
+          "batch:agent-portability"
+        ]
+      },
+      {
+        "taskId": "openatdd-mvp",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08",
+          "AC-09"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:journey-routing-solution",
+          "batch:knowledge-context",
+          "batch:agent-portability"
+        ]
+      }
+    ]
+  },
+  "handoff": {
+    "estimatedMinutes": 12
+  },
+  "budgets": {
+    "wallTimeMs": 300000,
+    "commandInvocations": 15,
+    "browserRoundTrips": 3,
+    "evidenceWrites": 37
+  }
+}

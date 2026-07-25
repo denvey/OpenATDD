@@ -1,0 +1,308 @@
+{
+  "schemaVersion": 1,
+  "taskId": "openatdd-1-0",
+  "preparedAt": "2026-07-24T02:51:30.198Z",
+  "context": {
+    "language": "zh-CN",
+    "version": "1.0.0",
+    "environment": "local",
+    "role": "n/a",
+    "prerequisites": [
+      "启动或验证命令: npm run check"
+    ],
+    "accountReference": "n/a (no login required)",
+    "entryPoint": "打开 report.md。",
+    "estimatedMinutes": 12
+  },
+  "steps": [
+    {
+      "number": 1,
+      "acceptanceId": "AC-01",
+      "title": "A developer completes the normal two-confirmation journey without process ceremony",
+      "precondition": "An initialized supported repository and a one-line feature requirement.",
+      "action": "The developer starts OpenATDD and responds to any material product, scope, cost, risk, or authorization decisions.",
+      "expected": "OpenATDD asks no discoverable or routine process questions, every human decision includes a grounded recommendation and 2-3 choices, the developer confirms only the concise completion standards and solution before implementation, and receives a prepared UAT handoff without additional routine approvals.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md"
+      ],
+      "judgment": "此项需要人工判断。"
+    },
+    {
+      "number": 2,
+      "acceptanceId": "AC-02",
+      "title": "Task depth controls investigation and subagents without changing the user contract",
+      "precondition": "Representative low-risk local, cross-module, and high-risk or novel task scenarios.",
+      "action": "OpenATDD classifies each task and prepares its investigation plan.",
+      "expected": "It records Quick, Standard, or Deep with reasons; applies deterministic risk escalators; keeps Quick local and direct; and uses external research, clean-context execution, or independent review subagents only when the selected depth calls for them.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 3,
+      "acceptanceId": "AC-03",
+      "title": "The approved solution is concise, project-fitting, and progressively disclosed from one source",
+      "precondition": "Approved completion standards with every blocking human decision resolved.",
+      "action": "OpenATDD drafts and reviews the solution before presenting it.",
+      "expected": "One `solution.md` provides a one-screen recommendation, rationale, changes, material risks, and exclusions followed by optional concise details; every acceptance ID is traced; no material choice is hidden only in the details; unnecessary architecture is rejected; and any post-approval edit invalidates the solution approval.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md"
+      ],
+      "judgment": "此项需要人工判断。"
+    },
+    {
+      "number": 4,
+      "acceptanceId": "AC-04",
+      "title": "A rebuildable semantic graph retrieves relevant knowledge and expands impact analysis",
+      "precondition": "Tasks, decisions, acceptance criteria, solutions, paths, incidents, invariants, standards, research, checks, and evidence with source artifacts.",
+      "action": "Those artifacts are approved, resolved, finalized, queried, changed, missing from the index, or rebuilt.",
+      "expected": "OpenATDD maintains a local source-hashed node-and-edge index with provenance, marks stale entries, rebuilds missing runtime indexes, returns only relevant relationships, and combines semantic relationships with the existing conservative path fallback to identify historical acceptance that needs reverification.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+        "evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 5,
+      "acceptanceId": "AC-05",
+      "title": "Implementation, verification, recovery, and learning receive scoped context",
+      "precondition": "An approved task with routing, decision, graph, memory, and environment facts.",
+      "action": "OpenATDD prepares implementation, verification, a fresh-context subagent, or a resumed repair attempt.",
+      "expected": "It supplies only relevant source-hashed context, keeps implementation and verification views distinct, persists a compact recovery boundary, records repair hypotheses and progress, promotes resolved defects into incidents and invariants, and does not mandate TDD, worktrees, a particular architecture, or multi-agent execution.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+        "evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 6,
+      "acceptanceId": "AC-06",
+      "title": "Existing projects migrate without weakening deterministic delivery",
+      "precondition": "Existing schema v1/v2 tasks and v0.3 project artifacts, including projects with absent rebuildable indexes.",
+      "action": "They are loaded, upgraded, approved, validated, repaired, and finalized under 1.0.",
+      "expected": "Existing contracts, evidence, history, environment observations, and readiness semantics remain valid; missing indexes are recreated; product code remains blocked before both approvals; fresh evidence, verification epochs, complete reruns, source freeze, atomic finalization, credential safety, and affected-history reverification continue to be enforced.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+        "evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 7,
+      "acceptanceId": "AC-07",
+      "title": "Real-agent evaluation detects interaction and delivery regressions",
+      "precondition": "Decision, routing, simplicity, recovery, graph, seed-repository, and hidden-acceptance scenarios plus a configured agent adapter.",
+      "action": "The 1.0 evaluation command runs against the current Skill and a bare-agent baseline where applicable.",
+      "expected": "It reports deterministic and real-agent outcomes, human turns, unnecessary questions, research misroutes, missed human decisions, over-engineering, contract violations, first-pass acceptance, token/time cost, and repeatability without treating model claims as test evidence.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-module-evaluations-module-eval-suite.md",
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-real-agent-report.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-agent-evaluation.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-package-dry-run.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-official-skill-validation.md"
+      ],
+      "judgment": "此项需要人工判断。"
+    },
+    {
+      "number": 8,
+      "acceptanceId": "AC-08",
+      "title": "OpenATDD 1.0 remains portable, documented, and independently usable",
+      "precondition": "A clean Node.js 20+ project with no OpenSpec or other workflow framework installed.",
+      "action": "A developer installs or copies the package, initializes a project, invokes help and the Skill, runs the documented checks, and packs the release.",
+      "expected": "Version 1.0 provides the complete natural-language-to-UAT workflow, CLI semantics are covered by real-process regressions, the Skill validates on supported hosts, existing granular commands remain available for debugging, and the distributable contains all required runtime and documentation files.",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-real-agent-report.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-agent-evaluation.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-package-dry-run.md",
+        "evidence/finalize/epoch-10/batch-agent-portability-uat-official-skill-validation.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    }
+  ],
+  "links": [
+    {
+      "label": "详细 UAT 报告",
+      "target": "report.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的验收卡",
+      "target": "acceptance.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的方案卡",
+      "target": "solution.md",
+      "applicable": true
+    },
+    {
+      "label": "问题与修复日志",
+      "target": "issues.md",
+      "applicable": true
+    },
+    {
+      "label": "local 环境档案",
+      "target": "../../environments/local.yaml",
+      "applicable": true
+    },
+    {
+      "label": "Finalization 清单",
+      "target": "../../finalization.json",
+      "applicable": true
+    },
+    {
+      "label": "项目文档",
+      "target": "../../../README.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: batch-journey-routing-solution-uat-journey-routing-solution.md",
+      "target": "evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: batch-journey-routing-solution-uat-journey-routing-solution.md",
+      "target": "evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: batch-journey-routing-solution-uat-journey-routing-solution.md",
+      "target": "evidence/finalize/epoch-10/batch-journey-routing-solution-uat-journey-routing-solution.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-knowledge-context-uat-knowledge-context.md",
+      "target": "evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-knowledge-context-uat-compatibility-recovery.md",
+      "target": "evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: batch-knowledge-context-uat-knowledge-context.md",
+      "target": "evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: batch-knowledge-context-uat-compatibility-recovery.md",
+      "target": "evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-06 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-06 证据: batch-knowledge-context-uat-knowledge-context.md",
+      "target": "evidence/finalize/epoch-10/batch-knowledge-context-uat-knowledge-context.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-06 证据: batch-knowledge-context-uat-compatibility-recovery.md",
+      "target": "evidence/finalize/epoch-10/batch-knowledge-context-uat-compatibility-recovery.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 证据: check-module-evaluations-module-eval-suite.md",
+      "target": "evidence/finalize/epoch-10/check-module-evaluations-module-eval-suite.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 证据: batch-agent-portability-uat-real-agent-report.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-real-agent-report.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 证据: batch-agent-portability-uat-agent-evaluation.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-agent-evaluation.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 证据: batch-agent-portability-uat-package-dry-run.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-package-dry-run.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-07 证据: batch-agent-portability-uat-official-skill-validation.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-official-skill-validation.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-10/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 证据: batch-agent-portability-uat-real-agent-report.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-real-agent-report.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 证据: batch-agent-portability-uat-agent-evaluation.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-agent-evaluation.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 证据: batch-agent-portability-uat-package-dry-run.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-package-dry-run.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-08 证据: batch-agent-portability-uat-official-skill-validation.md",
+      "target": "evidence/finalize/epoch-10/batch-agent-portability-uat-official-skill-validation.md",
+      "applicable": true
+    }
+  ]
+}

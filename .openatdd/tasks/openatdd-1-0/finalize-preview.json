@@ -1,0 +1,514 @@
+{
+  "schemaVersion": 1,
+  "taskId": "openatdd-1-0",
+  "status": "passed",
+  "createdAt": "2026-07-24T02:51:11.593Z",
+  "candidateFingerprint": "b256b0074dbf19a0ec1336d88851286bd43a436def54b351c7addf8831c73ba8",
+  "inventoryCount": 63,
+  "candidateFiles": [
+    {
+      "path": ".env.openatdd.example",
+      "mode": 420,
+      "size": 68,
+      "sha256": "fabbd4880ea50db4164da10ffe2ea5c9b92357c2da3af0a76f90b221a72965db",
+      "type": "file"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": 420,
+      "size": 335,
+      "sha256": "f13414b523ef1169ccd95060488da466f7ac51b48e2c15158e0f34b0bc1f9156",
+      "type": "file"
+    },
+    {
+      "path": ".gitignore",
+      "mode": 420,
+      "size": 370,
+      "sha256": "576fe8d45932ce6577424d97035525ead577fd2e945d3900bdddad88c4d74f8b",
+      "type": "file"
+    },
+    {
+      "path": ".openatdd/config.yaml",
+      "mode": 420,
+      "size": 162,
+      "sha256": "02327cebc6622f4a210b8a6a814e6f0d53e2480c8103021a0a9c4b7244706dc8",
+      "type": "file"
+    },
+    {
+      "path": ".openatdd/environments/local.yaml",
+      "mode": 420,
+      "size": 438,
+      "sha256": "7d3584bcc58d89c5551e2d71f9e7e3bcea684ef13cd9f1c4a9d8f657e60025a2",
+      "type": "file"
+    },
+    {
+      "path": ".openatdd/finalization.json",
+      "mode": 420,
+      "size": 5876,
+      "sha256": "1c418bb292f7a9b226345e1d746364937c960748fd61b86b7281dccf94615145",
+      "type": "file"
+    },
+    {
+      "path": "LICENSE",
+      "mode": 420,
+      "size": 1078,
+      "sha256": "452eb7f86aa352f2fe40010289aff1bd7a73896af5095e9c0860ade943342333",
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "mode": 420,
+      "size": 14290,
+      "sha256": "c3f42bd09c366100a7fe2cd315d9e20c44d21a3b549f053f2454d05ff1b99eee",
+      "type": "file"
+    },
+    {
+      "path": "bin/openatdd.mjs",
+      "mode": 493,
+      "size": 118,
+      "sha256": "01af1b2fcc5b51a6b322e736b1e23a6a390f85d5e26e0c0eae0032c425db6c71",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/rubrics/v1.json",
+      "mode": 420,
+      "size": 452,
+      "sha256": "d90a32023bf2004599578d27570355c9b7c3e3adba73ab1bc51a68b59c070268",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/graph-impact.v1.json",
+      "mode": 420,
+      "size": 2603,
+      "sha256": "7ecbd5f2796df8b7b1b09ea8999c06dcdd2e17083ebfce4c25347aa370af3d30",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/high-risk-escalation.v1.json",
+      "mode": 420,
+      "size": 2895,
+      "sha256": "0f70cecd47e86a629672a39a6fa7dae14908f0940879f74a1b98dddf5b828a99",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/quick-no-research.v1.json",
+      "mode": 420,
+      "size": 2318,
+      "sha256": "03f47b7fc5fcf6d1fb7dba6e67eb8df3c284dc3b4ce8777472eee8814f656e21",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/recovery.v1.json",
+      "mode": 420,
+      "size": 2638,
+      "sha256": "82da00f5eae4483bb8857116b277f35fcb502784fff17c3eec68205646d2e25e",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/simplicity.v1.json",
+      "mode": 420,
+      "size": 3772,
+      "sha256": "9e295563245edbe9287a3e3273ef1a5e741f62e5bfae3e6540c3347017b7b2a6",
+      "type": "file"
+    },
+    {
+      "path": "evals/baselines/v0.1.0.json",
+      "mode": 420,
+      "size": 216,
+      "sha256": "8f03e41ef78e1cfceb8a2f17f9f74dcb54a5d7053cb197d57ef61c1b05b2ad26",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/basic-gates.json",
+      "mode": 420,
+      "size": 375,
+      "sha256": "4bd004ae8b621c0b7569993779a50ad100d1c73e0c6f651954f600bf416e9e20",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/fast-finalization.json",
+      "mode": 420,
+      "size": 392,
+      "sha256": "d75bb2fe5323d30eafaa13bc1b04c064fd27f93dc74abd11ab02425571730728",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/manual-handoff.json",
+      "mode": 420,
+      "size": 398,
+      "sha256": "0c6e856e50836765cce2afa1ffd5a6df0743aa5878f506ac965c9bcb98e5bd4e",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/project-context-handoff.json",
+      "mode": 420,
+      "size": 503,
+      "sha256": "9e5f800cf5cfa1e994f1595324c492ef024dcd8da845c6f196e4235b76923a53",
+      "type": "file"
+    },
+    {
+      "path": "evals/holdout/browser-round-trip-budget.json",
+      "mode": 420,
+      "size": 510,
+      "sha256": "543a50d34adb3fcd6bc3e0c8a5b45d9974241b8c3fc41bdc2bbdab74067ea3dd",
+      "type": "file"
+    },
+    {
+      "path": "evals/holdout/finalization-repetition-budget.json",
+      "mode": 420,
+      "size": 485,
+      "sha256": "84e5ec59a7f520e64398a8175bcd0e0650250f08656b950329e2583879efc293",
+      "type": "file"
+    },
+    {
+      "path": "evals/holdout/high-risk-payment.json",
+      "mode": 420,
+      "size": 482,
+      "sha256": "f73cba7ef474e41388cffb57563aa7e59e270204fa5c31d77304a1be887cd6ff",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/contract-drift.json",
+      "mode": 420,
+      "size": 328,
+      "sha256": "867027dd755319bd6b24c36b0d43ded58cdcf6977a049ffcb0966ef30649be9f",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/epoch-secret-safety.json",
+      "mode": 420,
+      "size": 496,
+      "sha256": "06ddbcb1687308d9eaef55415b55df0b8ee004f353e8e8ee9c148e593aaee54e",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/finalization-idempotence.json",
+      "mode": 420,
+      "size": 437,
+      "sha256": "f75dc2edf5c44b59856ffd3c958ec9f02bb9fb61fc1b352182968efc5947830d",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/fresh-evidence.json",
+      "mode": 420,
+      "size": 367,
+      "sha256": "d40b288af490cdbba2acc6607652b17a383888c994006d43078da39203bca284",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/portable-cli-realpath.json",
+      "mode": 420,
+      "size": 401,
+      "sha256": "99b6bc3542751aacac96344be8c4cf72397984f1231c882859d05670fd474203",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/repair-invalidates-chain.json",
+      "mode": 420,
+      "size": 517,
+      "sha256": "0e5f4b6ca1efc0e6b62dc9f0b21248a4ea33df909acfdd460f92bbb50c9c8106",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/shared-impact.json",
+      "mode": 420,
+      "size": 421,
+      "sha256": "f26bac3a6f89ba7b7a97277719b63e3739fcdc4224e25a80f6b54cef9a00ed6d",
+      "type": "file"
+    },
+    {
+      "path": "evals/rubrics/hard-gates.json",
+      "mode": 420,
+      "size": 340,
+      "sha256": "2742cceab78d4181fa9cbf5468881a647b405fcbe74a330182e9a987d9409b90",
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "mode": 420,
+      "size": 1539,
+      "sha256": "f7186ec993c8a1a6f0dc3a4f0f26a5297dd82af27d5332645b3421b12b0ffa65",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/SKILL.md",
+      "mode": 420,
+      "size": 16018,
+      "sha256": "59596081e0a89092b9135d85686d6eca4a1119acf6c9a0ed144fc3203ba7e52f",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/agents/openai.yaml",
+      "mode": 420,
+      "size": 544,
+      "sha256": "0e1eadbf24b93f0e518e564101e95fb652b72a0982b14c89594063b60bf0345b",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/acceptance-patterns.md",
+      "mode": 420,
+      "size": 2057,
+      "sha256": "e649c8ecabe76a27dbf6ccc4ec0e354fd6abd81579878e021f6c9ebba396cb84",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/environment-profiles.md",
+      "mode": 420,
+      "size": 3150,
+      "sha256": "b07598f234ba281b7e76d337c76fe99f12c3232ed761dbf583bb90c1ac6f04ba",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/fast-finalization.md",
+      "mode": 420,
+      "size": 6942,
+      "sha256": "8c711297d087059bd084ec424773278f386a5e883147a5d1a783b8c96f633d8c",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/verification-routing.md",
+      "mode": 420,
+      "size": 3888,
+      "sha256": "b6b34d96bb834cf5f68b04ac64690554f03ee37a2fed5c67e875e0acc4d757d6",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/agent-eval.mjs",
+      "mode": 420,
+      "size": 27447,
+      "sha256": "bdaf5afe911a9668652a2c8dca0e197cc29bc74c27b9ab2852d9f3bcc1dff68d",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/codex-agent-adapter.mjs",
+      "mode": 420,
+      "size": 9290,
+      "sha256": "bff0c5cb60f8b5fe81cecef98710f6a6c7aa59d8a17add4c20811c5ddbc653ac",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/context.mjs",
+      "mode": 420,
+      "size": 15567,
+      "sha256": "9d4e7e64e779d707c4d82b42b996a86f1893c23c6133f06c2b17194b93ba1636",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/contracts.mjs",
+      "mode": 420,
+      "size": 12410,
+      "sha256": "1875911fcf396655b39e25e76b9851fbe68c257a22c7d0520c9481774244d478",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/decisions.mjs",
+      "mode": 420,
+      "size": 9588,
+      "sha256": "3ac30929923b7f2f9b67062df0987cef602265bb4c998a191a63e4892727a9b8",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/finalization.mjs",
+      "mode": 420,
+      "size": 34947,
+      "sha256": "b6c46da4a63779b7a5b65a3116e8105ef373ed76fd175f1432fddc3dfce7dbb4",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/graph.mjs",
+      "mode": 420,
+      "size": 35140,
+      "sha256": "eee92a959656ac942333a550c22edc175da22809fcb03685e7e3873870acb15d",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/lib.mjs",
+      "mode": 420,
+      "size": 10926,
+      "sha256": "48156c6bb6a4f79c39c30c8ec577090cf561200454b4a5b0e3821f385481beb1",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/manifest.mjs",
+      "mode": 420,
+      "size": 12881,
+      "sha256": "c0286b843b691a7417bd71cd9a97e8a3c0327a1fcbe82737259105072ed3fd45",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/openatdd.mjs",
+      "mode": 493,
+      "size": 27335,
+      "sha256": "5005638b79e1c8ff845b2a7f3aebd51c94ca6b58cb56f805d5628aebbb2861fc",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/profiles.mjs",
+      "mode": 420,
+      "size": 18822,
+      "sha256": "b84a60e0cd891df092a5aff4106e59c99d30c711409cb307fcce247abd0f3f1e",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/render-report.mjs",
+      "mode": 493,
+      "size": 667,
+      "sha256": "83c9cb004108ddd3ee0e01fde6fc2b5649e9521847fb21c155fa80dcdded0e11",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/routing.mjs",
+      "mode": 420,
+      "size": 7805,
+      "sha256": "9728fcdcd3e622853cd6c2a3fc8b835ae76c5261e3a95898f6ad315e0af2bd4c",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/state.mjs",
+      "mode": 420,
+      "size": 145,
+      "sha256": "f6b42b220ab3a0407cc26d1795f30f42cad1aab0580c21067c8c787592deeb03",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/validate-contract.mjs",
+      "mode": 493,
+      "size": 787,
+      "sha256": "411cc7dd38c92dddc75d819b10fd6592d2eee6fb6507b7c618c1ed14a0b8b290",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/workflow.mjs",
+      "mode": 420,
+      "size": 98873,
+      "sha256": "721441c8f6accb3e0bd0d78315ce34d45498b684394f07eaa8f085acdfaa30c2",
+      "type": "file"
+    },
+    {
+      "path": "tests/agent-eval.test.mjs",
+      "mode": 420,
+      "size": 10649,
+      "sha256": "79dccf4ce5af2c94fca7d11fde74ae2c5ebdce7748ba4875a60740ac77500362",
+      "type": "file"
+    },
+    {
+      "path": "tests/delivery-v2.test.mjs",
+      "mode": 420,
+      "size": 13942,
+      "sha256": "1c59acb89e1e938fec7fbee8ea919d6ebbcc5cd4b52259b42ca5c0c0ede3159a",
+      "type": "file"
+    },
+    {
+      "path": "tests/evals.test.mjs",
+      "mode": 420,
+      "size": 16374,
+      "sha256": "8582e58d7d8402ad50c23c0efb53db7b38f7cadb38613f7da75480c55f987ada",
+      "type": "file"
+    },
+    {
+      "path": "tests/finalization.test.mjs",
+      "mode": 420,
+      "size": 17772,
+      "sha256": "374e63c4b563e69ae3c213f5669ecf72c57cd5c6851ac7b800124899d356e8fd",
+      "type": "file"
+    },
+    {
+      "path": "tests/helpers.mjs",
+      "mode": 420,
+      "size": 4856,
+      "sha256": "37ef6e00faa061db773e9cb87002e1839337041d3cfa6ccb1a4a7fafe537c7b7",
+      "type": "file"
+    },
+    {
+      "path": "tests/intelligence-integration.test.mjs",
+      "mode": 420,
+      "size": 9922,
+      "sha256": "d386bbae1a3dead819fb06138d9b138034e2727ff7fe35ed7f5edcf0cad3a2ac",
+      "type": "file"
+    },
+    {
+      "path": "tests/intelligence.test.mjs",
+      "mode": 420,
+      "size": 6709,
+      "sha256": "539002c1f5132ef93bcd56938198ec0e089b0015efe5604b8bc0d86e98470bdc",
+      "type": "file"
+    },
+    {
+      "path": "tests/knowledge.test.mjs",
+      "mode": 420,
+      "size": 13435,
+      "sha256": "5f7acf5ae626ff73b4135e53c372f6fc24b068b9037a0b37e75f8906e4e61d36",
+      "type": "file"
+    },
+    {
+      "path": "tests/workflow.test.mjs",
+      "mode": 420,
+      "size": 14625,
+      "sha256": "31a44bd80743c308acc29158676467fb9e91ba113cfef54cc68e797ff161b5b4",
+      "type": "file"
+    }
+  ],
+  "manifestPath": ".openatdd/finalization.json",
+  "manifestDigest": "b2e5a76c207591dbd69217bed4efbf9cc34a29b3cdcd62c1dd3ca606f93766cd",
+  "profileDigest": "7d3584bcc58d89c5551e2d71f9e7e3bcea684ef13cd9f1c4a9d8f657e60025a2",
+  "commandResults": [
+    {
+      "id": "cli-help-smoke",
+      "argv": [
+        "node",
+        "skills/openatdd/scripts/openatdd.mjs",
+        "help"
+      ],
+      "durationMs": 34,
+      "exitCode": 0,
+      "evidencePath": ".openatdd/tasks/openatdd-1-0/preview/cli-help-smoke.md"
+    },
+    {
+      "id": "cli-status-smoke",
+      "argv": [
+        "node",
+        "skills/openatdd/scripts/openatdd.mjs",
+        "status",
+        "openatdd-1-0",
+        "--json"
+      ],
+      "durationMs": 32,
+      "exitCode": 0,
+      "evidencePath": ".openatdd/tasks/openatdd-1-0/preview/cli-status-smoke.md"
+    }
+  ],
+  "metrics": {
+    "mode": "dry-run",
+    "startedAt": "2026-07-24T02:51:11.511Z",
+    "wallTimeMs": 116,
+    "dryRunRuns": 1,
+    "finalRuns": 0,
+    "commandInvocations": 2,
+    "cliInvocations": 2,
+    "commandDurationMs": 66,
+    "checkGroupRuns": {
+      "focused": 0,
+      "module": 0,
+      "broad": 0
+    },
+    "uatJourneyRuns": 0,
+    "uatBatchRuns": 0,
+    "browserRoundTrips": 0,
+    "affectedHistoryPasses": 0,
+    "historyRuns": 0,
+    "historyCacheHits": 0,
+    "evidenceWrites": 2,
+    "evidenceWritesByPhase": {
+      "entry-points": 2
+    },
+    "phaseDurationsMs": {
+      "preflight": 0,
+      "entry-points": 68,
+      "handoff-preview": 2,
+      "source-stability": 11
+    },
+    "linkChecks": 0,
+    "warnings": []
+  },
+  "errors": []
+}

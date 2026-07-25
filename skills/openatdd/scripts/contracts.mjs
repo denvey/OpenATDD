@@ -1,10 +1,20 @@
-import { sha256 } from "./lib.mjs";
+import { inferHumanLanguage, sha256 } from "./lib.mjs";
 
-const PLACEHOLDER = /\bTODO\b|\[replace|<replace|TBD/i;
-const REQUIRED_ACCEPTANCE_FIELDS = ["Given", "When", "Then", "Evidence"];
+const PLACEHOLDER = /\bTODO\b|\[replace|<replace|TBD|待填写/i;
+const REQUIRED_ACCEPTANCE_FIELDS = Object.freeze({
+  given: ["Given", "前提"],
+  when: ["When", "操作"],
+  then: ["Then", "结果"],
+  evidence: ["Evidence", "证据"],
+});
+
+function escaped(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 function section(markdown, heading) {
-  const pattern = new RegExp(`^##\\s+${heading}\\s*$`, "im");
+  const headings = Array.isArray(heading) ? heading : [heading];
+  const pattern = new RegExp(`^##\\s+(?:${headings.map(escaped).join("|")})\\s*$`, "im");
   const match = pattern.exec(markdown);
   if (!match) return "";
   const start = match.index + match[0].length;
@@ -13,11 +23,33 @@ function section(markdown, heading) {
   return (next ? rest.slice(0, next.index) : rest).trim();
 }
 
+function markedSection(markdown, name, fallbackHeading = undefined) {
+  const startMarker = `<!-- openatdd:${name} -->`;
+  const endMarker = `<!-- /openatdd:${name} -->`;
+  const start = markdown.indexOf(startMarker);
+  const end = markdown.indexOf(endMarker);
+  if (start !== -1 && end > start) {
+    return markdown.slice(start + startMarker.length, end).replace(/^\s*##\s+.*$/m, "").trim();
+  }
+  return fallbackHeading ? section(markdown, fallbackHeading) : "";
+}
+
+function sectionStart(markdown, name, headings) {
+  const marker = markdown.indexOf(`<!-- openatdd:${name} -->`);
+  if (marker !== -1) return marker;
+  const aliases = Array.isArray(headings) ? headings : [headings];
+  const pattern = new RegExp(`^##\\s+(?:${aliases.map(escaped).join("|")})\\s*$`, "im");
+  return pattern.exec(markdown)?.index ?? -1;
+}
+
 function meaningful(value) {
   return Boolean(value?.trim()) && !PLACEHOLDER.test(value);
 }
 
 export function acceptanceTemplate(taskId, requirement) {
+  if (inferHumanLanguage(requirement) === "zh-CN") {
+    return `# 验收卡：${taskId}\n\n## 目标\n\n${requirement}\n\n## 建议用户旅程\n\n1. 待填写：描述真实用户的第一个动作。\n2. 待填写：描述可观察的成功结果。\n\n## 验收标准\n\n### AC-01 [AUTO] [BLOCKING] 待填写：命名一个可观察结果\n- 前提：待填写\n- 操作：待填写\n- 结果：待填写\n- 证据：待填写\n\n## 边界\n\n- 待填写：说明重要范围、角色、环境或排除项。\n`;
+  }
   return `# Acceptance card: ${taskId}\n\n## Goal\n\n${requirement}\n\n## Suggested user journey\n\n1. TODO: Describe the real user's first action.\n2. TODO: Describe the observable successful outcome.\n\n## Criteria\n\n### AC-01 [AUTO] [BLOCKING] TODO: Name an observable outcome\n- Given: TODO\n- When: TODO\n- Then: TODO\n- Evidence: TODO\n\n## Boundaries\n\n- TODO: State important scope, role, environment, or exclusion.\n`;
 }
 
@@ -32,9 +64,9 @@ export function parseAcceptance(markdown) {
     const end = matches[index + 1]?.index ?? markdown.length;
     const body = markdown.slice(start, end);
     const fields = {};
-    for (const name of REQUIRED_ACCEPTANCE_FIELDS) {
-      const fieldMatch = new RegExp(`^-\\s+${name}:\\s*(.+)$`, "im").exec(body);
-      fields[name.toLowerCase()] = fieldMatch?.[1]?.trim() ?? "";
+    for (const [name, aliases] of Object.entries(REQUIRED_ACCEPTANCE_FIELDS)) {
+      const fieldMatch = new RegExp(`^-\\s+(?:${aliases.map(escaped).join("|")})[:：]\\s*(.+)$`, "im").exec(body);
+      fields[name] = fieldMatch?.[1]?.trim() ?? "";
     }
     criteria.push({
       id: match[1],
@@ -46,10 +78,10 @@ export function parseAcceptance(markdown) {
   }
 
   return {
-    goal: section(markdown, "Goal"),
-    journey: section(markdown, "Suggested user journey"),
+    goal: section(markdown, ["Goal", "目标"]),
+    journey: section(markdown, ["Suggested user journey", "建议用户旅程"]),
     criteria,
-    boundaries: section(markdown, "Boundaries"),
+    boundaries: section(markdown, ["Boundaries", "边界"]),
   };
 }
 
@@ -79,22 +111,28 @@ export function validateAcceptance(markdown) {
 }
 
 export function solutionTemplate(taskId, criteria) {
+  const language = inferHumanLanguage(criteria.map((criterion) => [criterion.title, criterion.given, criterion.when, criterion.then]));
   const traceRows = criteria
-    .map((criterion) => `| ${criterion.id} | TODO: implementation | TODO: verification |`)
+    .map((criterion) => language === "zh-CN"
+      ? `| ${criterion.id} | 待填写：实现 | 待填写：验证 |`
+      : `| ${criterion.id} | TODO: implementation | TODO: verification |`)
     .join("\n");
 
-  return `# Solution card: ${taskId}\n\n## Implementation\n\n- TODO: Describe the smallest credible implementation.\n\n## Impact paths\n\n- \`TODO/path\`\n\n## Acceptance trace\n\n| Acceptance | Implementation | Verification |\n|---|---|---|\n${traceRows}\n\n## Risks\n\n- TODO: Name a material risk and mitigation.\n\n## Deliberate exclusions\n\n- TODO: State what this solution intentionally does not add.\n`;
+  if (language === "zh-CN") {
+    return `# 方案卡：${taskId}\n\n<!-- openatdd:recommendation -->\n## 推荐方案\n\n待填写：用几句话说明最小可信方案。\n<!-- /openatdd:recommendation -->\n\n<!-- openatdd:rationale -->\n## 为什么适合当前项目\n\n- 待填写：说明如何复用项目架构并保持简洁。\n<!-- /openatdd:rationale -->\n\n<!-- openatdd:changes -->\n## 主要改动\n\n- 待填写：列出人需要了解的少量关键变化。\n<!-- /openatdd:changes -->\n\n<!-- openatdd:risks -->\n## 风险\n\n- 待填写：说明重要风险及缓解方式。\n<!-- /openatdd:risks -->\n\n<!-- openatdd:exclusions -->\n## 明确排除\n\n- 待填写：说明方案明确不增加什么。\n<!-- /openatdd:exclusions -->\n\n## 实现细节\n\n- 待填写：提供按需查看的简洁技术细节。\n\n## 影响路径\n\n- \`待填写/路径\`\n\n## 验收追踪\n\n| 验收 | 实现 | 验证 |\n|---|---|---|\n${traceRows}\n`;
+  }
+  return `# Solution card: ${taskId}\n\n<!-- openatdd:recommendation -->\n## Recommendation\n\nTODO: State the smallest credible approach in a few sentences.\n<!-- /openatdd:recommendation -->\n\n<!-- openatdd:rationale -->\n## Why this fits\n\n- TODO: Explain why this reuses the project's architecture and stays simple.\n<!-- /openatdd:rationale -->\n\n<!-- openatdd:changes -->\n## Main changes\n\n- TODO: Name the few material changes a person should understand.\n<!-- /openatdd:changes -->\n\n<!-- openatdd:risks -->\n## Risks\n\n- TODO: Name a material risk and mitigation.\n<!-- /openatdd:risks -->\n\n<!-- openatdd:exclusions -->\n## Deliberate exclusions\n\n- TODO: State what this solution intentionally does not add.\n<!-- /openatdd:exclusions -->\n\n## Implementation\n\n- TODO: Describe the concise technical detail available on demand.\n\n## Impact paths\n\n- \`TODO/path\`\n\n## Acceptance trace\n\n| Acceptance | Implementation | Verification |\n|---|---|---|\n${traceRows}\n`;
 }
 
 export function parseSolution(markdown) {
-  const impactBody = section(markdown, "Impact paths");
+  const impactBody = section(markdown, ["Impact paths", "影响路径"]);
   const impactPaths = impactBody
     .split("\n")
     .map((line) => /^\s*-\s+(?:`([^`]+)`|(.+))\s*$/.exec(line))
     .filter(Boolean)
     .map((match) => (match[1] ?? match[2]).trim());
 
-  const traceBody = section(markdown, "Acceptance trace");
+  const traceBody = section(markdown, ["Acceptance trace", "验收追踪"]);
   const trace = [];
   for (const line of traceBody.split("\n")) {
     const cells = line
@@ -108,19 +146,47 @@ export function parseSolution(markdown) {
   }
 
   return {
-    implementation: section(markdown, "Implementation"),
+    recommendation: markedSection(markdown, "recommendation", "Recommendation"),
+    rationale: markedSection(markdown, "rationale", "Why this fits"),
+    changes: markedSection(markdown, "changes", "Main changes"),
+    implementation: section(markdown, ["Implementation", "实现细节"]),
     impactPaths,
     trace,
-    risks: section(markdown, "Risks"),
-    exclusions: section(markdown, "Deliberate exclusions"),
+    risks: markedSection(markdown, "risks", ["Risks", "风险"]),
+    exclusions: markedSection(markdown, "exclusions", ["Deliberate exclusions", "明确排除"]),
   };
 }
 
-export function validateSolution(markdown, acceptanceCriteria) {
+export function validateSolution(markdown, acceptanceCriteria, options = {}) {
   const parsed = parseSolution(markdown);
   const errors = [];
   const warnings = [];
 
+  if (options.progressive) {
+    if (!meaningful(parsed.recommendation)) errors.push("The recommendation summary is missing or contains a placeholder.");
+    if (!meaningful(parsed.rationale)) errors.push("The project-fit rationale is missing or contains a placeholder.");
+    if (!meaningful(parsed.changes)) errors.push("The main-changes summary is missing or contains a placeholder.");
+    if (!meaningful(parsed.risks)) errors.push("The material-risks summary is missing or contains a placeholder.");
+    if (!meaningful(parsed.exclusions)) errors.push("The deliberate-exclusions summary is missing or contains a placeholder.");
+    const orderedSections = [
+      ["recommendation", ["Recommendation", "推荐方案"]],
+      ["rationale", ["Why this fits", "为什么适合当前项目"]],
+      ["changes", ["Main changes", "主要改动"]],
+      ["risks", ["Risks", "风险"]],
+      ["exclusions", ["Deliberate exclusions", "明确排除"]],
+      ["implementation", ["Implementation", "实现细节"]],
+      ["impact", ["Impact paths", "影响路径"]],
+      ["trace", ["Acceptance trace", "验收追踪"]],
+    ].map(([name, headings]) => ({ name, position: sectionStart(markdown, name, headings) }));
+    if (orderedSections.every((item) => item.position !== -1)) {
+      for (let index = 1; index < orderedSections.length; index += 1) {
+        if (orderedSections[index].position < orderedSections[index - 1].position) {
+          errors.push("The progressive solution must present recommendation, rationale, changes, risks, and exclusions before optional technical details.");
+          break;
+        }
+      }
+    }
+  }
   if (!meaningful(parsed.implementation)) errors.push("The Implementation section is missing or contains a placeholder.");
   if (!meaningful(parsed.risks)) errors.push("The Risks section is missing or contains a placeholder.");
   if (parsed.impactPaths.length === 0) errors.push("At least one concrete impact path is required.");
@@ -143,7 +209,7 @@ export function validateSolution(markdown, acceptanceCriteria) {
   for (const criterion of acceptanceCriteria) {
     if (!seen.has(criterion.id)) errors.push(`Solution does not trace acceptance criterion ${criterion.id}.`);
   }
-  if (!meaningful(parsed.exclusions)) warnings.push("Consider stating deliberate exclusions to keep the solution bounded.");
+  if (!meaningful(parsed.exclusions) && !options.progressive) warnings.push("Consider stating deliberate exclusions to keep the solution bounded.");
 
   return { parsed, errors, warnings };
 }

@@ -1,0 +1,16 @@
+{
+  "id": "dev-project-context-handoff-001",
+  "set": "dev",
+  "scenario": "project-context-handoff",
+  "input": "Prepare a reusable local UAT environment and a detailed final acceptance handoff",
+  "expected": {
+    "automatic_preflight_passed": true,
+    "numbered_steps_cover_acceptance": true,
+    "descriptive_links_prepared": true,
+    "only_two_human_gates": true
+  },
+  "forbidden": [
+    "Add a third human approval before UAT",
+    "Hand off an undetailed report without prepared links"
+  ]
+}

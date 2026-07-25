@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "taskId": "openatdd-1-0",
+  "status": "passed",
+  "completedAt": "2026-07-24T02:51:30.265Z",
+  "sourceFingerprint": "b256b0074dbf19a0ec1336d88851286bd43a436def54b351c7addf8831c73ba8",
+  "inventoryCount": 63,
+  "manifestDigest": "b2e5a76c207591dbd69217bed4efbf9cc34a29b3cdcd62c1dd3ca606f93766cd",
+  "profileDigest": "7d3584bcc58d89c5551e2d71f9e7e3bcea684ef13cd9f1c4a9d8f657e60025a2",
+  "verificationEpoch": 10,
+  "metrics": {
+    "mode": "final",
+    "startedAt": "2026-07-24T02:51:21.757Z",
+    "wallTimeMs": 8530,
+    "dryRunRuns": 1,
+    "finalRuns": 1,
+    "commandInvocations": 10,
+    "cliInvocations": 10,
+    "commandDurationMs": 8428,
+    "checkGroupRuns": {
+      "focused": 1,
+      "module": 1,
+      "broad": 1
+    },
+    "uatJourneyRuns": 1,
+    "uatBatchRuns": 3,
+    "browserRoundTrips": 3,
+    "affectedHistoryPasses": 1,
+    "historyRuns": 3,
+    "historyCacheHits": 0,
+    "evidenceWrites": 10,
+    "evidenceWritesByPhase": {
+      "checks": 3,
+      "uat": 7
+    },
+    "phaseDurationsMs": {
+      "preflight": 1,
+      "checks": 4224,
+      "uat": 4211,
+      "acceptance-mapping": 0,
+      "history": 3,
+      "handoff-readiness": 68
+    },
+    "linkChecks": 0,
+    "warnings": []
+  },
+  "affectedHistory": [
+    "detailed-uat-handoff",
+    "fast-portable-finalization",
+    "openatdd-mvp"
+  ]
+}

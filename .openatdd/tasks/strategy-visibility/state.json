@@ -1,0 +1,935 @@
+{
+  "schemaVersion": 3,
+  "deliveryVersion": 3,
+  "taskId": "strategy-visibility",
+  "requirement": "增加一个默认关闭的策略可见性开关；打开后在执行过程中显示当前采用的 OpenATDD 能力组合、借鉴来源、启用原因、未启用能力及效果指标，并支持完整、裸 Agent 和能力消融对照评测。",
+  "phase": "READY_FOR_UAT",
+  "createdAt": "2026-07-24T03:10:15.553Z",
+  "updatedAt": "2026-07-24T03:56:40.047Z",
+  "acceptance": {
+    "approvedAt": "2026-07-24T03:33:07.161Z",
+    "sha256": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca",
+    "items": [
+      {
+        "id": "AC-01",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "正常执行保持零额外干扰",
+        "given": "已初始化的 OpenATDD 项目正在交付任务。",
+        "when": "任务完成路由、实现、验证和 finalization。",
+        "then": "运行过程中不增加策略播报、问题、Token 上下文或确认步骤；未请求回溯时，现有 1.0 体验保持不变。",
+        "evidence": "兼容性、交互轮次和默认 CLI 输出回归测试。"
+      },
+      {
+        "id": "AC-02",
+        "classification": "ASSISTED",
+        "blocking": true,
+        "title": "完成后按需生成可理解的策略回溯",
+        "given": "任务已有路由、执行或验收状态。",
+        "when": "开发者请求回溯本次采用的方案。",
+        "then": "用当前对话语言生成一份简短报告，说明任务深度、选择理由、能力借鉴来源、策略选择、实际调用、未调用项及原因，并明确不展示内部思维链。",
+        "evidence": "Quick、Standard、Deep 回溯快照，真实 CLI 输出和人工可读性判断。"
+      },
+      {
+        "id": "AC-03",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "实际调用、效果和证据可追溯",
+        "given": "任务产生 Agent、调研、审查、恢复、finalization 或评测记录。",
+        "when": "开发者生成策略回溯或机器可读输出。",
+        "then": "报告只从确定性状态和证据派生，展示实际 Agent/审查/恢复记录及可用的人类轮次、首次验收、Token、缓存 Token、耗时和通过率；每项结论可链接到来源，缺失指标明确标为不可用。",
+        "evidence": "状态派生、指标聚合、缓存 Token 和缺失值回归测试。"
+      },
+      {
+        "id": "AC-04",
+        "classification": "ASSISTED",
+        "blocking": true,
+        "title": "对照评测能说明效果并给出优化建议",
+        "given": "存在完整 OpenATDD、裸 Agent 和一个或多个能力消融配置。",
+        "when": "同一版本化场景重复运行并生成对照报告。",
+        "then": "报告列出每组启用能力、通过率、人类交互、过度设计、合同违规、Token/时间及相对差异，并依据证据提出“保留、减少、关闭或继续观察”的建议；不因单个场景得分相同就宣称框架更优。",
+        "evidence": "版本化消融配置、隐藏检查、对照报告和人工结论判断。"
+      }
+    ]
+  },
+  "solution": {
+    "approvedAt": "2026-07-24T03:35:33.733Z",
+    "sha256": "76c6c118587319e8ac0e9d07f57b30c104a30b8b6efe4d8b443df7eb21d7dbe6",
+    "impactPaths": [
+      "skills/openatdd/scripts/strategy.mjs",
+      "skills/openatdd/scripts/openatdd.mjs",
+      "skills/openatdd/scripts/agent-eval.mjs",
+      "skills/openatdd/scripts/codex-agent-adapter.mjs",
+      "skills/openatdd/scripts/workflow.mjs",
+      "skills/openatdd/SKILL.md",
+      "README.md",
+      "tests",
+      "evals/agent"
+    ],
+    "trace": [
+      {
+        "acceptanceId": "AC-01",
+        "implementation": "回溯命令与正常工作流完全分离",
+        "verification": "默认输出、交互轮次和兼容性回归"
+      },
+      {
+        "acceptanceId": "AC-02",
+        "implementation": "能力目录、状态派生和中英文回溯渲染",
+        "verification": "Quick/Standard/Deep 快照与人工可读性判断"
+      },
+      {
+        "acceptanceId": "AC-03",
+        "implementation": "证据链接、调用记录和 Token/耗时聚合",
+        "verification": "状态、缺失值、缓存 Token 和真实 CLI 测试"
+      },
+      {
+        "acceptanceId": "AC-04",
+        "implementation": "评测 profile、裸 Agent/消融组和规则化建议",
+        "verification": "隐藏检查、差异计算、样本量与无夸大结论测试"
+      }
+    ]
+  },
+  "routing": {
+    "status": "assessed",
+    "assessedAt": "2026-07-24T03:11:02.739Z",
+    "schemaVersion": 1,
+    "lane": "standard",
+    "reasons": [
+      "cross-module-scope",
+      "partial-project-pattern",
+      "medium-uncertainty"
+    ],
+    "assessment": {
+      "scope": "cross-module",
+      "projectPattern": "partial",
+      "reversibility": "reversible",
+      "uncertainty": "medium",
+      "riskSignals": []
+    },
+    "investigation": {
+      "externalResearch": false
+    },
+    "agents": {
+      "policy": "optional",
+      "roles": [
+        "independent-review"
+      ]
+    }
+  },
+  "decisions": [],
+  "reviews": {
+    "solution": {
+      "status": "passed",
+      "reviewer": "main",
+      "summary": "方案将可观测性限制在手动回溯，复用现有状态与评测证据，不影响正常执行。",
+      "findings": [
+        "摘要与细节一致，未隐藏运行期行为变化。",
+        "未增加持久开关、服务或外部框架依赖。",
+        "四条验收均有实现和验证追踪。"
+      ],
+      "checks": [
+        "simplicity",
+        "project-fit",
+        "summary-detail-consistency",
+        "hidden-material-choices",
+        "acceptance-trace",
+        "unnecessary-infrastructure"
+      ],
+      "agentId": null,
+      "contextDigest": null,
+      "reviewedAt": "2026-07-24T03:34:23.142Z",
+      "solutionSha256": "76c6c118587319e8ac0e9d07f57b30c104a30b8b6efe4d8b443df7eb21d7dbe6"
+    }
+  },
+  "agents": {
+    "dispatches": []
+  },
+  "context": {
+    "status": "prepared",
+    "path": ".openatdd/tasks/strategy-visibility/context.json",
+    "digest": "624302e4e8b12f25e44b2d48f657d4ada5b230908cf9bed2f105c41f78be67b5",
+    "sourceDigests": {
+      ".openatdd/environments/observations.json": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+      ".openatdd/memory/incidents/INC-2026-001-a-repaired-failed-criterion-remained-failed-inst.md": "298ac0e75faf6f47f560c3960fd54f7f1d60e3191f1406dd110388266aec30af",
+      ".openatdd/memory/incidents/INC-2026-005-legacy-projects-without-openatdd-reverification-.md": "cc3a3f36e78be5ad8dd7529f023c0fa60778cdc113d2e1ea7f9a7fbb490bb975",
+      ".openatdd/memory/incidents/INC-2026-007-formal-finalization-marks-assisted-criteria-pass.md": "3857a35e5f9f3f391d809bf34e8a3d8bd026bfcb2bc6814dd7669284cd5535f3",
+      ".openatdd/memory/incidents/INC-2026-009-resumed-repairs-and-dispatched-fresh-context-age.md": "ee53929abf29db3b7e15e37e67fd25395206c678b30277a0e049342aa3d9ab8e",
+      ".openatdd/memory/incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md": "57953cbd438e7f162ea0db5c4ba51093a22f1ce65ccfd3ce0d3aed62da273384",
+      ".openatdd/memory/invariants.md": "03ee365830bf5d10ec82cc8f0985d583fd2bc94f67c2ce1ceafa01eeb959f8af",
+      ".openatdd/tasks/detailed-uat-handoff/acceptance.md": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
+      ".openatdd/tasks/fast-portable-finalization/acceptance.md": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+      ".openatdd/tasks/openatdd-1-0/acceptance.md": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+      ".openatdd/tasks/openatdd-1-0/state.json": "53f2b4ed6d7e21c601762ea45397b2d5da0f95f5939cdbd9f715e6dcd8c5ee60",
+      ".openatdd/tasks/openatdd-mvp/acceptance.md": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+      ".openatdd/tasks/strategy-visibility/acceptance.md": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca",
+      ".openatdd/tasks/strategy-visibility/solution.md": "76c6c118587319e8ac0e9d07f57b30c104a30b8b6efe4d8b443df7eb21d7dbe6",
+      ".openatdd/tasks/strategy-visibility/state.json": "952dc96767dabca9c4425d2fcc86b2f4b229336fb02bbb6eb754608c74a4025c"
+    }
+  },
+  "repair": {
+    "attempts": [],
+    "lastProgressFingerprint": null,
+    "lastHypothesis": null,
+    "consecutiveNoProgress": 0
+  },
+  "verificationNotBefore": "2026-07-24T03:56:33.804Z",
+  "verification": {
+    "epoch": 2,
+    "startedAt": "2026-07-24T03:56:33.804Z",
+    "clean": true,
+    "reason": "final source frozen: 46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae"
+  },
+  "results": {
+    "AC-01": {
+      "acceptanceId": "AC-01",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Finalization manifest for AC-01 verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+          "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+          "size": 1605,
+          "modifiedAt": "2026-07-24T03:56:38.343Z",
+          "capturedAt": "2026-07-24T03:56:38.343Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.975Z",
+      "epoch": 2
+    },
+    "AC-02": {
+      "acceptanceId": "AC-02",
+      "classification": "ASSISTED",
+      "blocking": true,
+      "status": "manual",
+      "summary": "Finalization manifest for AC-02 prepared evidence; explicit human judgment remains required.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.975Z",
+      "epoch": 2
+    },
+    "AC-03": {
+      "acceptanceId": "AC-03",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Finalization manifest for AC-03 verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-focused-strategy-focused-strategy-tests.md",
+          "sha256": "5e4f66f9a6dd2768b17e9d6aaf8c59b33a688e45698526ef800af68285ed1284",
+          "size": 2113,
+          "modifiedAt": "2026-07-24T03:56:34.696Z",
+          "capturedAt": "2026-07-24T03:56:34.697Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+          "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+          "size": 14645,
+          "modifiedAt": "2026-07-24T03:56:38.379Z",
+          "capturedAt": "2026-07-24T03:56:38.379Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.975Z",
+      "epoch": 2
+    },
+    "AC-04": {
+      "acceptanceId": "AC-04",
+      "classification": "ASSISTED",
+      "blocking": true,
+      "status": "manual",
+      "summary": "Finalization manifest for AC-04 prepared evidence; explicit human judgment remains required.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-module-evaluations-module-eval-suite.md",
+          "sha256": "e1cc3b2ae7eddd20d5e1f2adb4d2dcdae26c9166d00b36663df2441fbb1a1b23",
+          "size": 2689,
+          "modifiedAt": "2026-07-24T03:56:35.671Z",
+          "capturedAt": "2026-07-24T03:56:35.671Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+          "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+          "size": 2817,
+          "modifiedAt": "2026-07-24T03:56:38.408Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+          "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+          "size": 1328,
+          "modifiedAt": "2026-07-24T03:56:39.071Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+          "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+          "size": 4468,
+          "modifiedAt": "2026-07-24T03:56:39.359Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        },
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+          "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+          "size": 633,
+          "modifiedAt": "2026-07-24T03:56:39.975Z",
+          "capturedAt": "2026-07-24T03:56:39.975Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:39.975Z",
+      "epoch": 2
+    }
+  },
+  "checks": {
+    "focused-strategy": {
+      "id": "focused-strategy",
+      "name": "Strategy retrospective and evaluation regressions",
+      "command": "node --test tests/strategy.test.mjs tests/agent-eval.test.mjs tests/intelligence-integration.test.mjs",
+      "status": "passed",
+      "scope": "focused",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": 891,
+      "summary": "Final focused group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-focused-strategy-focused-strategy-tests.md",
+          "sha256": "5e4f66f9a6dd2768b17e9d6aaf8c59b33a688e45698526ef800af68285ed1284",
+          "size": 2113,
+          "modifiedAt": "2026-07-24T03:56:34.696Z",
+          "capturedAt": "2026-07-24T03:56:34.697Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:34.697Z",
+      "epoch": 2
+    },
+    "module-evaluations": {
+      "id": "module-evaluations",
+      "name": "OpenATDD deterministic and Agent evaluation corpus",
+      "command": "npm run eval",
+      "status": "passed",
+      "scope": "module",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": 973,
+      "summary": "Final module group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-module-evaluations-module-eval-suite.md",
+          "sha256": "e1cc3b2ae7eddd20d5e1f2adb4d2dcdae26c9166d00b36663df2441fbb1a1b23",
+          "size": 2689,
+          "modifiedAt": "2026-07-24T03:56:35.671Z",
+          "capturedAt": "2026-07-24T03:56:35.671Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:35.671Z",
+      "epoch": 2
+    },
+    "broad-project": {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "command": "npm run check",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "durationMs": 2346,
+      "summary": "Final broad group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "9c0f3d9bd11f2022bf6484dff9eca19a6f186cdfe52448d7542852e8caec9249",
+          "size": 7861,
+          "modifiedAt": "2026-07-24T03:56:38.023Z",
+          "capturedAt": "2026-07-24T03:56:38.023Z"
+        }
+      ],
+      "verifiedAt": "2026-07-24T03:56:38.023Z",
+      "epoch": 2
+    }
+  },
+  "checkSequence": [
+    {
+      "id": "focused-strategy",
+      "scope": "focused",
+      "status": "passed",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "verifiedAt": "2026-07-24T03:56:34.697Z",
+      "epoch": 2
+    },
+    {
+      "id": "module-evaluations",
+      "scope": "module",
+      "status": "passed",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "verifiedAt": "2026-07-24T03:56:35.671Z",
+      "epoch": 2
+    },
+    {
+      "id": "broad-project",
+      "scope": "broad",
+      "status": "passed",
+      "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+      "verifiedAt": "2026-07-24T03:56:38.023Z",
+      "epoch": 2
+    }
+  ],
+  "issues": [],
+  "affectedDependencies": [
+    {
+      "taskId": "detailed-uat-handoff",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/workflow.mjs",
+          "skills/openatdd/scripts/workflow.mjs"
+        ],
+        [
+          "skills/openatdd/SKILL.md",
+          "skills/openatdd/SKILL.md"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ],
+        [
+          "tests",
+          "tests"
+        ],
+        [
+          "evals/agent",
+          "evals"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent:evals",
+        "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd/scripts/workflow.mjs",
+        "path-overlap:tests:tests"
+      ],
+      "notBefore": "2026-07-24T03:35:33.733Z"
+    },
+    {
+      "taskId": "fast-portable-finalization",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/workflow.mjs",
+          "skills/openatdd/scripts/workflow.mjs"
+        ],
+        [
+          "skills/openatdd/SKILL.md",
+          "skills/openatdd/SKILL.md"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ],
+        [
+          "tests",
+          "tests"
+        ],
+        [
+          "evals/agent",
+          "evals"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent:evals",
+        "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd/scripts/workflow.mjs",
+        "path-overlap:tests:tests"
+      ],
+      "notBefore": "2026-07-24T03:35:33.733Z"
+    },
+    {
+      "taskId": "openatdd-1-0",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/agent-eval.mjs",
+          "skills/openatdd/scripts/agent-eval.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/workflow.mjs",
+          "skills/openatdd/scripts/workflow.mjs"
+        ],
+        [
+          "skills/openatdd/SKILL.md",
+          "skills/openatdd/SKILL.md"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ],
+        [
+          "tests",
+          "tests"
+        ],
+        [
+          "evals/agent",
+          "evals"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent:evals",
+        "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd/scripts/workflow.mjs",
+        "path-overlap:tests:tests"
+      ],
+      "notBefore": "2026-07-24T03:35:33.733Z"
+    },
+    {
+      "taskId": "openatdd-mvp",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08",
+        "AC-09"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/strategy.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/agent-eval.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/codex-agent-adapter.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/workflow.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/SKILL.md",
+          "skills/openatdd"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ],
+        [
+          "tests",
+          "tests"
+        ],
+        [
+          "evals/agent",
+          "evals"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent:evals",
+        "path-overlap:skills/openatdd/SKILL.md:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/strategy.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd",
+        "path-overlap:tests:tests"
+      ],
+      "notBefore": "2026-07-24T03:35:33.733Z"
+    }
+  ],
+  "preflight": {
+    "schemaVersion": 1,
+    "environment": "local",
+    "profile": ".openatdd/environments/local.yaml",
+    "status": "passed",
+    "checkedAt": "2026-07-24T03:56:33.804Z",
+    "durationMs": 0,
+    "checks": [
+      {
+        "name": "workspace",
+        "status": "passed",
+        "detail": "."
+      },
+      {
+        "name": "project",
+        "status": "passed",
+        "detail": "configured OpenATDD; expected openatdd or openatdd"
+      },
+      {
+        "name": "start_command",
+        "status": "passed",
+        "detail": "npm run check"
+      },
+      {
+        "name": "application_version",
+        "status": "passed",
+        "detail": "expected 1.0.0; observed 1.0.0"
+      },
+      {
+        "name": "services",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "entry_url",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "credential_variables",
+        "status": "passed",
+        "detail": "0 runtime value(s) loaded and redacted"
+      },
+      {
+        "name": "login",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "organization",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "integration",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "fixture",
+        "status": "not_applicable",
+        "detail": "n/a"
+      },
+      {
+        "name": "known_workarounds",
+        "status": "not_applicable",
+        "detail": "none"
+      }
+    ],
+    "warnings": [],
+    "credentialVariables": []
+  },
+  "uat": {
+    "planStatus": "planned",
+    "plannedAt": "2026-07-24T03:56:38.023Z",
+    "batches": {
+      "default-no-interference": {
+        "id": "default-no-interference",
+        "status": "passed",
+        "summary": "Normal delivery remains unchanged until retrospective is requested passed.",
+        "evidence": [
+          {
+            "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+            "sha256": "83c3271f8764252837c08bb0896d4f8eaf1d5894d2b137cfabef8f49c4dc3d8b",
+            "size": 1605,
+            "modifiedAt": "2026-07-24T03:56:38.343Z",
+            "capturedAt": "2026-07-24T03:56:38.343Z"
+          }
+        ],
+        "verifiedAt": "2026-07-24T03:56:38.343Z",
+        "epoch": 2
+      },
+      "manual-retrospective": {
+        "id": "manual-retrospective",
+        "status": "passed",
+        "summary": "Manual retrospective explains selected and observed capabilities with evidence passed.",
+        "evidence": [
+          {
+            "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+            "sha256": "c47fad7fd2ff99c2416e5095c45cb0b3356a735cd1692fd4877d0c831b9ac404",
+            "size": 14645,
+            "modifiedAt": "2026-07-24T03:56:38.379Z",
+            "capturedAt": "2026-07-24T03:56:38.379Z"
+          }
+        ],
+        "verifiedAt": "2026-07-24T03:56:38.380Z",
+        "epoch": 2
+      },
+      "evaluation-effect": {
+        "id": "evaluation-effect",
+        "status": "passed",
+        "summary": "Full, bare, and capability-ablation outcomes support bounded optimization conclusions passed.",
+        "evidence": [
+          {
+            "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+            "sha256": "420c7555ea6a78f3c75287ffafc299ae8c12e3e1f505ff7e7a7e1cb05c6fc368",
+            "size": 2817,
+            "modifiedAt": "2026-07-24T03:56:38.408Z",
+            "capturedAt": "2026-07-24T03:56:39.975Z"
+          },
+          {
+            "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+            "sha256": "bd2c8b128f3f0a30f65a32375c1940c52abd15d1cf112238cfc45c2561dab7d1",
+            "size": 1328,
+            "modifiedAt": "2026-07-24T03:56:39.071Z",
+            "capturedAt": "2026-07-24T03:56:39.975Z"
+          },
+          {
+            "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+            "sha256": "0524f8804f4d3eed885411c07d5b32cf73d74dc7979d18ea229742b18ada9e6b",
+            "size": 4468,
+            "modifiedAt": "2026-07-24T03:56:39.359Z",
+            "capturedAt": "2026-07-24T03:56:39.975Z"
+          },
+          {
+            "path": ".openatdd/tasks/strategy-visibility/evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+            "sha256": "4da6e065123e940b09c32f6fd1a7fd24736311d32974ac287f6dc9a4e83e1da6",
+            "size": 633,
+            "modifiedAt": "2026-07-24T03:56:39.975Z",
+            "capturedAt": "2026-07-24T03:56:39.975Z"
+          }
+        ],
+        "verifiedAt": "2026-07-24T03:56:39.975Z",
+        "epoch": 2
+      }
+    },
+    "warnings": [],
+    "estimatedRoundTrips": 3
+  },
+  "handoff": {
+    "status": "prepared",
+    "preparedAt": "2026-07-24T03:56:39.979Z",
+    "estimatedMinutes": 10
+  },
+  "finalization": {
+    "status": "complete",
+    "version": 1,
+    "completedAt": "2026-07-24T03:56:40.047Z",
+    "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+    "manifestDigest": "b99e05c03bfb0e83deeccd132cea03572eba250034be7e73ef5503a4110d77b4",
+    "metrics": {
+      "mode": "final",
+      "startedAt": "2026-07-24T03:56:33.803Z",
+      "wallTimeMs": 6262,
+      "dryRunRuns": 1,
+      "finalRuns": 1,
+      "commandInvocations": 9,
+      "cliInvocations": 9,
+      "commandDurationMs": 6159,
+      "checkGroupRuns": {
+        "focused": 1,
+        "module": 1,
+        "broad": 1
+      },
+      "uatJourneyRuns": 1,
+      "uatBatchRuns": 3,
+      "browserRoundTrips": 3,
+      "affectedHistoryPasses": 1,
+      "historyRuns": 4,
+      "historyCacheHits": 0,
+      "evidenceWrites": 9,
+      "evidenceWritesByPhase": {
+        "checks": 3,
+        "uat": 6
+      },
+      "phaseDurationsMs": {
+        "preflight": 1,
+        "checks": 4218,
+        "uat": 1952,
+        "acceptance-mapping": 0,
+        "history": 4,
+        "handoff-readiness": 68
+      },
+      "linkChecks": 0,
+      "warnings": []
+    }
+  },
+  "timing": {
+    "currentPhase": "READY_FOR_UAT",
+    "phaseStartedAt": "2026-07-24T03:56:40.047Z",
+    "phases": [
+      {
+        "phase": "ACCEPTANCE_DRAFT",
+        "startedAt": "2026-07-24T03:10:15.553Z",
+        "endedAt": "2026-07-24T03:33:07.161Z",
+        "durationMs": 1371608
+      },
+      {
+        "phase": "ACCEPTANCE_APPROVED",
+        "startedAt": "2026-07-24T03:33:07.161Z",
+        "endedAt": "2026-07-24T03:33:07.300Z",
+        "durationMs": 139
+      },
+      {
+        "phase": "SOLUTION_DRAFT",
+        "startedAt": "2026-07-24T03:33:07.300Z",
+        "endedAt": "2026-07-24T03:35:33.733Z",
+        "durationMs": 146433
+      },
+      {
+        "phase": "CONTRACT_APPROVED",
+        "startedAt": "2026-07-24T03:35:33.733Z",
+        "endedAt": "2026-07-24T03:35:33.925Z",
+        "durationMs": 192
+      },
+      {
+        "phase": "IMPLEMENTING",
+        "startedAt": "2026-07-24T03:35:33.925Z",
+        "endedAt": "2026-07-24T03:56:33.804Z",
+        "durationMs": 1259879
+      },
+      {
+        "phase": "PRE_UAT",
+        "startedAt": "2026-07-24T03:56:33.804Z",
+        "endedAt": "2026-07-24T03:56:40.047Z",
+        "durationMs": 6243
+      }
+    ]
+  },
+  "readyAt": "2026-07-24T03:56:40.047Z",
+  "history": [
+    {
+      "event": "TASK_CREATED",
+      "at": "2026-07-24T03:10:15.553Z",
+      "details": {
+        "requirement": "增加一个默认关闭的策略可见性开关；打开后在执行过程中显示当前采用的 OpenATDD 能力组合、借鉴来源、启用原因、未启用能力及效果指标，并支持完整、裸 Agent 和能力消融对照评测。"
+      }
+    },
+    {
+      "event": "TASK_ASSESSED",
+      "at": "2026-07-24T03:11:02.739Z",
+      "details": {
+        "lane": "standard",
+        "reasons": [
+          "cross-module-scope",
+          "partial-project-pattern",
+          "medium-uncertainty"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_APPROVED",
+      "at": "2026-07-24T03:33:07.161Z",
+      "details": {
+        "sha256": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca"
+      }
+    },
+    {
+      "event": "SOLUTION_DRAFTED",
+      "at": "2026-07-24T03:33:07.300Z"
+    },
+    {
+      "event": "SOLUTION_REVIEWED",
+      "at": "2026-07-24T03:34:23.142Z",
+      "details": {
+        "status": "passed",
+        "reviewer": "main"
+      }
+    },
+    {
+      "event": "SOLUTION_APPROVED",
+      "at": "2026-07-24T03:35:33.733Z",
+      "details": {
+        "sha256": "76c6c118587319e8ac0e9d07f57b30c104a30b8b6efe4d8b443df7eb21d7dbe6"
+      }
+    },
+    {
+      "event": "IMPLEMENTATION_STARTED",
+      "at": "2026-07-24T03:35:33.925Z"
+    },
+    {
+      "event": "SCOPED_CONTEXT_PREPARED",
+      "at": "2026-07-24T03:35:33.954Z",
+      "details": {
+        "lane": "standard",
+        "persisted": true,
+        "implementationReferences": 10,
+        "verificationReferences": 12
+      }
+    },
+    {
+      "event": "FINALIZATION_COMPLETED",
+      "at": "2026-07-24T03:56:40.047Z",
+      "details": {
+        "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae",
+        "manifestDigest": "b99e05c03bfb0e83deeccd132cea03572eba250034be7e73ef5503a4110d77b4"
+      }
+    }
+  ],
+  "sourceFingerprint": "46be2bb44c2f7aec006f4726336097d381f1d840b037c44f6285edc59fc136ae"
+}

@@ -1,0 +1,14 @@
+{
+  "id": "dev-fast-finalization-001",
+  "set": "dev",
+  "scenario": "fast-finalization",
+  "input": "After two approvals, finish the task through one rehearsal and one formal finalization",
+  "expected": {
+    "preview_non_mutating": true,
+    "final_ready": true
+  },
+  "forbidden": [
+    "Add a third human approval for finalization",
+    "Record formal passes during the rehearsal"
+  ]
+}

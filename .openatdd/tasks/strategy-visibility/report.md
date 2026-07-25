@@ -1,0 +1,128 @@
+# UAT 前报告：strategy-visibility
+
+## 从这里开始
+
+- 版本：1.0.0
+- 环境：local
+- 角色：n/a
+- 安全账户引用：n/a (no login required)
+- 入口：打开 report.md。
+- 预计时间：10 分钟
+- 验证 epoch：2
+
+### 前置条件
+
+- 启动或验证命令: npm run check
+
+## 分步人工验收
+
+请按顺序完成。若某一步失败，请返回步骤号、实际结果和相关截图，不要继续猜测。
+
+### 第 1 步 — AC-01：正常执行保持零额外干扰
+
+- 前提：已初始化的 OpenATDD 项目正在交付任务。
+- 操作：任务完成路由、实现、验证和 finalization。
+- 预期结果：运行过程中不增加策略播报、问题、Token 上下文或确认步骤；未请求回溯时，现有 1.0 体验保持不变。
+- 结论：[ ] Pass  [ ] Fail
+- 判断方式：确认准备的证据与可观察结果。
+- 已准备证据：[check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-default-no-interference-uat-default-no-interference.md](evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md)
+
+### 第 2 步 — AC-02：完成后按需生成可理解的策略回溯
+
+- 前提：任务已有路由、执行或验收状态。
+- 操作：开发者请求回溯本次采用的方案。
+- 预期结果：用当前对话语言生成一份简短报告，说明任务深度、选择理由、能力借鉴来源、策略选择、实际调用、未调用项及原因，并明确不展示内部思维链。
+- 结论：[ ] Pass  [ ] Fail
+- 判断方式：此项需要人工判断。
+- 已准备证据：[check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-manual-retrospective-uat-manual-retrospective.md](evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md)
+
+### 第 3 步 — AC-03：实际调用、效果和证据可追溯
+
+- 前提：任务产生 Agent、调研、审查、恢复、finalization 或评测记录。
+- 操作：开发者生成策略回溯或机器可读输出。
+- 预期结果：报告只从确定性状态和证据派生，展示实际 Agent/审查/恢复记录及可用的人类轮次、首次验收、Token、缓存 Token、耗时和通过率；每项结论可链接到来源，缺失指标明确标为不可用。
+- 结论：[ ] Pass  [ ] Fail
+- 判断方式：确认准备的证据与可观察结果。
+- 已准备证据：[check-focused-strategy-focused-strategy-tests.md](evidence/finalize/epoch-2/check-focused-strategy-focused-strategy-tests.md), [check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-manual-retrospective-uat-manual-retrospective.md](evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md)
+
+### 第 4 步 — AC-04：对照评测能说明效果并给出优化建议
+
+- 前提：存在完整 OpenATDD、裸 Agent 和一个或多个能力消融配置。
+- 操作：同一版本化场景重复运行并生成对照报告。
+- 预期结果：报告列出每组启用能力、通过率、人类交互、过度设计、合同违规、Token/时间及相对差异，并依据证据提出“保留、减少、关闭或继续观察”的建议；不因单个场景得分相同就宣称框架更优。
+- 结论：[ ] Pass  [ ] Fail
+- 判断方式：此项需要人工判断。
+- 已准备证据：[check-module-evaluations-module-eval-suite.md](evidence/finalize/epoch-2/check-module-evaluations-module-eval-suite.md), [check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-evaluation-effect-uat-strategy-real-agent-report.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md), [batch-evaluation-effect-uat-agent-evaluation.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md), [batch-evaluation-effect-uat-package-dry-run.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md), [batch-evaluation-effect-uat-official-skill-validation.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md)
+
+## 相关链接
+
+- [详细 UAT 报告](report.md)
+- [已批准的验收卡](acceptance.md)
+- [已批准的方案卡](solution.md)
+- [问题与修复日志](issues.md)
+- [local 环境档案](../../environments/local.yaml)
+- [Finalization 清单](../../finalization.json)
+- [项目文档](../../../README.md)
+- [AC-01 证据: check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md)
+- [AC-01 证据: batch-default-no-interference-uat-default-no-interference.md](evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md)
+- [AC-02 证据: check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md)
+- [AC-02 证据: batch-manual-retrospective-uat-manual-retrospective.md](evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md)
+- [AC-03 证据: check-focused-strategy-focused-strategy-tests.md](evidence/finalize/epoch-2/check-focused-strategy-focused-strategy-tests.md)
+- [AC-03 证据: check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md)
+- [AC-03 证据: batch-manual-retrospective-uat-manual-retrospective.md](evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md)
+- [AC-04 证据: check-module-evaluations-module-eval-suite.md](evidence/finalize/epoch-2/check-module-evaluations-module-eval-suite.md)
+- [AC-04 证据: check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md)
+- [AC-04 证据: batch-evaluation-effect-uat-strategy-real-agent-report.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md)
+- [AC-04 证据: batch-evaluation-effect-uat-agent-evaluation.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md)
+- [AC-04 证据: batch-evaluation-effect-uat-package-dry-run.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md)
+- [AC-04 证据: batch-evaluation-effect-uat-official-skill-validation.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md)
+
+## 交付证据摘要
+
+- 需求：增加一个默认关闭的策略可见性开关；打开后在执行过程中显示当前采用的 OpenATDD 能力组合、借鉴来源、启用原因、未启用能力及效果指标，并支持完整、裸 Agent 和能力消融对照评测。
+- 阶段：READY_FOR_UAT
+- 验收批准时间：2026-07-24T03:33:07.161Z
+- 方案批准时间：2026-07-24T03:35:33.733Z
+- 就绪时间：2026-07-24T03:56:40.047Z
+
+### 验收结果
+
+| 验收 | 类型 | 阻塞 | 状态 | 证据 |
+|---|---|---:|---|---|
+| AC-01 | AUTO | 是 | passed | [check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-default-no-interference-uat-default-no-interference.md](evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md) |
+| AC-02 | ASSISTED | 是 | manual | [check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-manual-retrospective-uat-manual-retrospective.md](evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md) |
+| AC-03 | AUTO | 是 | passed | [check-focused-strategy-focused-strategy-tests.md](evidence/finalize/epoch-2/check-focused-strategy-focused-strategy-tests.md), [check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-manual-retrospective-uat-manual-retrospective.md](evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md) |
+| AC-04 | ASSISTED | 是 | manual | [check-module-evaluations-module-eval-suite.md](evidence/finalize/epoch-2/check-module-evaluations-module-eval-suite.md), [check-broad-project-broad-project-check.md](evidence/finalize/epoch-2/check-broad-project-broad-project-check.md), [batch-evaluation-effect-uat-strategy-real-agent-report.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md), [batch-evaluation-effect-uat-agent-evaluation.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md), [batch-evaluation-effect-uat-package-dry-run.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md), [batch-evaluation-effect-uat-official-skill-validation.md](evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md) |
+
+### 项目检查
+
+- Strategy retrospective and evaluation regressions [focused]：**passed** — `node --test tests/strategy.test.mjs tests/agent-eval.test.mjs tests/intelligence-integration.test.mjs` — 891 ms
+- OpenATDD deterministic and Agent evaluation corpus [module]：**passed** — `npm run eval` — 973 ms
+- Complete OpenATDD project checks [broad]：**passed** — `npm run check` — 2346 ms
+
+### 修复
+
+UAT 前未解决任何缺陷。
+
+### 受影响的历史验收
+
+- detailed-uat-handoff：AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07
+- fast-portable-finalization：AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08
+- openatdd-1-0：AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08
+- openatdd-mvp：AC-01, AC-02, AC-03, AC-04, AC-05, AC-06, AC-07, AC-08, AC-09
+
+### 人工判断
+
+- AC-02 [ASSISTED]：完成后按需生成可理解的策略回溯
+- AC-04 [ASSISTED]：对照评测能说明效果并给出优化建议
+
+### 性能观察
+
+- 环境预检：0 ms
+- 预计浏览器往返：3
+- ACCEPTANCE_DRAFT：1371608 ms
+- ACCEPTANCE_APPROVED：139 ms
+- SOLUTION_DRAFT：146433 ms
+- CONTRACT_APPROVED：192 ms
+- IMPLEMENTING：1259879 ms
+- PRE_UAT：6243 ms

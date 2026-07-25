@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 export class OpenATDDError extends Error {
@@ -64,6 +64,87 @@ export async function atomicWrite(target, content) {
 
 export async function writeJson(target, value) {
   await atomicWrite(target, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+function assertAbsoluteInside(root, target) {
+  const projectRoot = path.resolve(root);
+  const absolute = path.resolve(target);
+  const relative = path.relative(projectRoot, absolute);
+  assert(relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative)), "PATH_OUTSIDE_PROJECT", `Transaction target leaves project root: ${target}`);
+  return absolute;
+}
+
+async function rollbackJournal(root, journal) {
+  for (const entry of [...journal.entries].reverse()) {
+    const target = assertAbsoluteInside(root, entry.target);
+    const before = assertAbsoluteInside(root, entry.before);
+    await mkdir(path.dirname(target), { recursive: true });
+    if (entry.existed) {
+      const content = await readFile(before);
+      await atomicWrite(target, content);
+    } else {
+      await rm(target, { force: true });
+    }
+  }
+}
+
+export async function recoverTransactions(root) {
+  const directory = path.join(path.resolve(root), ".openatdd", "transactions");
+  if (!(await pathExists(directory))) return [];
+  const recovered = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const transaction = path.join(directory, entry.name);
+    const journalPath = path.join(transaction, "journal.json");
+    if (!(await pathExists(journalPath))) {
+      await rm(transaction, { recursive: true, force: true });
+      continue;
+    }
+    const journal = await readJson(journalPath);
+    if (journal.status !== "committed") {
+      await rollbackJournal(root, journal);
+      recovered.push(journal.id);
+    }
+    await rm(transaction, { recursive: true, force: true });
+  }
+  return recovered;
+}
+
+export async function atomicWriteBatch(root, entries, clock = () => new Date()) {
+  assert(Array.isArray(entries) && entries.length > 0, "TRANSACTION_EMPTY", "A file transaction requires entries.");
+  const projectRoot = path.resolve(root);
+  const id = `txn-${clock().toISOString().replace(/[^0-9]/g, "")}-${process.pid}-${Math.random().toString(16).slice(2)}`;
+  const directory = path.join(projectRoot, ".openatdd", "transactions", id);
+  await mkdir(directory, { recursive: true });
+  const seen = new Set();
+  const journal = { schemaVersion: 1, id, status: "preparing", createdAt: isoNow(clock), entries: [] };
+  try {
+    for (const [index, input] of entries.entries()) {
+      const target = assertAbsoluteInside(projectRoot, input.target);
+      assert(!seen.has(target), "TRANSACTION_DUPLICATE_TARGET", `Duplicate transaction target: ${target}`);
+      seen.add(target);
+      const existed = await pathExists(target);
+      const before = path.join(directory, `before-${String(index).padStart(4, "0")}`);
+      const after = path.join(directory, `after-${String(index).padStart(4, "0")}`);
+      if (existed) await writeFile(before, await readFile(target));
+      await writeFile(after, input.content);
+      journal.entries.push({ target, before, after, existed });
+    }
+    journal.status = "prepared";
+    await writeJson(path.join(directory, "journal.json"), journal);
+    for (const entry of journal.entries) {
+      await mkdir(path.dirname(entry.target), { recursive: true });
+      await rename(entry.after, entry.target);
+    }
+    journal.status = "committed";
+    await writeJson(path.join(directory, "journal.json"), journal);
+    await rm(directory, { recursive: true, force: true });
+    return { id, files: journal.entries.map((entry) => entry.target) };
+  } catch (error) {
+    if (journal.entries.length > 0) await rollbackJournal(projectRoot, journal);
+    await rm(directory, { recursive: true, force: true });
+    throw error;
+  }
 }
 
 export function toPosix(value) {
@@ -172,4 +253,59 @@ export async function verifyCapturedEvidence(root, captured, notBefore) {
 
 export function tokenize(value) {
   return [...new Set(String(value).toLowerCase().match(/[\p{L}\p{N}_./-]{2,}/gu) ?? [])];
+}
+
+export function inferHumanLanguage(...values) {
+  const text = values.flat(Infinity).filter(Boolean).join(" ");
+  return /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/u.test(text) ? "zh-CN" : "en";
+}
+
+export function createRedactor(secretValues = []) {
+  const secrets = [...new Set(asArray(secretValues).map(String).filter((value) => value.length >= 3))]
+    .sort((left, right) => right.length - left.length);
+  return (value) => secrets.reduce(
+    (redacted, secret) => redacted.split(secret).join("[REDACTED]"),
+    String(value ?? ""),
+  );
+}
+
+export function assertNoSecretValues(value, secretValues = [], label = "Persisted artifact") {
+  const text = String(value ?? "");
+  const matches = [...new Set(asArray(secretValues).map(String).filter((secret) => secret.length >= 3 && text.includes(secret)))];
+  assert(matches.length === 0, "SECRET_LEAK", `${label} contains a loaded credential value.`, {
+    matches: matches.map(() => "[REDACTED]"),
+  });
+}
+
+export async function filesBelow(directory) {
+  const results = [];
+  if (!(await pathExists(directory))) return results;
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const target = path.join(directory, entry.name);
+    if (entry.isDirectory()) results.push(...await filesBelow(target));
+    else if (entry.isFile()) results.push(target);
+  }
+  return results;
+}
+
+export async function scanFilesForSecrets(directory, secretValues = [], exclusions = []) {
+  const excluded = new Set(exclusions.map((value) => path.resolve(value)));
+  const leaks = [];
+  for (const file of await filesBelow(directory)) {
+    if (excluded.has(path.resolve(file))) continue;
+    let content;
+    try {
+      content = await readFile(file, "utf8");
+    } catch (error) {
+      if (error?.code === "EISDIR" || error?.code === "ERR_INVALID_ARG_TYPE") continue;
+      throw error;
+    }
+    for (const secret of [...new Set(asArray(secretValues).map(String).filter((value) => value.length >= 3))]) {
+      if (content.includes(secret)) {
+        leaks.push({ path: file, value: "[REDACTED]" });
+        break;
+      }
+    }
+  }
+  return leaks;
 }

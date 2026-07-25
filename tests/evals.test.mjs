@@ -6,17 +6,30 @@ import { promisify } from "node:util";
 import test from "node:test";
 import {
   approveAcceptance,
+  assessTask,
   beginImplementation,
   beginPreUat,
   createTask,
   draftSolution,
   loadTask,
   markReady,
+  preflightTask,
+  prepareHandoff,
+  prepareUatPlan,
   recordAcceptanceResult,
   recordCheck,
   recordIssue,
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
+import {
+  loadEnvironmentProfile,
+  parseRestrictedDotenv,
+  renderFlatYaml,
+} from "../skills/openatdd/scripts/profiles.mjs";
+import {
+  dryRunFinalization,
+  finalizeTask,
+} from "../skills/openatdd/scripts/finalization.mjs";
 import {
   clock,
   criterion,
@@ -43,6 +56,12 @@ async function loadCases() {
 async function probeGateOrder(t) {
   const root = await temporaryProject(t);
   await createTask(root, "probe-gates", "Probe both approval gates", clock("2020-01-01T00:00:00.000Z"));
+  await assessTask(root, "probe-gates", {
+    scope: "local",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "low",
+  }, clock("2020-01-01T00:00:30.000Z"));
   let acceptanceRejected = false;
   try {
     await draftSolution(root, "probe-gates");
@@ -205,6 +224,124 @@ async function probePortableCli(t) {
   };
 }
 
+async function probeProjectContextHandoff(t) {
+  const root = await temporaryProject(t);
+  const criteria = [criterion("AC-01"), criterion("AC-02")];
+  await prepareApprovedTask(root, "v2-handoff-probe", { criteria, impactPaths: ["README.md"] });
+  await beginImplementation(root, "v2-handoff-probe");
+  await beginPreUat(root, "v2-handoff-probe");
+  for (const item of criteria) {
+    const evidence = await writeEvidence(root, "v2-handoff-probe", `${item.id}.txt`, "journey passed");
+    await recordAcceptanceResult(root, "v2-handoff-probe", { acceptanceId: item.id, status: "passed", evidence });
+  }
+  const checkEvidence = await writeEvidence(root, "v2-handoff-probe", "broad.txt", "broad passed");
+  await recordCheck(root, "v2-handoff-probe", { name: "broad", scope: "broad", command: "npm test", status: "passed", evidence: checkEvidence });
+  const prepared = await prepareHandoff(root, "v2-handoff-probe");
+  return {
+    automatic_preflight_passed: prepared.state.preflight.status === "passed",
+    numbered_steps_cover_acceptance: prepared.handoff.steps.length === criteria.length && prepared.handoff.steps.every((step, index) => step.number === index + 1),
+    descriptive_links_prepared: prepared.handoff.links.some((link) => link.label === "Approved acceptance card" && link.applicable),
+    only_two_human_gates: prepared.state.acceptance.approvedAt !== null && prepared.state.solution.approvedAt !== null,
+  };
+}
+
+async function probeEpochSecrets(t) {
+  const root = await temporaryProject(t);
+  await prepareApprovedTask(root, "epoch-secret-probe", { impactPaths: ["src/cache"] });
+  await beginImplementation(root, "epoch-secret-probe");
+  await beginPreUat(root, "epoch-secret-probe");
+  const before = (await loadTask(root, "epoch-secret-probe")).state.verification.epoch;
+  await recordIssue(root, "epoch-secret-probe", { acceptanceId: "AC-01", status: "open", symptom: "stale result" });
+  const premature = await writeEvidence(root, "epoch-secret-probe", "premature.txt", "premature");
+  let openIssueRejected = false;
+  try {
+    await recordAcceptanceResult(root, "epoch-secret-probe", { acceptanceId: "AC-01", status: "passed", evidence: premature });
+  } catch (error) {
+    openIssueRejected = error.code === "OPEN_ISSUE_BLOCKS_PASS";
+  }
+  const fix = await writeEvidence(root, "epoch-secret-probe", "fix.txt", "fixed");
+  await recordIssue(root, "epoch-secret-probe", {
+    id: "ISSUE-001",
+    status: "resolved",
+    rootCause: "cache epoch was stale",
+    regression: "cache_epoch_regression",
+    invariant: "formal evidence follows repair",
+    paths: "src/cache",
+    evidence: fix,
+  });
+  let injectionRejected = false;
+  try { parseRestrictedDotenv("TOKEN=${SHELL_TOKEN}\n"); } catch (error) { injectionRejected = error.code === "UNSAFE_DOTENV"; }
+  const after = (await loadTask(root, "epoch-secret-probe")).state;
+  return {
+    open_issue_pass_rejected: openIssueRejected,
+    repair_advanced_epoch: after.verification.epoch === before + 1,
+    prior_result_invalidated: after.results["AC-01"].status === "affected",
+    dotenv_interpolation_rejected: injectionRejected,
+  };
+}
+
+async function probeBrowserBudget(t) {
+  const root = await temporaryProject(t);
+  const criteria = Array.from({ length: 7 }, (_, index) => criterion(`AC-${String(index + 1).padStart(2, "0")}`));
+  await prepareApprovedTask(root, "browser-budget-probe", { criteria });
+  await beginImplementation(root, "browser-budget-probe");
+  const { files, profile } = await loadEnvironmentProfile(root, "local");
+  profile.browser_round_trip_budget = "2";
+  await writeFile(files.profile, renderFlatYaml(profile));
+  await preflightTask(root, "browser-budget-probe");
+  await beginPreUat(root, "browser-budget-probe");
+  const planned = await prepareUatPlan(root, "browser-budget-probe");
+  return {
+    cohesive_batches: planned.plan.batches.length === 3,
+    complete_acceptance_coverage: new Set(planned.plan.batches.flatMap((batch) => batch.steps.map((step) => step.acceptanceId))).size === criteria.length,
+    budget_warning_non_blocking: planned.warnings.length === 1 && planned.state.uat.planStatus === "planned",
+    session_reused_after_setup: planned.plan.batches.slice(1).every((batch) => batch.reuseSession),
+  };
+}
+
+async function probeFastFinalization(t) {
+  const root = await temporaryProject(t);
+  const criteria = [criterion("AC-01")];
+  await prepareApprovedTask(root, "fast-finalization-probe", { criteria, impactPaths: ["src/finalization"] });
+  await beginImplementation(root, "fast-finalization-probe");
+  const trivial = (id) => ({ id, argv: [process.execPath, "-e", `process.stdout.write(${JSON.stringify(id)})`] });
+  const manifest = {
+    schemaVersion: 1,
+    surface: "cli",
+    environment: "local",
+    source: { include: ["**/*"], exclude: [] },
+    dryRun: { commands: [trivial("entry-smoke")], checkHttpLinks: false },
+    checks: [
+      { id: "focused", scope: "focused", commands: [trivial("focused-check")] },
+      { id: "module", scope: "module", commands: [trivial("module-check")] },
+      { id: "broad", scope: "broad", commands: [trivial("broad-check")] },
+    ],
+    uat: {
+      estimatedRoundTrips: 1,
+      batches: [{ id: "journey", name: "Approved journey", runner: "internal", acceptanceIds: ["AC-01"] }],
+    },
+    acceptance: { "AC-01": ["check:broad", "batch:journey"] },
+    history: { mode: "deferred", overrides: [] },
+    handoff: { estimatedMinutes: 5 },
+    budgets: { commandInvocations: 0, browserRoundTrips: 1, evidenceWrites: 20 },
+  };
+  await writeFile(path.join(root, ".openatdd", "finalization.json"), `${JSON.stringify(manifest, null, 2)}\n`);
+  const files = taskFiles(root, "fast-finalization-probe");
+  const before = await readFile(files.state);
+  const preview = await dryRunFinalization(root, "fast-finalization-probe");
+  const previewState = await readFile(files.state);
+  const final = await finalizeTask(root, "fast-finalization-probe");
+  const repeated = await finalizeTask(root, "fast-finalization-probe");
+  return {
+    preview_non_mutating: preview.unchangedState && Buffer.compare(before, previewState) === 0,
+    final_ready: final.state.phase === "READY_FOR_UAT" && final.state.finalization.status === "complete",
+    one_broad_group: final.result.metrics.checkGroupRuns.broad === 1,
+    one_complete_journey: final.result.metrics.uatJourneyRuns === 1,
+    budget_warning_non_blocking: preview.preview.metrics.warnings.length > 0 && final.state.phase === "READY_FOR_UAT",
+    same_fingerprint_idempotent: repeated.unchanged === true,
+  };
+}
+
 const probes = {
   "gate-order": probeGateOrder,
   "manual-boundary": probeManualBoundary,
@@ -213,6 +350,10 @@ const probes = {
   "repair-rerun": probeRepairRerun,
   "shared-impact": probeSharedImpact,
   "portable-cli": probePortableCli,
+  "project-context-handoff": probeProjectContextHandoff,
+  "epoch-secrets": probeEpochSecrets,
+  "browser-budget": probeBrowserBudget,
+  "fast-finalization": probeFastFinalization,
 };
 
 test("evaluation corpus satisfies the deterministic hard-gate baseline", async (t) => {

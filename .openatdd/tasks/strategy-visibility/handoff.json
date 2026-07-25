@@ -1,0 +1,182 @@
+{
+  "schemaVersion": 1,
+  "taskId": "strategy-visibility",
+  "preparedAt": "2026-07-24T03:56:39.979Z",
+  "context": {
+    "language": "zh-CN",
+    "version": "1.0.0",
+    "environment": "local",
+    "role": "n/a",
+    "prerequisites": [
+      "启动或验证命令: npm run check"
+    ],
+    "accountReference": "n/a (no login required)",
+    "entryPoint": "打开 report.md。",
+    "estimatedMinutes": 10
+  },
+  "steps": [
+    {
+      "number": 1,
+      "acceptanceId": "AC-01",
+      "title": "正常执行保持零额外干扰",
+      "precondition": "已初始化的 OpenATDD 项目正在交付任务。",
+      "action": "任务完成路由、实现、验证和 finalization。",
+      "expected": "运行过程中不增加策略播报、问题、Token 上下文或确认步骤；未请求回溯时，现有 1.0 体验保持不变。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 2,
+      "acceptanceId": "AC-02",
+      "title": "完成后按需生成可理解的策略回溯",
+      "precondition": "任务已有路由、执行或验收状态。",
+      "action": "开发者请求回溯本次采用的方案。",
+      "expected": "用当前对话语言生成一份简短报告，说明任务深度、选择理由、能力借鉴来源、策略选择、实际调用、未调用项及原因，并明确不展示内部思维链。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md"
+      ],
+      "judgment": "此项需要人工判断。"
+    },
+    {
+      "number": 3,
+      "acceptanceId": "AC-03",
+      "title": "实际调用、效果和证据可追溯",
+      "precondition": "任务产生 Agent、调研、审查、恢复、finalization 或评测记录。",
+      "action": "开发者生成策略回溯或机器可读输出。",
+      "expected": "报告只从确定性状态和证据派生，展示实际 Agent/审查/恢复记录及可用的人类轮次、首次验收、Token、缓存 Token、耗时和通过率；每项结论可链接到来源，缺失指标明确标为不可用。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-focused-strategy-focused-strategy-tests.md",
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 4,
+      "acceptanceId": "AC-04",
+      "title": "对照评测能说明效果并给出优化建议",
+      "precondition": "存在完整 OpenATDD、裸 Agent 和一个或多个能力消融配置。",
+      "action": "同一版本化场景重复运行并生成对照报告。",
+      "expected": "报告列出每组启用能力、通过率、人类交互、过度设计、合同违规、Token/时间及相对差异，并依据证据提出“保留、减少、关闭或继续观察”的建议；不因单个场景得分相同就宣称框架更优。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-module-evaluations-module-eval-suite.md",
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+        "evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+        "evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+        "evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md"
+      ],
+      "judgment": "此项需要人工判断。"
+    }
+  ],
+  "links": [
+    {
+      "label": "详细 UAT 报告",
+      "target": "report.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的验收卡",
+      "target": "acceptance.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的方案卡",
+      "target": "solution.md",
+      "applicable": true
+    },
+    {
+      "label": "问题与修复日志",
+      "target": "issues.md",
+      "applicable": true
+    },
+    {
+      "label": "local 环境档案",
+      "target": "../../environments/local.yaml",
+      "applicable": true
+    },
+    {
+      "label": "Finalization 清单",
+      "target": "../../finalization.json",
+      "applicable": true
+    },
+    {
+      "label": "项目文档",
+      "target": "../../../README.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: batch-default-no-interference-uat-default-no-interference.md",
+      "target": "evidence/finalize/epoch-2/batch-default-no-interference-uat-default-no-interference.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: batch-manual-retrospective-uat-manual-retrospective.md",
+      "target": "evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: check-focused-strategy-focused-strategy-tests.md",
+      "target": "evidence/finalize/epoch-2/check-focused-strategy-focused-strategy-tests.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: batch-manual-retrospective-uat-manual-retrospective.md",
+      "target": "evidence/finalize/epoch-2/batch-manual-retrospective-uat-manual-retrospective.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: check-module-evaluations-module-eval-suite.md",
+      "target": "evidence/finalize/epoch-2/check-module-evaluations-module-eval-suite.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-evaluation-effect-uat-strategy-real-agent-report.md",
+      "target": "evidence/finalize/epoch-2/batch-evaluation-effect-uat-strategy-real-agent-report.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-evaluation-effect-uat-agent-evaluation.md",
+      "target": "evidence/finalize/epoch-2/batch-evaluation-effect-uat-agent-evaluation.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-evaluation-effect-uat-package-dry-run.md",
+      "target": "evidence/finalize/epoch-2/batch-evaluation-effect-uat-package-dry-run.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-evaluation-effect-uat-official-skill-validation.md",
+      "target": "evidence/finalize/epoch-2/batch-evaluation-effect-uat-official-skill-validation.md",
+      "applicable": true
+    }
+  ]
+}
