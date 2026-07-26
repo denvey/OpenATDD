@@ -103,6 +103,70 @@ test("schema v3 hard gates require assessment, resolved blocking decisions, and 
   assert.equal((await loadTask(root, "hard-gates")).state.phase, "BLOCKED");
 });
 
+test("a dangerous risk overlay requires resolved authorization before product code changes", async (t) => {
+  const root = await temporaryProject(t);
+  const criteria = [criterion("AC-01")];
+  await createTask(root, "overlay-authorization", "Purge expired accounts in production", clock("2026-02-01T00:00:00.000Z"));
+  const routing = await assessTask(root, "overlay-authorization", {
+    scope: "local",
+    projectPattern: "established",
+    reversibility: "irreversible",
+    uncertainty: "low",
+    riskSignals: ["deletion", "production"],
+  });
+  // Depth still measures complexity only; the overlay is a safety requirement.
+  assert.equal(routing.state.routing.lane, "quick");
+  await writeAcceptance(root, "overlay-authorization", criteria);
+  await approveAcceptance(root, "overlay-authorization");
+  await draftSolution(root, "overlay-authorization");
+  const files = taskFiles(root, "overlay-authorization");
+  await writeFile(files.solution, solutionMarkdown("overlay-authorization", criteria));
+  await recordSolutionReview(root, "overlay-authorization", {
+    status: "passed",
+    reviewer: "main",
+    summary: "The deletion path is the smallest project-fitting change.",
+    checks: "all",
+  });
+  await assert.rejects(
+    () => approveSolution(root, "overlay-authorization"),
+    (error) => error.code === "AUTHORIZATION_DECISION_REQUIRED"
+      && error.details.errors.some((item) => item.includes("deletion"))
+      && error.details.errors.some((item) => item.includes("production")),
+  );
+
+  await recordTaskDecision(root, "overlay-authorization", {
+    owner: "authorization",
+    question: "May the irreversible production purge run in this delivery?",
+    options: [
+      { id: "authorize", label: "Authorize the purge", consequence: "Expired accounts are erased irreversibly." },
+      { id: "defer", label: "Defer to a reversible soft delete", consequence: "No data is erased in this delivery." },
+    ],
+    recommendation: "defer",
+    recommendationBasis: "The retention rule is not yet recorded for this project.",
+    status: "resolved",
+    resolution: { optionId: "authorize", rationale: "The owner authorized the purge in writing." },
+  });
+  const approved = await approveSolution(root, "overlay-authorization");
+  assert.equal(approved.state.phase, "CONTRACT_APPROVED");
+});
+
+test("a verification-only risk overlay never adds an authorization pause", async (t) => {
+  const root = await temporaryProject(t);
+  await prepareApprovedTask(root, "overlay-verification-only", {
+    assessment: {
+      scope: "local",
+      projectPattern: "established",
+      reversibility: "costly",
+      uncertainty: "low",
+      riskSignals: ["security", "authentication", "privacy"],
+    },
+  });
+  const { state } = await loadTask(root, "overlay-verification-only");
+  assert.equal(state.phase, "CONTRACT_APPROVED");
+  assert.deepEqual(state.routing.riskOverlays, ["authentication", "privacy", "security"]);
+  assert.deepEqual(state.decisions, []);
+});
+
 test("resume and repair automatically restore the scoped context boundary", async (t) => {
   const root = await temporaryProject(t);
   await prepareApprovedTask(root, "resume-context", {
@@ -139,8 +203,8 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     outputTokens: 10,
     durationMs: 250,
   });
-  assert.equal(reviewed.dispatch.model, "gpt-5.6-terra");
-  assert.equal(reviewed.dispatch.reasoningEffort, "high");
+  assert.equal(reviewed.dispatch.model, "gpt-5.6-luna");
+  assert.equal(reviewed.dispatch.reasoningEffort, "low");
   assert.equal(reviewed.dispatch.durationMs, 250);
 
   await recordRepairAttempt(root, "resume-context", {
@@ -209,11 +273,11 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
     "--summary",
     "Review completed",
     "--profile",
-    "independent-review-high-risk",
+    "default",
     "--model",
-    "gpt-5.6-sol",
+    "gpt-5.6-luna",
     "--reasoning-effort",
-    "high",
+    "low",
     "--fork-turns",
     "none",
     "--sandbox",
@@ -258,7 +322,7 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   await run(root, "graph-impact", "cli-intelligence", "--paths", "src/export", "--json");
   await run(root, "context-build", "cli-intelligence", "--persist", "--query", "export privacy", "--json");
   const context = await run(root, "context-show", "cli-intelligence", "--json");
-  assert.equal(JSON.parse(context.stdout).lane, "deep");
+  assert.equal(JSON.parse(context.stdout).lane, "standard");
 
   const scenario = path.resolve("evals/agent/scenarios/simplicity.v1.json");
   const report = path.join(root, "agent-report.json");
@@ -267,17 +331,18 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   assert.equal(JSON.parse(await readFile(report, "utf8")).baseline.adapter.name, "bare-mock");
 
   const state = (await loadTask(root, "cli-intelligence")).state;
-  assert.equal(state.routing.lane, "deep");
+  assert.equal(state.routing.lane, "standard");
   assert.deepEqual(state.routing.assessment.riskSignals, ["privacy", "external-service"]);
+  assert.deepEqual(state.routing.riskOverlays, ["privacy", "external-service"]);
   assert.equal(state.decisions[0].resolution.rationale, "Approved product boundary");
   assert.deepEqual(state.reviews.solution.findings, ["No unnecessary infrastructure.", "Every acceptance row is traced."]);
   assert.equal(state.reviews.solution.agentId, "AGENT-009");
   assert.equal(state.agents.dispatches[0].context.surface, "verification");
   assert(state.agents.dispatches[0].context.digest);
   assert.equal(state.agents.dispatches[0].id, "AGENT-009");
-  assert.equal(state.agents.dispatches[0].profile, "independent-review-high-risk");
-  assert.equal(state.agents.dispatches[0].model, "gpt-5.6-sol");
-  assert.equal(state.agents.dispatches[0].reasoningEffort, "high");
+  assert.equal(state.agents.dispatches[0].profile, "default");
+  assert.equal(state.agents.dispatches[0].model, "gpt-5.6-luna");
+  assert.equal(state.agents.dispatches[0].reasoningEffort, "low");
   assert.equal(state.agents.dispatches[0].forkTurns, "none");
   assert.equal(state.agents.dispatches[0].sandbox, "read-only");
   assert.equal(state.agents.dispatches[0].inputTokens, 120);

@@ -1,0 +1,227 @@
+{
+  "schemaVersion": 1,
+  "surface": "cli",
+  "environment": "local",
+  "source": {
+    "include": [
+      "README.md",
+      "skills/openatdd/SKILL.md",
+      "skills/openatdd/references/fast-finalization.md",
+      "skills/openatdd/scripts/agent-profiles.mjs",
+      "skills/openatdd/scripts/finalization.mjs",
+      "skills/openatdd/scripts/manifest.mjs",
+      "skills/openatdd/scripts/openatdd.mjs",
+      "skills/openatdd/scripts/profiles.mjs",
+      "skills/openatdd/scripts/routing.mjs",
+      "skills/openatdd/scripts/workflow.mjs",
+      "tests/delivery-v2.test.mjs",
+      "tests/finalization.test.mjs",
+      "tests/intelligence-integration.test.mjs",
+      "tests/intelligence.test.mjs",
+      "tests/strategy.test.mjs"
+    ],
+    "exclude": []
+  },
+  "preflight": {
+    "scope": "project",
+    "reason": "The approved CLI journey uses deterministic local Node test harnesses and has no live service, account, organization, integration, fixture, workaround, credential, or declared command environment dependency."
+  },
+  "dryRun": {
+    "commands": [
+      {
+        "id": "validate-finalization-smoke",
+        "argv": [
+          "node",
+          "skills/openatdd/scripts/openatdd.mjs",
+          "validate-finalization",
+          "optimize-quick-delivery",
+          "--json"
+        ],
+        "timeoutMs": 30000
+      }
+    ],
+    "checkHttpLinks": false
+  },
+  "checks": [
+    {
+      "id": "focused-quick-delivery",
+      "name": "Quick delivery and finalization regressions",
+      "scope": "focused",
+      "commands": [
+        {
+          "id": "focused-quick-delivery-tests",
+          "argv": [
+            "node",
+            "--test",
+            "tests/finalization.test.mjs",
+            "tests/delivery-v2.test.mjs",
+            "tests/intelligence.test.mjs",
+            "tests/intelligence-integration.test.mjs"
+          ],
+          "timeoutMs": 120000
+        }
+      ]
+    },
+    {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "scope": "broad",
+      "commands": [
+        {
+          "id": "broad-project-check",
+          "argv": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "timeoutMs": 180000
+        }
+      ]
+    }
+  ],
+  "uat": {
+    "estimatedRoundTrips": 1,
+    "batches": [
+      {
+        "id": "quick-finalization",
+        "name": "Quick task statically validates and completes the approved deterministic finalization journey",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ],
+        "commands": [
+          {
+            "id": "uat-quick-finalization",
+            "argv": [
+              "node",
+              "--test",
+              "tests/finalization.test.mjs",
+              "tests/delivery-v2.test.mjs",
+              "tests/intelligence.test.mjs"
+            ],
+            "timeoutMs": 120000
+          }
+        ],
+        "reuseSession": true
+      }
+    ]
+  },
+  "acceptance": {
+    "AC-01": [
+      "check:broad-project",
+      "batch:quick-finalization"
+    ],
+    "AC-02": [
+      "check:focused-quick-delivery",
+      "check:broad-project",
+      "batch:quick-finalization"
+    ],
+    "AC-03": [
+      "check:focused-quick-delivery",
+      "check:broad-project",
+      "batch:quick-finalization"
+    ],
+    "AC-04": [
+      "check:focused-quick-delivery",
+      "check:broad-project",
+      "batch:quick-finalization"
+    ]
+  },
+  "history": {
+    "mode": "deferred",
+    "overrides": [
+      {
+        "taskId": "detailed-uat-handoff",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:quick-finalization"
+        ]
+      },
+      {
+        "taskId": "fast-portable-finalization",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:quick-finalization"
+        ]
+      },
+      {
+        "taskId": "openatdd-1-0",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:quick-finalization"
+        ]
+      },
+      {
+        "taskId": "openatdd-mvp",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08",
+          "AC-09"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:quick-finalization"
+        ]
+      },
+      {
+        "taskId": "strategy-visibility",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:quick-finalization"
+        ]
+      }
+    ]
+  },
+  "handoff": {
+    "estimatedMinutes": 5
+  },
+  "budgets": {
+    "wallTimeMs": 180000,
+    "commandInvocations": 4,
+    "browserRoundTrips": 1,
+    "evidenceWrites": 20
+  }
+}

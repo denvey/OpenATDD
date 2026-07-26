@@ -16,6 +16,7 @@ import {
 const execFileAsync = promisify(execFile);
 const SCOPES = ["focused", "module", "broad"];
 const SURFACES = new Set(["cli", "api", "web", "file", "mixed"]);
+const PREFLIGHT_SCOPES = new Set(["environment", "project"]);
 const HARD_EXCLUDES = Object.freeze([
   ".git/**",
   ".env.openatdd.local",
@@ -128,12 +129,20 @@ export function validateFinalizationManifest(manifest, acceptanceItems = []) {
   if (manifest?.preflight !== undefined && (!manifest.preflight || typeof manifest.preflight !== "object" || Array.isArray(manifest.preflight))) {
     errors.push("preflight must be an object when provided.");
   }
+  const preflightScope = manifest?.preflight?.scope ?? "environment";
+  if (!PREFLIGHT_SCOPES.has(preflightScope)) errors.push("preflight.scope must be environment or project.");
+  if (preflightScope === "project" && (typeof manifest?.preflight?.reason !== "string" || !manifest.preflight.reason.trim())) {
+    errors.push("preflight.reason is required when preflight.scope is project.");
+  }
   const preflightCommands = manifest?.preflight?.commands;
   if (preflightCommands !== undefined && (!Array.isArray(preflightCommands) || preflightCommands.length === 0)) {
     errors.push("preflight.commands must be a non-empty command array when provided.");
   }
   for (const [index, command] of (preflightCommands ?? []).entries()) {
     validateCommand(command, `preflight.commands[${index}]`, errors);
+  }
+  if (preflightScope === "project" && (preflightCommands?.length ?? 0) > 0) {
+    errors.push("preflight.commands are not allowed when preflight.scope is project.");
   }
 
   const checks = manifest?.checks;
@@ -182,6 +191,16 @@ export function validateFinalizationManifest(manifest, acceptanceItems = []) {
 
   const ids = allCommandIds(manifest);
   for (const id of new Set(ids)) if (ids.filter((value) => value === id).length > 1) errors.push(`Command ID must be unique: ${id}.`);
+  if (preflightScope === "project") {
+    const commandsWithEnvironment = [
+      ...(dryCommands ?? []),
+      ...(checks ?? []).flatMap((group) => group.commands ?? []),
+      ...(batches ?? []).flatMap((batch) => batch.commands ?? []),
+    ].filter((command) => (command.env?.length ?? 0) > 0);
+    if (commandsWithEnvironment.length > 0) {
+      errors.push(`preflight.scope project cannot run commands with declared environment variables: ${commandsWithEnvironment.map((command) => command.id).join(", ")}.`);
+    }
+  }
 
   const validReferences = new Set([
     ...(checks ?? []).map((group) => `check:${group.id}`),
@@ -212,9 +231,17 @@ export function validateFinalizationManifest(manifest, acceptanceItems = []) {
 }
 
 export async function loadFinalizationManifest(root, taskId, candidate = undefined) {
+  const projectRoot = path.resolve(root);
+  // The author-provided task manifest is deliberately distinct from
+  // `finalization.json`, which formal finalization writes as a frozen snapshot.
+  // Sharing one path would silently turn that snapshot back into an input.
+  const taskManifest = path.join(projectRoot, ".openatdd", "tasks", taskId, "finalization.manifest.json");
+  const projectManifest = path.join(projectRoot, ".openatdd", "finalization.json");
   const manifestPath = candidate
     ? resolveInside(root, candidate).resolved
-    : path.join(path.resolve(root), ".openatdd", "finalization.json");
+    : await pathExists(taskManifest)
+      ? taskManifest
+      : projectManifest;
   assert(await pathExists(manifestPath), "FINALIZATION_MANIFEST_NOT_FOUND", `Finalization manifest does not exist: ${path.relative(root, manifestPath)}`);
   const manifest = await readJson(manifestPath);
   return {

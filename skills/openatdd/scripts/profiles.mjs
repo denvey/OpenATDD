@@ -290,8 +290,15 @@ async function assertionStatus(root, assertions, name, applicable, description, 
 export async function runEnvironmentPreflight(root, environment = "local", input = {}, clock = () => new Date()) {
   const started = Date.now();
   const { files, profile } = await loadEnvironmentProfile(root, environment);
+  const scope = input.scope ?? "environment";
+  assert(["environment", "project"].includes(scope), "INVALID_PREFLIGHT_SCOPE", "Preflight scope must be environment or project.");
+  const projectOnly = scope === "project";
+  const projectReason = String(input.reason ?? "").trim();
+  if (projectOnly) assert(projectReason, "PREFLIGHT_REASON_REQUIRED", "Project-scoped preflight requires a reason.");
   if (input.persist !== false) await refreshExample(files, profile.credential_variables);
-  const credentials = await loadLocalCredentials(root, profile.credential_variables);
+  const credentials = projectOnly
+    ? { values: {}, secretValues: [], files }
+    : await loadLocalCredentials(root, profile.credential_variables);
   const checks = [];
   const configuredWorkspace = path.resolve(files.root, profile.workspace || ".");
   checks.push({ name: "workspace", status: configuredWorkspace === files.root ? "passed" : "failed", detail: profile.workspace || "." });
@@ -314,32 +321,38 @@ export async function runEnvironmentPreflight(root, environment = "local", input
     checks.push({ name: "application_version", status: observed === profile.application_version ? "passed" : "failed", detail: `expected ${profile.application_version}; observed ${observed}` });
   } else checks.push({ name: "application_version", status: "not_applicable", detail: "n/a" });
 
-  const urls = csv(profile.service_urls);
-  for (const url of urls) {
-    let parsed;
-    try { parsed = new URL(url); } catch { parsed = null; }
-    if (!parsed || !["http:", "https:"].includes(parsed.protocol)) {
-      checks.push({ name: `service:${url}`, status: "failed", detail: "invalid HTTP(S) URL" });
-      continue;
+  if (projectOnly) {
+    checks.push({ name: "services", status: "not_applicable", detail: projectReason });
+    checks.push({ name: "entry_url", status: "not_applicable", detail: projectReason });
+    checks.push({ name: "credential_variables", status: "not_applicable", detail: projectReason });
+  } else {
+    const urls = csv(profile.service_urls);
+    for (const url of urls) {
+      let parsed;
+      try { parsed = new URL(url); } catch { parsed = null; }
+      if (!parsed || !["http:", "https:"].includes(parsed.protocol)) {
+        checks.push({ name: `service:${url}`, status: "failed", detail: "invalid HTTP(S) URL" });
+        continue;
+      }
+      const result = await reachable(url, Number(input.timeoutMs ?? 3000));
+      checks.push({ name: `service:${parsed.host}`, status: result.passed ? "passed" : "failed", detail: result.detail });
     }
-    const result = await reachable(url, Number(input.timeoutMs ?? 3000));
-    checks.push({ name: `service:${parsed.host}`, status: result.passed ? "passed" : "failed", detail: result.detail });
-  }
-  if (urls.length === 0) checks.push({ name: "services", status: "not_applicable", detail: "n/a" });
+    if (urls.length === 0) checks.push({ name: "services", status: "not_applicable", detail: "n/a" });
 
-  if (profile.entry_url && profile.entry_url !== "n/a") {
-    let valid = false;
-    try { valid = ["http:", "https:"].includes(new URL(profile.entry_url).protocol); } catch {}
-    checks.push({ name: "entry_url", status: valid ? "passed" : "failed", detail: valid ? profile.entry_url : "invalid URL" });
-  } else checks.push({ name: "entry_url", status: "not_applicable", detail: "n/a" });
-  checks.push({ name: "credential_variables", status: "passed", detail: `${Object.keys(credentials.values).length} runtime value(s) loaded and redacted` });
+    if (profile.entry_url && profile.entry_url !== "n/a") {
+      let valid = false;
+      try { valid = ["http:", "https:"].includes(new URL(profile.entry_url).protocol); } catch {}
+      checks.push({ name: "entry_url", status: valid ? "passed" : "failed", detail: valid ? profile.entry_url : "invalid URL" });
+    } else checks.push({ name: "entry_url", status: "not_applicable", detail: "n/a" });
+    checks.push({ name: "credential_variables", status: "passed", detail: `${Object.keys(credentials.values).length} runtime value(s) loaded and redacted` });
+  }
 
   const applicable = (value) => Boolean(value && !["n/a", "none"].includes(String(value).toLowerCase()));
-  checks.push(await assertionStatus(files.root, input.assertions, "login", applicable(profile.role) || Object.keys(credentials.values).length > 0, profile.role || "n/a", input.notBefore, clock));
-  checks.push(await assertionStatus(files.root, input.assertions, "organization", applicable(profile.organization), profile.organization || "n/a", input.notBefore, clock));
-  checks.push(await assertionStatus(files.root, input.assertions, "integration", applicable(profile.integration), profile.integration || "n/a", input.notBefore, clock));
-  checks.push(await assertionStatus(files.root, input.assertions, "fixture", applicable(profile.fixture), profile.fixture || "n/a", input.notBefore, clock));
-  checks.push(await assertionStatus(files.root, input.assertions, "known_workarounds", applicable(profile.known_workarounds) && profile.known_workarounds !== "none", profile.known_workarounds || "none", input.notBefore, clock));
+  checks.push(await assertionStatus(files.root, input.assertions, "login", !projectOnly && (applicable(profile.role) || Object.keys(credentials.values).length > 0), projectOnly ? projectReason : profile.role || "n/a", input.notBefore, clock));
+  checks.push(await assertionStatus(files.root, input.assertions, "organization", !projectOnly && applicable(profile.organization), projectOnly ? projectReason : profile.organization || "n/a", input.notBefore, clock));
+  checks.push(await assertionStatus(files.root, input.assertions, "integration", !projectOnly && applicable(profile.integration), projectOnly ? projectReason : profile.integration || "n/a", input.notBefore, clock));
+  checks.push(await assertionStatus(files.root, input.assertions, "fixture", !projectOnly && applicable(profile.fixture), projectOnly ? projectReason : profile.fixture || "n/a", input.notBefore, clock));
+  checks.push(await assertionStatus(files.root, input.assertions, "known_workarounds", !projectOnly && applicable(profile.known_workarounds) && profile.known_workarounds !== "none", projectOnly ? projectReason : profile.known_workarounds || "none", input.notBefore, clock));
 
   const now = isoNow(clock);
   const durationMs = Math.max(0, Date.now() - started);
@@ -349,13 +362,15 @@ export async function runEnvironmentPreflight(root, environment = "local", input
   const result = {
     schemaVersion: 1,
     environment: files.environment,
+    scope,
+    reason: projectOnly ? projectReason : null,
     profile: path.relative(files.root, files.profile),
     status: checks.some((check) => check.status === "failed") ? "failed" : "passed",
     checkedAt: now,
     durationMs,
     checks: checks.map((check) => ({ ...check, detail: redact(check.detail) })),
     warnings,
-    credentialVariables: csv(profile.credential_variables),
+    credentialVariables: projectOnly ? [] : csv(profile.credential_variables),
   };
   if (result.status === "passed" && input.persist !== false) {
     profile.last_verified_at = now;

@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "taskId": "optimize-quick-delivery",
+  "preparedAt": "2026-07-25T22:47:59.681Z",
+  "context": {
+    "language": "zh-CN",
+    "version": "1.0.0",
+    "environment": "local",
+    "role": "n/a",
+    "prerequisites": [
+      "启动或验证命令: npm run check"
+    ],
+    "accountReference": "n/a (no login required)",
+    "entryPoint": "打开 report.md。",
+    "estimatedMinutes": 5
+  },
+  "steps": [
+    {
+      "number": 1,
+      "acceptanceId": "AC-01",
+      "title": "Quick 指令采用最小默认工作预算",
+      "precondition": "任务位置已知、改动局部、模式成熟且可逆。",
+      "action": "Agent 按 OpenATDD Quick 指令执行检索、读取、修改和验证。",
+      "expected": "默认只进行一次定位、一次目标批量读取、一个最小补丁、相关检查和一次差异检查；语义搜索、CodeGraph、无关架构资料、已知失败的全量检查和子代理仅在有明确理由时使用。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 2,
+      "acceptanceId": "AC-02",
+      "title": "最终化清单可在执行前静态校验",
+      "precondition": "任务已有批准的验收与方案，且存在候选最终化清单。",
+      "action": "运行 `openatdd validate-finalization <task>`。",
+      "expected": "命令在不执行 smoke、check、UAT、不写 preview 的情况下返回完整的 schema、验收映射与清单路径校验结果；无效清单返回非零状态。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 3,
+      "acceptanceId": "AC-03",
+      "title": "任务级清单优先于项目级清单",
+      "precondition": "任务目录存在 `finalization.json`，项目根目录也存在旧任务清单。",
+      "action": "未显式传入 `--manifest` 时校验或最终化当前任务。",
+      "expected": "OpenATDD 选择任务级清单；没有任务级清单时保持项目级回退，显式参数仍具有最高优先级。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 4,
+      "acceptanceId": "AC-04",
+      "title": "组件级验证无需伪造运行环境证据",
+      "precondition": "清单显式声明 `preflight.scope: project` 并提供原因，环境档案仍包含角色、组织、集成或 fixture 信息。",
+      "action": "执行静态校验和最终化预检。",
+      "expected": "工作区、项目和启动命令等项目事实仍被校验；服务、入口、登录、组织、集成、fixture 与 workaround 被标记为不适用且不要求 assertions/evidence；默认 `environment` 范围保持原有严格行为。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
+        "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    }
+  ],
+  "links": [
+    {
+      "label": "详细 UAT 报告",
+      "target": "report.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的验收卡",
+      "target": "acceptance.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的方案卡",
+      "target": "solution.md",
+      "applicable": true
+    },
+    {
+      "label": "问题与修复日志",
+      "target": "issues.md",
+      "applicable": true
+    },
+    {
+      "label": "local 环境档案",
+      "target": "../../environments/local.yaml",
+      "applicable": true
+    },
+    {
+      "label": "Finalization 清单",
+      "target": "finalization.json",
+      "applicable": true
+    },
+    {
+      "label": "项目文档",
+      "target": "../../../README.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: batch-quick-finalization-uat-quick-finalization.md",
+      "target": "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: check-focused-quick-delivery-focused-quick-delivery-tests.md",
+      "target": "evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: batch-quick-finalization-uat-quick-finalization.md",
+      "target": "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: check-focused-quick-delivery-focused-quick-delivery-tests.md",
+      "target": "evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: batch-quick-finalization-uat-quick-finalization.md",
+      "target": "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: check-focused-quick-delivery-focused-quick-delivery-tests.md",
+      "target": "evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-quick-finalization-uat-quick-finalization.md",
+      "target": "evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+      "applicable": true
+    }
+  ]
+}

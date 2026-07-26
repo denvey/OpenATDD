@@ -3,8 +3,8 @@ import path from "node:path";
 import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { OpenATDDError, asArray, recoverTransactions } from "./lib.mjs";
-import { dryRunFinalization, finalizeTask } from "./finalization.mjs";
+import { OpenATDDError, asArray, assert, recoverTransactions } from "./lib.mjs";
+import { dryRunFinalization, fastFinalize, finalizeTask, validateFinalizationPlan } from "./finalization.mjs";
 import {
   createCodexAdapter,
   createCommandAdapter,
@@ -15,6 +15,7 @@ import {
 import { capabilityProfile, writeStrategyRetrospective } from "./strategy.mjs";
 import {
   adoptTask,
+  advanceQuickTask,
   analyzeKnowledgeImpact,
   approveAcceptance,
   approveSolution,
@@ -67,11 +68,14 @@ Usage:
   openatdd draft-solution TASK
   openatdd review-solution TASK --status passed|failed --reviewer main|independent --summary TEXT
                   --check all [--agent-id AGENT-001]
-  openatdd approve-solution TASK
+  openatdd approve-solution TASK [--begin]
   openatdd reopen-acceptance TASK --reason TEXT
   openatdd reopen-solution TASK --reason TEXT
   openatdd begin TASK
+  openatdd advance TASK [--summary TEXT] [--finding TEXT]
   openatdd resume TASK
+  openatdd validate-finalization TASK [--manifest PATH] [--json]
+  openatdd finalize TASK --fast [--manifest PATH] [--assertions FILE]
   openatdd finalize TASK --dry-run [--manifest PATH] [--assertions FILE]
   openatdd finalize TASK [--manifest PATH] [--assertions FILE]
   openatdd pre-uat TASK
@@ -286,8 +290,9 @@ async function execute(parsed, io) {
     }
     case "approve-solution": {
       const result = await approveSolution(root, taskId(positionals));
+      const begun = options.begin === true ? await beginImplementation(root, taskId(positionals)) : null;
       const payload = {
-        ...summarizeState(result.state),
+        ...summarizeState((begun ?? result).state),
         warnings: result.warnings,
         unchanged: result.unchanged,
         affectedDependencies: result.affectedDependencies,
@@ -298,6 +303,7 @@ async function execute(parsed, io) {
         for (const dependency of result.affectedDependencies) {
           io.stdout.write(`Affected historical task: ${dependency.taskId} (${dependency.acceptanceIds.join(", ")})\n`);
         }
+        if (begun) io.stdout.write(`Implementation started: ${begun.state.taskId}\n`);
         for (const warning of result.warnings) io.stdout.write(`Warning: ${warning}\n`);
       }
       return 0;
@@ -327,6 +333,40 @@ async function execute(parsed, io) {
       else io.stdout.write(`Implementation started: ${result.state.taskId}\n`);
       return 0;
     }
+    case "advance": {
+      const result = await advanceQuickTask(root, taskId(positionals), {
+        summary: options.summary === undefined ? undefined : String(options.summary),
+        findings: options.finding,
+      });
+      const payload = {
+        ...summarizeState(result.state),
+        steps: result.steps,
+        warnings: result.warnings,
+        affectedDependencies: result.affectedDependencies,
+      };
+      if (json) outputJson(io, payload);
+      else {
+        io.stdout.write(`Advanced ${result.state.taskId} to ${result.state.phase}\n`);
+        for (const step of result.steps.filter((item) => item.performed)) io.stdout.write(`Step: ${step.step}\n`);
+        for (const dependency of result.affectedDependencies) {
+          io.stdout.write(`Affected historical task: ${dependency.taskId} (${dependency.acceptanceIds.join(", ")})\n`);
+        }
+        for (const warning of result.warnings) io.stdout.write(`Warning: ${warning}\n`);
+      }
+      return 0;
+    }
+    case "validate-finalization": {
+      const result = await validateFinalizationPlan(root, taskId(positionals), {
+        manifest: options.manifest ? String(options.manifest) : undefined,
+      });
+      if (json) outputJson(io, result);
+      else {
+        io.stdout.write(`${result.valid ? "Valid" : "Invalid"} finalization manifest: ${result.manifestPath}\n`);
+        for (const error of result.errors) io.stdout.write(`Error: ${error}\n`);
+        for (const warning of result.warnings) io.stdout.write(`Warning: ${warning}\n`);
+      }
+      return result.valid ? 0 : 1;
+    }
     case "finalize": {
       const assertions = options.assertions
         ? JSON.parse(await readFile(path.resolve(root, String(options.assertions)), "utf8"))
@@ -336,6 +376,11 @@ async function execute(parsed, io) {
         assertions,
         timeoutMs: options["timeout-ms"],
       };
+      assert(
+        !(options["dry-run"] && options.fast),
+        "INVALID_FINALIZE_MODE",
+        "--fast already performs the rehearsal; do not combine it with --dry-run.",
+      );
       if (options["dry-run"]) {
         const result = await dryRunFinalization(root, taskId(positionals), input);
         if (json) outputJson(io, result.preview);
@@ -343,6 +388,17 @@ async function execute(parsed, io) {
           io.stdout.write(`Finalization dry-run passed: ${result.state.taskId}\n`);
           io.stdout.write(`Preview: ${result.files.finalizePreview}\n`);
           io.stdout.write(`Handoff preview: ${result.files.previewReport}\n`);
+        }
+      } else if (options.fast) {
+        const result = await fastFinalize(root, taskId(positionals), input);
+        if (json) outputJson(io, { ...result.result, unchanged: result.unchanged, validation: result.validation, preview: result.preview });
+        else {
+          io.stdout.write(`Validated manifest: ${result.validation.manifestPath}\n`);
+          io.stdout.write(`Rehearsal passed: ${result.preview.candidateFingerprint}\n`);
+          io.stdout.write(`Finalization completed: ${result.state.taskId}\n`);
+          io.stdout.write(`Report: ${result.files.report}\n`);
+          io.stdout.write(`Result: ${result.files.finalizeResult}\n`);
+          for (const warning of result.validation.warnings) io.stdout.write(`Warning: ${warning}\n`);
         }
       } else {
         const result = await finalizeTask(root, taskId(positionals), input);

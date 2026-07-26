@@ -5,6 +5,15 @@ implementation repairs are complete. The portable default is:
 
 ```text
 focused implementation and repair
+→ finalize --fast   (validation + rehearsal + one formal run, single invocation)
+```
+
+Use the explicit ladder when the intermediate output matters: no project
+manifest yet, a rehearsal you expect to fail, or a narrow diagnosis.
+
+```text
+focused implementation and repair
+→ validate-finalization
 → finalize --dry-run
 → repair every rehearsal finding
 → freeze the complete source fingerprint
@@ -18,8 +27,14 @@ and solution confirmations before the agent executes finalization.
 
 ## Project manifest
 
-Store the versioned contract at `.openatdd/finalization.json`. Commands are
-always argv arrays and run without a shell. A minimal CLI example is:
+Store the reusable versioned contract at `.openatdd/finalization.json`. A task
+may provide `.openatdd/tasks/<task>/finalization.manifest.json` when its
+acceptance IDs or commands cannot safely reuse the project contract. Resolution
+order is an explicit `--manifest`, then the task manifest, then the project
+manifest. The separate `finalization.json` that finalization writes inside the
+task is a frozen snapshot of what actually ran and is never read back as input.
+Commands are always argv arrays and run without a shell. A minimal CLI example
+is:
 
 ```json
 {
@@ -87,6 +102,10 @@ Rules enforced by the validator:
 - `environment` names a non-secret profile in `.openatdd/environments/`;
 - every command has a unique lowercase ID and non-empty `argv` array;
 - optional `preflight.commands` use the same safe argv-only command contract;
+- optional `preflight.scope` is `environment` (default) or `project`; project
+  scope requires a reason, forbids preflight commands and declared command
+  environment variables, and is only for deterministic no-live-dependency
+  harnesses;
 - working directories stay inside the project and timeouts are positive;
 - check groups are ordered `focused → module → broad`, with exactly one broad
   group;
@@ -99,8 +118,11 @@ Rules enforced by the validator:
 - budgets warn about avoidable repetition but never fail solely due to elapsed
   time.
 
-The resolved manifest is copied into the task only during successful formal
-finalization. Existing granular OpenATDD commands remain available.
+The resolved manifest is copied into the task as `finalization.json` during
+successful formal finalization. That copy records what ran; editing it changes
+nothing, because resolution only reads the explicit path, the task
+`finalization.manifest.json`, or the project manifest. Existing granular
+OpenATDD commands remain available.
 
 Each preflight command prints one JSON object to stdout. Keys may be `login`,
 `organization`, `integration`, `fixture`, or `known_workarounds`; every value
@@ -133,7 +155,17 @@ local, staging, or disposable operations.
 
 ## Rehearsal
 
-Run:
+`finalize --fast` already runs this validation, the rehearsal, and one formal
+run in a single invocation. Split it only when the intermediate output matters.
+
+First validate schema, current acceptance IDs, evidence references, preflight
+scope, and the resolved path without running a command or writing a preview:
+
+```bash
+openatdd validate-finalization <task>
+```
+
+Fix every reported static error together. Then run:
 
 ```bash
 openatdd finalize <task> --dry-run
@@ -143,6 +175,21 @@ Add `--manifest <path>` only to try a project-contained alternate manifest.
 Prefer manifest `preflight.commands` for reusable login, organization,
 integration, fixture, or workaround checks. `--assertions <safe-json>` remains
 the compatible fallback for projects without an adapter.
+
+For a component or local project harness with no live dependency, use an
+explicit project-scoped preflight instead of manufacturing assertion files:
+
+```json
+{
+  "preflight": {
+    "scope": "project",
+    "reason": "The approved journey runs entirely in the deterministic component harness."
+  }
+}
+```
+
+Default environment scope remains strict. Project scope still validates the
+workspace, project identity, start command, and application version.
 
 The rehearsal checks the real entry points, non-persisting environment
 preflight, UAT coverage, report rendering, local and applicable HTTP links,

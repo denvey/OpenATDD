@@ -104,7 +104,7 @@ test("retrospective exposes delivery critical path, retries, integration tail, a
   };
   state.agents.dispatches = [{
     id: "AGENT-001",
-    role: "clean-context-execution",
+    role: "legacy-implementation-agent",
     status: "passed",
     startedAt: "2026-07-24T10:00:00.000Z",
     updatedAt: "2026-07-24T10:20:00.000Z",

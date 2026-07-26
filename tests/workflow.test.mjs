@@ -5,10 +5,12 @@ import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
 import {
+  advanceQuickTask,
   approveAcceptance,
   assessTask,
   beginImplementation,
   beginPreUat,
+  createTask,
   draftSolution,
   loadTask,
   markReady,
@@ -16,6 +18,7 @@ import {
   recordCheck,
   recordIssue,
   recordSolutionReview,
+  recordTaskDecision,
   searchMemory,
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
@@ -27,6 +30,7 @@ import {
   temporaryProject,
   writeAcceptance,
   writeEvidence,
+  writeSolution,
 } from "./helpers.mjs";
 
 const execFileAsync = promisify(execFile);
@@ -353,4 +357,107 @@ test("human-facing templates and reports infer Chinese without a language option
   assert.match(report, /^# UAT 前报告：/);
   assert.match(report, /### 验收结果/);
   assert.doesNotMatch(report, /# Pre-UAT report/);
+});
+
+async function quickCards(root, taskId, options = {}) {
+  const criteria = options.criteria ?? [criterion("AC-01")];
+  await createTask(root, taskId, options.requirement ?? `Deliver ${taskId}`, clock("2026-03-01T00:00:00.000Z"));
+  await assessTask(root, taskId, {
+    scope: "local",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "low",
+    ...options.assessment,
+  }, clock("2026-03-01T00:00:01.000Z"));
+  await writeAcceptance(root, taskId, criteria);
+  await writeSolution(root, taskId, criteria);
+  return criteria;
+}
+
+test("advance runs the whole Quick autonomous approval chain in one invocation", async (t) => {
+  const root = await temporaryProject(t);
+  await quickCards(root, "quick-advance");
+  const result = await advanceQuickTask(root, "quick-advance", {
+    summary: "The smallest project-fitting patch covers the approved acceptance.",
+  }, clock("2026-03-01T00:00:02.000Z"));
+  assert.equal(result.state.phase, "IMPLEMENTING");
+  assert.deepEqual(
+    result.steps.filter((step) => step.performed).map((step) => step.step),
+    ["approve-acceptance", "draft-solution", "review-solution", "approve-solution", "begin"],
+  );
+  assert.equal(result.state.reviews.solution.reviewer, "main");
+  const chain = ["ACCEPTANCE_APPROVED", "SOLUTION_DRAFTED", "SOLUTION_REVIEWED", "SOLUTION_APPROVED", "IMPLEMENTATION_STARTED"];
+  assert.deepEqual(result.state.history.map((item) => item.event).filter((event) => chain.includes(event)), chain);
+
+  // Re-running advance is idempotent recovery, not a duplicate approval.
+  const repeated = await advanceQuickTask(root, "quick-advance", {}, clock("2026-03-01T00:00:03.000Z"));
+  assert.equal(repeated.state.phase, "IMPLEMENTING");
+  assert.deepEqual(repeated.steps.filter((step) => step.performed).map((step) => step.step), ["begin"]);
+});
+
+test("advance rejects Standard and Deep lanes so both human confirmations stay separate", async (t) => {
+  const root = await temporaryProject(t);
+  await quickCards(root, "standard-advance", {
+    assessment: { scope: "cross-module", uncertainty: "medium" },
+  });
+  await assert.rejects(
+    () => advanceQuickTask(root, "standard-advance", { summary: "A concise review finding." }),
+    (error) => error.code === "ADVANCE_REQUIRES_QUICK",
+  );
+});
+
+test("advance stops at the authorization gate and resumes after the recorded decision", async (t) => {
+  const root = await temporaryProject(t);
+  await quickCards(root, "quick-advance-authorization", {
+    assessment: { riskSignals: ["deletion"] },
+  });
+  await assert.rejects(
+    () => advanceQuickTask(root, "quick-advance-authorization", { summary: "The deletion path is the smallest fitting change." }),
+    (error) => error.code === "AUTHORIZATION_DECISION_REQUIRED",
+  );
+  const { state } = await loadTask(root, "quick-advance-authorization");
+  assert.equal(state.phase, "SOLUTION_DRAFT");
+  assert.equal(Boolean(state.acceptance.approvedAt), true);
+
+  await recordTaskDecision(root, "quick-advance-authorization", {
+    owner: "authorization",
+    question: "May the stale exports be purged in this delivery?",
+    options: [
+      { id: "authorize", label: "Authorize the purge", consequence: "Stale exports are removed." },
+      { id: "defer", label: "Defer to a later delivery", consequence: "Nothing is removed now." },
+    ],
+    recommendation: "authorize",
+    recommendationBasis: "The exports are regenerated fixtures with no retention requirement.",
+    status: "resolved",
+    resolution: { optionId: "authorize", rationale: "The owner authorized the purge." },
+  });
+  const resumed = await advanceQuickTask(root, "quick-advance-authorization", {
+    summary: "The deletion path is the smallest fitting change.",
+  });
+  assert.equal(resumed.state.phase, "IMPLEMENTING");
+  assert.deepEqual(
+    resumed.steps.filter((step) => step.performed).map((step) => step.step),
+    ["approve-solution", "begin"],
+  );
+});
+
+test("CLI advance and approve-solution --begin remove approval round trips", async (t) => {
+  const script = path.resolve("skills/openatdd/scripts/openatdd.mjs");
+  const root = await temporaryProject(t);
+  await quickCards(root, "cli-advance");
+  const advanced = await execFileAsync(process.execPath, [
+    script, "advance", "cli-advance",
+    "--summary", "The smallest project-fitting patch covers the approved acceptance.",
+    "--json", "--root", root,
+  ]);
+  const payload = JSON.parse(advanced.stdout);
+  assert.equal(payload.phase, "IMPLEMENTING");
+  assert.equal(payload.steps.filter((step) => step.performed).length, 5);
+
+  const merged = await temporaryProject(t);
+  await prepareApprovedTask(merged, "merged-begin");
+  const approved = await execFileAsync(process.execPath, [
+    script, "approve-solution", "merged-begin", "--begin", "--json", "--root", merged,
+  ]);
+  assert.equal(JSON.parse(approved.stdout).phase, "IMPLEMENTING");
 });

@@ -27,6 +27,7 @@ import {
   loadLocalCredentials,
   parseRestrictedDotenv,
   renderFlatYaml,
+  runEnvironmentPreflight,
   scanEnvironmentArtifacts,
 } from "../skills/openatdd/scripts/profiles.mjs";
 import {
@@ -127,6 +128,28 @@ test("preflight reports workspace, service, login, organization, integration, an
     assertions: Object.fromEntries(["login", "organization", "integration", "fixture"].map((name) => [name, { status: "passed", summary: `${name} verified`, evidence: assertionEvidence }])),
   });
   assert.equal(passed.state.preflight.status, "passed");
+});
+
+test("project-scoped preflight retains project checks while skipping live environment requirements", async (t) => {
+  const root = await temporaryProject(t);
+  await initProject(root);
+  await writeProfile(root, {
+    service_urls: "http://127.0.0.1:1",
+    entry_url: "http://127.0.0.1:1/app",
+    role: "admin",
+    organization: "qa-org",
+    integration: "live-api",
+    fixture: "sample-order",
+    credential_variables: "OPENATDD_TEST_PASSWORD",
+  });
+  const reason = "The component harness has no live environment dependency.";
+  const result = await runEnvironmentPreflight(root, "local", { scope: "project", reason, persist: false });
+  assert.equal(result.result.status, "passed");
+  assert.equal(result.result.scope, "project");
+  assert.equal(result.result.checks.find((item) => item.name === "workspace").status, "passed");
+  assert.equal(result.result.checks.find((item) => item.name === "project").status, "passed");
+  assert.equal(result.result.checks.find((item) => item.name === "login").detail, reason);
+  assert(result.result.checks.filter((item) => ["services", "entry_url", "credential_variables", "login", "organization", "integration", "fixture", "known_workarounds"].includes(item.name)).every((item) => item.status === "not_applicable"));
 });
 
 test("open issues reject passed evidence and resolution advances a clean verification epoch", async (t) => {

@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  HARD_ESCALATORS,
+  RISK_OVERLAYS,
   classifyTask,
   validateAssessment,
   validateRouting,
@@ -52,6 +53,17 @@ test("routing classifies a local established low-risk task as quick", () => {
   assert.equal(validateRouting(routing).valid, true);
 });
 
+test("Quick guidance keeps known-target work compact without weakening validation", async () => {
+  const skill = await readFile(new URL("../skills/openatdd/SKILL.md", import.meta.url), "utf8");
+  assert.match(skill, /default work budget is one location step/);
+  assert.match(skill, /optimization budget, not a correctness cap/);
+  assert.match(skill, /known-failing repository-wide check/);
+  assert.match(skill, /openatdd validate-finalization/);
+  assert.match(skill, /memory .*--limit 5/);
+  assert.match(skill, /openatdd finalize <task-id> --fast/);
+  assert.match(skill, /resolved\n   `authorization` decision before any product code changes/);
+});
+
 test("routing classifies ordinary cross-module work as standard", () => {
   const routing = classifyTask(assessment({ scope: "cross-module", uncertainty: "medium" }));
   assert.equal(routing.lane, "standard");
@@ -68,58 +80,98 @@ test("routing classifies novel cross-cutting work as deep", () => {
   assert.equal(routing.agents.policy, "parallel");
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.agents.roles.includes("external-research"));
-  assert(routing.agents.roles.includes("clean-context-execution"));
+  assert(!routing.agents.roles.includes("clean-context-execution"));
 });
 
-test("every hard risk deterministically escalates to deep", async (t) => {
-  for (const signal of HARD_ESCALATORS) {
+test("risk signals add safety overlays without changing problem-solving depth", async (t) => {
+  for (const signal of RISK_OVERLAYS) {
     await t.test(signal, () => {
       const routing = classifyTask(assessment({ riskSignals: [signal] }));
-      assert.equal(routing.lane, "deep");
-      assert(routing.reasons.includes(`hard-escalator:${signal}`));
+      assert.equal(routing.lane, "quick");
+      assert.deepEqual(routing.riskOverlays, [signal]);
+      assert.equal(routing.investigation.externalResearch, false);
     });
   }
 });
 
-test("Agent profiles route exploration to Luna, execution and review to Terra, and escalate only bounded high-risk work", () => {
+test("only system, high-uncertainty, or novel cross-cutting complexity enters Deep", () => {
+  for (const overrides of [
+    { scope: "system" },
+    { uncertainty: "high" },
+    { scope: "cross-module", projectPattern: "none" },
+  ]) {
+    const routing = classifyTask(assessment(overrides));
+    assert.equal(routing.lane, "deep");
+  }
+});
+
+test("local established token bug with an existing migration is not Deep", () => {
+  const routing = classifyTask(assessment({
+    reversibility: "costly",
+    riskSignals: ["migration", "security"],
+  }));
+  assert.equal(routing.lane, "quick");
+  assert.deepEqual(routing.riskOverlays, ["migration", "security"]);
+  assert.deepEqual(routing.reasons, ["local-scope", "established-project-pattern", "low-uncertainty"]);
+});
+
+test("material safety risk stays separate from problem-solving depth", () => {
+  const routing = classifyTask(assessment({
+    reversibility: "irreversible",
+    riskSignals: ["authorization", "sensitive-boundary-change", "production"],
+  }));
+  assert.equal(routing.lane, "quick");
+  assert.deepEqual(routing.riskOverlays, [
+    "authorization",
+    "production",
+    "irreversible",
+    "sensitive-boundary-change",
+  ]);
+});
+
+test("routing overlay validation is additive for persisted schema-v1 tasks", () => {
+  const routing = classifyTask(assessment({ riskSignals: ["security"] }));
+  const legacy = structuredClone(routing);
+  delete legacy.riskOverlays;
+  assert.equal(validateRouting(legacy).valid, true);
+  assert.equal(validateRouting({ ...routing, riskOverlays: [] }).valid, false);
+});
+
+test("every allowed Agent task label resolves to the single Luna low read-only scout", () => {
   assert.deepEqual(profileForDispatch({ role: "local-discovery" }), {
     role: "local-discovery",
-    profile: "local-discovery",
+    profile: "default",
     model: "gpt-5.6-luna",
     reasoningEffort: "low",
     forkTurns: "none",
     sandbox: "read-only",
     escalation: null,
   });
-  assert.equal(profileForDispatch({ role: "clean-context-execution" }).model, "gpt-5.6-terra");
-  assert.equal(profileForDispatch({ role: "independent-review" }).reasoningEffort, "high");
-
-  const highRiskReview = profileForDispatch({ role: "independent-review", riskSignals: ["security"] });
-  assert.equal(highRiskReview.model, "gpt-5.6-sol");
-  assert.equal(highRiskReview.escalation, "hard-risk-independent-review");
-
-  const escalatedRepair = profileForDispatch({
-    role: "clean-context-execution",
-    repairAttempts: [{ outcome: "failed" }, { outcome: "no-progress" }],
-  });
-  assert.equal(escalatedRepair.model, "gpt-5.6-sol");
-  assert.equal(escalatedRepair.escalation, "two-consecutive-failed-repairs");
-  assert.equal(profileForDispatch({
-    role: "clean-context-execution",
-    repairAttempts: [{ outcome: "failed" }, { outcome: "progress" }],
-  }).model, "gpt-5.6-terra");
+  for (const role of ["external-research", "independent-review"]) {
+    const profile = profileForDispatch({ role, riskSignals: ["security"] });
+    assert.equal(profile.profile, "default");
+    assert.equal(profile.model, "gpt-5.6-luna");
+    assert.equal(profile.reasoningEffort, "low");
+    assert.equal(profile.sandbox, "read-only");
+    assert.equal(profile.escalation, null);
+  }
+  assert.throws(
+    () => profileForDispatch({ role: "clean-context-execution" }),
+    (error) => error.code === "UNKNOWN_AGENT_ROLE",
+  );
 });
 
-test("irreversible assessment escalates even without a duplicated risk flag", () => {
+test("irreversible assessment adds a safety overlay without changing a local task's depth", () => {
   const routing = classifyTask(assessment({ reversibility: "irreversible" }));
-  assert.equal(routing.lane, "deep");
+  assert.equal(routing.lane, "quick");
   assert.deepEqual(routing.assessment.riskSignals, ["irreversible"]);
+  assert.deepEqual(routing.riskOverlays, ["irreversible"]);
 });
 
 test("routing assessment validation rejects unknown and malformed risk input", () => {
   const invalid = validateAssessment(assessment({ riskSignals: ["mystery"], risks: { deletion: "yes" } }));
   assert.equal(invalid.valid, false);
-  assert(invalid.errors.some((error) => error.includes("Unknown hard risk signal")));
+  assert(invalid.errors.some((error) => error.includes("Unknown risk signal")));
   assert(invalid.errors.some((error) => error.includes("must be boolean")));
   assert.throws(
     () => classifyTask(assessment({ scope: "tiny" })),

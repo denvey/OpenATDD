@@ -242,7 +242,7 @@ async function detectedVersion(root) {
   try { return (await readJson(path.join(root, "package.json"))).version ?? "unspecified"; } catch { return "unspecified"; }
 }
 
-async function buildHandoff(root, state, files, manifest, profile, evidenceReferences, reportName) {
+async function buildHandoff(root, state, files, manifest, profile, evidenceReferences, reportName, manifestPath) {
   const language = inferHumanLanguage(await readFile(files.solution, "utf8"), state.requirement);
   const zh = language === "zh-CN";
   const links = [
@@ -251,7 +251,7 @@ async function buildHandoff(root, state, files, manifest, profile, evidenceRefer
     { label: zh ? "已批准的方案卡" : "Approved solution card", target: "solution.md", applicable: true },
     { label: zh ? "问题与修复日志" : "Issue and repair log", target: "issues.md", applicable: true },
     { label: `${manifest.environment} ${zh ? "环境档案" : "environment profile"}`, target: taskRelative(files, `.openatdd/environments/${manifest.environment}.yaml`), applicable: true },
-    { label: zh ? "Finalization 清单" : "Finalization manifest", target: taskRelative(files, ".openatdd/finalization.json"), applicable: true },
+    { label: zh ? "Finalization 清单" : "Finalization manifest", target: taskRelative(files, manifestPath), applicable: true },
   ];
   for (const link of manifest.links ?? []) links.push(link);
   const readme = path.join(root, "README.md");
@@ -334,6 +334,9 @@ function initialMetrics(mode, clock) {
     affectedHistoryPasses: 0,
     historyRuns: 0,
     historyCacheHits: 0,
+    historyEpochReuse: 0,
+    skippedCheckGroups: [],
+    checkGroupSignatureReuse: [],
     evidenceWrites: 0,
     evidenceWritesByPhase: {},
     phaseDurationsMs: {},
@@ -371,15 +374,51 @@ function applyBudgets(metrics, budgets = {}) {
 }
 
 async function loadContext(root, taskId, input) {
-  const loaded = await loadTask(root, taskId);
-  await assertContractIntegrity(loaded.files, loaded.state);
+  const inspected = await inspectFinalization(root, taskId, input);
+  const { loaded, manifestInfo, validation } = inspected;
   assert([PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, PHASES.READY_FOR_UAT].includes(loaded.state.phase), "INVALID_PHASE", `Finalization is not allowed in phase ${loaded.state.phase}.`);
-  const manifestInfo = await loadFinalizationManifest(root, taskId, input.manifest);
-  const validation = validateFinalizationManifest(manifestInfo.manifest, loaded.state.acceptance.items);
   assert(validation.valid, "INVALID_FINALIZATION_MANIFEST", "Finalization manifest is invalid.", { errors: validation.errors });
   const profileInfo = await profileDigest(root, manifestInfo.manifest.environment);
-  const credentials = await loadLocalCredentials(root, profileInfo.profile.credential_variables);
+  const credentialVariables = manifestInfo.manifest.preflight?.scope === "project"
+    ? ""
+    : profileInfo.profile.credential_variables;
+  const credentials = await loadLocalCredentials(root, credentialVariables);
   return { ...loaded, manifestInfo, profileInfo, credentials, warnings: validation.warnings };
+}
+
+async function inspectFinalization(root, taskId, input = {}) {
+  const loaded = await loadTask(root, taskId);
+  await assertContractIntegrity(loaded.files, loaded.state);
+  const manifestInfo = await loadFinalizationManifest(root, taskId, input.manifest);
+  const validation = validateFinalizationManifest(manifestInfo.manifest, loaded.state.acceptance.items);
+  return { loaded, manifestInfo, validation };
+}
+
+export async function validateFinalizationPlan(root, taskId, input = {}) {
+  const { loaded, manifestInfo, validation } = await inspectFinalization(root, taskId, input);
+  return {
+    schemaVersion: 1,
+    taskId,
+    phase: loaded.state.phase,
+    valid: validation.valid,
+    errors: validation.errors,
+    warnings: validation.warnings,
+    manifestPath: manifestInfo.relativePath,
+    manifestDigest: manifestInfo.digest,
+    preflight: {
+      scope: manifestInfo.manifest.preflight?.scope ?? "environment",
+      reason: manifestInfo.manifest.preflight?.reason ?? null,
+    },
+  };
+}
+
+async function finalizationUnchanged(root, taskId, input = {}) {
+  const { loaded, manifestInfo } = await inspectFinalization(root, taskId, input);
+  if (loaded.state.finalization?.status !== "complete") return false;
+  if (loaded.state.finalization.manifestDigest !== manifestInfo.digest) return false;
+  if (!(await pathExists(loaded.files.finalizeResult))) return false;
+  const inventory = await fingerprintProject(root, manifestInfo.manifest.source);
+  return loaded.state.finalization.sourceFingerprint === inventory.fingerprint;
 }
 
 export async function dryRunFinalization(root, taskId, input = {}, clock = () => new Date()) {
@@ -411,6 +450,8 @@ export async function dryRunFinalization(root, taskId, input = {}, clock = () =>
       timeoutMs: input.timeoutMs,
       persist: false,
       notBefore: hasGeneratedAssertions ? generatedBoundary : evidenceBoundary(state),
+      scope: manifestInfo.manifest.preflight?.scope,
+      reason: manifestInfo.manifest.preflight?.reason,
     }, clock);
     assert(preflight.result.status === "passed", "PREFLIGHT_FAILED", "Dry-run environment preflight failed.", {
       errors: preflight.result.checks.filter((item) => item.status === "failed").map((item) => `${item.name}: ${item.detail}`),
@@ -430,7 +471,7 @@ export async function dryRunFinalization(root, taskId, input = {}, clock = () =>
     previewState.preflight = preflight.result;
     previewState.uat = { planStatus: "planned", batches: {}, warnings: [], estimatedRoundTrips: plan.estimatedRoundTrips };
     const emptyEvidence = new Map(state.acceptance.items.map((item) => [item.id, []]));
-    const handoff = await buildHandoff(root, previewState, files, manifestInfo.manifest, profileInfo.profile, emptyEvidence, "report.preview.md");
+    const handoff = await buildHandoff(root, previewState, files, manifestInfo.manifest, profileInfo.profile, emptyEvidence, "report.preview.md", manifestInfo.relativePath);
     const previewReport = renderTaskReport(previewState, handoff);
     assertNoSecretValues(previewReport, credentials.secretValues, "Preview report");
     await atomicWrite(files.previewReport, previewReport);
@@ -486,6 +527,38 @@ function evidenceForReferences(referenceEvidence, references) {
   return [...new Map(values.map((item) => [item.path, item])).values()];
 }
 
+function commandSignature(commands = []) {
+  if (commands.length === 0) return null;
+  return JSON.stringify(commands.map((command) => ({
+    argv: command.argv,
+    cwd: command.cwd ?? null,
+    env: [...(command.env ?? [])].sort(),
+    timeoutMs: command.timeoutMs ?? null,
+    expectedExitCodes: [...(command.expectedExitCodes ?? [0])].sort((a, b) => a - b),
+  })));
+}
+
+/**
+ * Reuse evidence already produced in this verification epoch when a historical
+ * replay would execute the identical commands. The source is frozen for the
+ * whole epoch, so a second identical run cannot observe a different outcome; it
+ * only multiplies the broad suite by the number of affected historical tasks.
+ */
+function reusableEpochEvidence(manifest, referenceEvidence, replayCommands) {
+  const signature = commandSignature(replayCommands);
+  if (!signature) return null;
+  const candidates = [
+    ...(manifest.checks ?? []).map((group) => [`check:${group.id}`, group.commands]),
+    ...(manifest.uat?.batches ?? []).map((batch) => [`batch:${batch.id}`, batch.runner === "internal" ? [] : batch.commands]),
+  ];
+  for (const [reference, commands] of candidates) {
+    if (commandSignature(commands) !== signature) continue;
+    const evidence = referenceEvidence.get(reference);
+    if (evidence?.length) return { reference, evidence };
+  }
+  return null;
+}
+
 async function projectHistoricalStates(root, state, manifest, referenceEvidence, fingerprint, boundary, clock, metrics) {
   const dependencyStates = new Map();
   const project = projectFiles(root);
@@ -503,6 +576,7 @@ async function projectHistoricalStates(root, state, manifest, referenceEvidence,
     const replayDigest = sha256(JSON.stringify(override ?? snapshot.replay));
     const key = sha256(`${dependency.taskId}\n${contractDigest}\n${replayDigest}\n${fingerprint}`);
     const cached = nextEntries.find((item) => item.key === key);
+    const reused = override ? null : reusableEpochEvidence(manifest, referenceEvidence, snapshot.replay.commands);
     let evidence;
     if (cached && (await verifyCapturedEvidence(root, cached.evidence, dependency.notBefore)).length === 0) {
       evidence = cached.evidence;
@@ -511,6 +585,9 @@ async function projectHistoricalStates(root, state, manifest, referenceEvidence,
       evidence = evidenceForReferences(referenceEvidence, override.evidenceFrom);
       assert(evidence.length > 0, "HISTORY_EVIDENCE_REQUIRED", `History override for ${dependency.taskId} resolved no evidence.`);
       metrics.historyRuns += 1;
+    } else if (reused) {
+      evidence = reused.evidence;
+      metrics.historyEpochReuse += 1;
     } else {
       const paths = [];
       const credentials = await loadLocalCredentials(root, "");
@@ -560,7 +637,20 @@ async function projectHistoricalStates(root, state, manifest, referenceEvidence,
     projected.readyAt = now;
     projected.updatedAt = now;
     dependencyStates.set(dependency.taskId, { state: projected, files: prior.files });
-    if (!cached) nextEntries.push({ key, taskId: dependency.taskId, contractDigest, replayDigest, fingerprint, evidence, verifiedAt: now });
+    if (!cached) {
+      // An entry for the same contract and replay under an older fingerprint can
+      // never be reused again; keeping it would grow the index without bound.
+      for (let position = nextEntries.length - 1; position >= 0; position -= 1) {
+        const entry = nextEntries[position];
+        if (entry.taskId === dependency.taskId
+          && entry.contractDigest === contractDigest
+          && entry.replayDigest === replayDigest
+          && entry.fingerprint !== fingerprint) {
+          nextEntries.splice(position, 1);
+        }
+      }
+      nextEntries.push({ key, taskId: dependency.taskId, contractDigest, replayDigest, fingerprint, evidence, verifiedAt: now });
+    }
   }
   return { dependencyStates, index: { schemaVersion: 1, entries: nextEntries } };
 }
@@ -622,6 +712,8 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     timeoutMs: input.timeoutMs,
     persist: false,
     notBefore: hasGeneratedAssertions ? boundary : previousBoundary,
+    scope: manifestInfo.manifest.preflight?.scope,
+    reason: manifestInfo.manifest.preflight?.reason,
   }, clock);
   assert(preflight.result.status === "passed", "PREFLIGHT_FAILED", "Final environment preflight failed.", {
     errors: preflight.result.checks.filter((item) => item.status === "failed").map((item) => `${item.name}: ${item.detail}`),
@@ -631,7 +723,46 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   const referenceEvidence = new Map();
 
   phaseStarted = beginMetricsPhase(metrics, "checks");
+  const requiredReferences = new Set([
+    ...Object.values(manifestInfo.manifest.acceptance ?? {}).flat(),
+    ...(manifestInfo.manifest.history?.overrides ?? []).flatMap((item) => item.evidenceFrom ?? []),
+  ]);
+  const executedCheckGroups = new Map();
   for (const group of manifestInfo.manifest.checks) {
+    // A Quick task has already run its focused checks during implementation. Once
+    // the source is frozen, a narrower group that maps to no acceptance evidence
+    // only repeats what the single broad group already covers.
+    if (draft.routing?.lane === "quick" && group.scope !== "broad" && !requiredReferences.has(`check:${group.id}`)) {
+      metrics.skippedCheckGroups.push(group.id);
+      continue;
+    }
+    const signature = commandSignature(group.commands);
+    const identical = group.scope === "broad" ? undefined : executedCheckGroups.get(signature);
+    if (identical) {
+      // The source is frozen for this run, so a group whose commands are
+      // argv-identical to an already executed group cannot observe a different
+      // outcome. The broad group is exempt: exactly one broad execution backs
+      // the frozen journey and the history replay snapshot.
+      metrics.checkGroupSignatureReuse.push(group.id);
+      const evidence = referenceEvidence.get(identical.reference);
+      const verifiedAt = isoNow(clock);
+      referenceEvidence.set(`check:${group.id}`, evidence);
+      draft.checks[group.id] = {
+        id: group.id,
+        name: group.name || group.id,
+        command: group.commands.map((item) => item.argv.join(" ")).join(" && "),
+        status: "passed",
+        scope: group.scope,
+        sourceFingerprint: inventory.fingerprint,
+        durationMs: 0,
+        summary: `Final ${group.scope} group reused the identical command evidence of ${identical.id}.`,
+        evidence,
+        verifiedAt,
+        epoch: draft.verification.epoch,
+      };
+      draft.checkSequence.push({ id: group.id, scope: group.scope, status: "passed", sourceFingerprint: inventory.fingerprint, verifiedAt, epoch: draft.verification.epoch });
+      continue;
+    }
     metrics.checkGroupRuns[group.scope] += 1;
     const paths = [];
     let durationMs = 0;
@@ -642,6 +773,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     }
     const evidence = await capturePaths(root, paths, boundary, clock);
     referenceEvidence.set(`check:${group.id}`, evidence);
+    executedCheckGroups.set(signature, { id: group.id, reference: `check:${group.id}` });
     draft.checks[group.id] = {
       id: group.id,
       name: group.name || group.id,
@@ -722,7 +854,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   const history = await projectHistoricalStates(root, draft, manifestInfo.manifest, referenceEvidence, inventory.fingerprint, boundary, clock, metrics);
   endMetricsPhase(metrics, "history", phaseStarted);
   phaseStarted = beginMetricsPhase(metrics, "handoff-readiness");
-  const handoff = await buildHandoff(root, draft, files, manifestInfo.manifest, profileInfo.profile, acceptanceEvidence, "report.md");
+  const handoff = await buildHandoff(root, draft, files, manifestInfo.manifest, profileInfo.profile, acceptanceEvidence, "report.md", manifestInfo.relativePath);
   draft.handoff = { status: "prepared", preparedAt: handoff.preparedAt, estimatedMinutes: handoff.context.estimatedMinutes };
   const handoffValidation = await validateHandoff(draft, handoff, files);
   assert(handoffValidation.valid, "INVALID_HANDOFF", "Final handoff is invalid.", { errors: handoffValidation.errors });
@@ -806,4 +938,23 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     // The graph is a rebuildable runtime index and never invalidates a completed delivery.
   }
   return { state: draft, files, result, unchanged: false };
+}
+
+/**
+ * Run the whole default finalization ladder in one invocation: static
+ * validation, the non-formal rehearsal, then exactly one formal run for the same
+ * frozen fingerprint. Every stage keeps its own diagnostics and its own abort
+ * behavior; only the round trips between them are removed.
+ */
+export async function fastFinalize(root, taskId, input = {}, clock = () => new Date()) {
+  const validation = await validateFinalizationPlan(root, taskId, input);
+  assert(validation.valid, "INVALID_FINALIZATION_MANIFEST", "Finalization manifest is invalid.", { errors: validation.errors });
+  if (await finalizationUnchanged(root, taskId, input)) {
+    // Repeating --fast for an already finalized fingerprint must not rehearse again.
+    const repeated = await finalizeTask(root, taskId, input, clock);
+    return { ...repeated, validation, preview: null };
+  }
+  const rehearsal = await dryRunFinalization(root, taskId, input, clock);
+  const final = await finalizeTask(root, taskId, input, clock);
+  return { ...final, validation, preview: rehearsal.preview };
 }

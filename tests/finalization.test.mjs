@@ -11,10 +11,13 @@ import {
 } from "../skills/openatdd/scripts/lib.mjs";
 import {
   dryRunFinalization,
+  fastFinalize,
   finalizeTask,
+  validateFinalizationPlan,
 } from "../skills/openatdd/scripts/finalization.mjs";
 import {
   fingerprintProject,
+  loadFinalizationManifest,
   validateFinalizationManifest,
 } from "../skills/openatdd/scripts/manifest.mjs";
 import {
@@ -89,6 +92,12 @@ async function writeManifest(root, manifest) {
   return target;
 }
 
+async function writeTaskManifest(root, taskId, manifest) {
+  const target = taskFiles(root, taskId).finalizationManifest;
+  await writeFile(target, `${JSON.stringify(manifest, null, 2)}\n`);
+  return target;
+}
+
 async function approvedImplementation(testContext, taskId = "fast-finalize", options = {}) {
   const root = await temporaryProject(testContext);
   const criteria = options.criteria ?? [criterion("AC-01")];
@@ -98,6 +107,7 @@ async function approvedImplementation(testContext, taskId = "fast-finalize", opt
     createdAt: options.createdAt,
     acceptanceAt: options.acceptanceAt,
     solutionAt: options.solutionAt,
+    assessment: options.assessment,
   });
   await beginImplementation(root, taskId);
   const manifest = finalizationManifest(criteria, options.manifest);
@@ -124,6 +134,69 @@ test("strict manifests require argv commands, ordered scopes, complete UAT, and 
   assert(result.errors.some((item) => item.includes("Exactly one broad")));
   assert(result.errors.some((item) => item.includes("do not cover AC-02")));
   assert(result.errors.some((item) => item.includes("unknown evidence")));
+
+  const unsafeProjectScope = finalizationManifest(criteria, {
+    preflight: { scope: "project" },
+  });
+  assert(validateFinalizationManifest(unsafeProjectScope, criteria).errors.some((item) => item.includes("preflight.reason")));
+  unsafeProjectScope.preflight.reason = "Only deterministic component commands run.";
+  unsafeProjectScope.checks[0].commands[0].env = ["TEST_SECRET"];
+  assert(validateFinalizationManifest(unsafeProjectScope, criteria).errors.some((item) => item.includes("cannot run commands with declared environment variables")));
+});
+
+test("task finalization manifest wins over the project default unless an explicit path is supplied", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "manifest-precedence";
+  const criteria = [criterion("AC-01")];
+  await prepareApprovedTask(root, taskId, { criteria });
+  const projectManifest = finalizationManifest(criteria);
+  const taskManifest = finalizationManifest(criteria, {
+    dryRun: { commands: [command("task-entry-smoke")] },
+  });
+  const projectPath = await writeManifest(root, projectManifest);
+  const taskPath = await writeTaskManifest(root, taskId, taskManifest);
+
+  const resolvedTask = await loadFinalizationManifest(root, taskId);
+  assert.equal(resolvedTask.manifestPath, taskPath);
+  assert.equal(resolvedTask.manifest.dryRun.commands[0].id, "task-entry-smoke");
+
+  const explicitProject = await loadFinalizationManifest(root, taskId, path.relative(root, projectPath));
+  assert.equal(explicitProject.manifestPath, projectPath);
+  assert.equal(explicitProject.manifest.dryRun.commands[0].id, "entry-smoke");
+
+  await rm(projectPath);
+  await beginImplementation(root, taskId);
+  const preview = await dryRunFinalization(root, taskId);
+  assert.equal(preview.preview.manifestPath, `.openatdd/tasks/${taskId}/finalization.manifest.json`);
+
+  await rm(taskPath);
+  await writeManifest(root, projectManifest);
+  assert.equal((await loadFinalizationManifest(root, taskId)).manifestPath, projectPath);
+});
+
+test("the frozen finalization snapshot never becomes the resolved manifest of a later run", async (t) => {
+  const { root, taskId, files } = await approvedImplementation(t, "snapshot-not-input");
+  await dryRunFinalization(root, taskId);
+  await finalizeTask(root, taskId);
+  assert.equal(await pathExists(files.finalization), true);
+
+  const resolved = await loadFinalizationManifest(root, taskId);
+  assert.equal(resolved.manifestPath, path.join(root, ".openatdd", "finalization.json"));
+  assert.notEqual(resolved.manifestPath, files.finalization);
+});
+
+test("static finalization validation executes no commands and writes no preview", async (t) => {
+  const marker = "static-validation-must-not-run.txt";
+  const script = `require("node:fs").writeFileSync(${JSON.stringify(marker)}, "ran")`;
+  const { root, taskId, files } = await approvedImplementation(t, "static-finalization", {
+    manifest: { dryRun: { commands: [command("must-not-run", script)] } },
+  });
+
+  const result = await validateFinalizationPlan(root, taskId);
+  assert.equal(result.valid, true);
+  assert.equal(result.manifestPath, ".openatdd/finalization.json");
+  assert.equal(await pathExists(path.join(root, marker)), false);
+  assert.equal(await pathExists(files.finalizePreview), false);
 });
 
 test("internal UAT can hand off assisted or manual judgment but cannot satisfy automatic acceptance", () => {
@@ -229,9 +302,9 @@ test("formal finalization commits one complete journey and is idempotent for the
   assert.equal(completed.result.metrics.uatJourneyRuns, 1);
   assert.equal(completed.result.metrics.dryRunRuns, 1);
   assert.equal(completed.result.metrics.finalRuns, 1);
-  assert(completed.result.metrics.cliInvocations >= 3);
+  assert(completed.result.metrics.cliInvocations >= 2);
   assert(completed.result.metrics.phaseDurationsMs.checks >= 0);
-  assert(completed.result.metrics.evidenceWritesByPhase.checks >= 3);
+  assert(completed.result.metrics.evidenceWritesByPhase.checks >= 1);
   assert.equal(await pathExists(files.report), true);
   assert.equal(await pathExists(files.notification), true);
   assert.equal(await pathExists(files.finalizationSnapshot), true);
@@ -379,18 +452,163 @@ test("manifest preflight commands generate fresh formal assertions inside the ve
   assert.equal(assertions.length, 4);
   assert(assertions.every((item) => item.status === "passed"));
   assert(assertions.every((item) => item.evidence[0].path.includes("preflight-runtime-assertions.md")));
-  assert(completed.result.metrics.commandInvocations >= 4);
+  assert(completed.result.metrics.commandInvocations >= 3);
+});
+
+test("a Quick lane skips frozen check groups that map to no acceptance evidence while Standard keeps the ladder", async (t) => {
+  const quick = await approvedImplementation(t, "quick-check-ladder");
+  await dryRunFinalization(quick.root, quick.taskId);
+  const quickResult = await finalizeTask(quick.root, quick.taskId);
+  assert.equal(quickResult.state.routing.lane, "quick");
+  assert.deepEqual(quickResult.result.metrics.skippedCheckGroups, ["focused", "module"]);
+  assert.deepEqual(quickResult.result.metrics.checkGroupRuns, { focused: 0, module: 0, broad: 1 });
+  assert.equal(quickResult.state.checks.broad.status, "passed");
+  assert.equal(quickResult.state.checks.focused, undefined);
+
+  const standard = await approvedImplementation(t, "standard-check-ladder", {
+    assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
+  });
+  await dryRunFinalization(standard.root, standard.taskId);
+  const standardResult = await finalizeTask(standard.root, standard.taskId);
+  assert.equal(standardResult.state.routing.lane, "standard");
+  assert.deepEqual(standardResult.result.metrics.skippedCheckGroups, []);
+  assert.deepEqual(standardResult.result.metrics.checkGroupRuns, { focused: 1, module: 1, broad: 1 });
+});
+
+test("a Quick lane still runs a narrow group that carries acceptance or history evidence", async (t) => {
+  const criteria = [criterion("AC-01")];
+  const { root, taskId } = await approvedImplementation(t, "referenced-check-group", {
+    criteria,
+    manifest: {
+      acceptance: { "AC-01": ["check:focused", "check:broad", "batch:approved-journey"] },
+    },
+  });
+  await dryRunFinalization(root, taskId);
+  const result = await finalizeTask(root, taskId);
+  assert.deepEqual(result.result.metrics.skippedCheckGroups, ["module"]);
+  assert.deepEqual(result.result.metrics.checkGroupRuns, { focused: 1, module: 0, broad: 1 });
+});
+
+test("a formal run reuses evidence for identical narrower commands and never substitutes the broad group", async (t) => {
+  const script = 'process.stdout.write("shared-suite")';
+  const { root, taskId } = await approvedImplementation(t, "signature-reuse", {
+    assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
+    manifest: {
+      checks: [
+        { id: "focused", name: "Focused checks", scope: "focused", commands: [command("focused-suite", script)] },
+        { id: "module", name: "Module checks", scope: "module", commands: [command("module-suite", script)] },
+        { id: "broad", name: "Broad checks", scope: "broad", commands: [command("broad-suite", script)] },
+      ],
+      acceptance: { "AC-01": ["check:module", "check:broad", "batch:approved-journey"] },
+    },
+  });
+  await dryRunFinalization(root, taskId);
+  const result = await finalizeTask(root, taskId);
+  assert.deepEqual(result.result.metrics.checkGroupSignatureReuse, ["module"]);
+  assert.deepEqual(result.result.metrics.checkGroupRuns, { focused: 1, module: 0, broad: 1 });
+  assert.equal(result.state.checks.module.status, "passed");
+  assert.match(result.state.checks.module.summary, /identical command evidence of focused/);
+  assert.deepEqual(result.state.checks.module.evidence, result.state.checks.focused.evidence);
+  // The broad group executed its own commands even though they are identical.
+  assert.notDeepEqual(result.state.checks.broad.evidence, result.state.checks.focused.evidence);
+});
+
+test("fast finalization validates, rehearses, and commits one frozen journey in a single call", async (t) => {
+  const { root, taskId, files } = await approvedImplementation(t, "fast-single-call");
+  const result = await fastFinalize(root, taskId);
+  assert.equal(result.validation.valid, true);
+  assert.equal(result.preview.status, "passed");
+  assert.equal(result.unchanged, false);
+  assert.equal(result.state.phase, "READY_FOR_UAT");
+  assert.equal(result.result.metrics.checkGroupRuns.broad, 1);
+  assert.equal(result.result.metrics.uatJourneyRuns, 1);
+  assert.equal(await pathExists(files.report), true);
+
+  // A repeat for the same frozen fingerprint reports unchanged without rehearsing.
+  const repeated = await fastFinalize(root, taskId);
+  assert.equal(repeated.unchanged, true);
+  assert.equal(repeated.preview, null);
+  assert.equal(repeated.result.sourceFingerprint, result.result.sourceFingerprint);
+
+  const invalid = await approvedImplementation(t, "fast-invalid-manifest");
+  invalid.manifest.uat.batches[0].acceptanceIds = ["AC-99"];
+  await writeManifest(invalid.root, invalid.manifest);
+  await assert.rejects(
+    () => fastFinalize(invalid.root, invalid.taskId),
+    (error) => error.code === "INVALID_FINALIZATION_MANIFEST",
+  );
+  assert.equal(await pathExists(invalid.files.finalizePreview), false);
+});
+
+test("project-scoped finalization preflight skips live assertions without fabricated evidence", async (t) => {
+  const { root, taskId } = await approvedImplementation(t, "project-preflight", {
+    manifest: {
+      preflight: {
+        scope: "project",
+        reason: "The approved journey is a deterministic component harness with no live environment dependency.",
+      },
+    },
+  });
+  const profile = path.join(root, ".openatdd", "environments", "local.yaml");
+  const profileText = await readFile(profile, "utf8");
+  await writeFile(profile, profileText
+    .replace("service_urls: n/a", "service_urls: http://127.0.0.1:1")
+    .replace("entry_url: n/a", "entry_url: http://127.0.0.1:1/app")
+    .replace("role: n/a", "role: tester")
+    .replace("organization: n/a", "organization: qa-org")
+    .replace("integration: n/a", "integration: unavailable-live-api")
+    .replace("fixture: n/a", "fixture: sample-order")
+    .replace('credential_variables: ""', "credential_variables: OPENATDD_TEST_PASSWORD"));
+
+  await dryRunFinalization(root, taskId);
+  const completed = await finalizeTask(root, taskId);
+  assert.equal(completed.state.preflight.scope, "project");
+  assert.equal(completed.state.preflight.status, "passed");
+  for (const name of ["services", "entry_url", "credential_variables", "login", "organization", "integration", "fixture", "known_workarounds"]) {
+    assert.equal(completed.state.preflight.checks.find((item) => item.name === name)?.status, "not_applicable");
+  }
+  assert.deepEqual(completed.state.preflight.credentialVariables, []);
 });
 
 test("CLI exposes both finalize modes and forwards JSON results", async (t) => {
   const { root, taskId } = await approvedImplementation(t, "cli-finalize");
   const cli = path.resolve("skills/openatdd/scripts/openatdd.mjs");
+  const validation = await execFileAsync(process.execPath, [cli, "validate-finalization", taskId, "--json", "--root", root]);
+  assert.equal(JSON.parse(validation.stdout).valid, true);
   const preview = await execFileAsync(process.execPath, [cli, "finalize", taskId, "--dry-run", "--json", "--root", root]);
   assert.equal(JSON.parse(preview.stdout).status, "passed");
   const final = await execFileAsync(process.execPath, [cli, "finalize", taskId, "--json", "--root", root]);
   assert.equal(JSON.parse(final.stdout).status, "passed");
   const repeated = await execFileAsync(process.execPath, [cli, "finalize", taskId, "--json", "--root", root]);
   assert.equal(JSON.parse(repeated.stdout).unchanged, true);
+});
+
+test("CLI fast finalization needs one invocation and rejects a combined dry-run", async (t) => {
+  const { root, taskId } = await approvedImplementation(t, "cli-fast-finalize");
+  const cli = path.resolve("skills/openatdd/scripts/openatdd.mjs");
+  const result = await execFileAsync(process.execPath, [cli, "finalize", taskId, "--fast", "--json", "--root", root]);
+  const payload = JSON.parse(result.stdout);
+  assert.equal(payload.status, "passed");
+  assert.equal(payload.validation.valid, true);
+  assert.equal(payload.preview.status, "passed");
+  assert.equal((await loadTask(root, taskId)).state.phase, "READY_FOR_UAT");
+
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [cli, "finalize", taskId, "--fast", "--dry-run", "--root", root]),
+    (error) => error.stderr.includes("INVALID_FINALIZE_MODE"),
+  );
+});
+
+test("CLI static validation returns nonzero for an invalid acceptance mapping", async (t) => {
+  const { root, taskId, manifest, files } = await approvedImplementation(t, "invalid-cli-manifest");
+  manifest.uat.batches[0].acceptanceIds = ["AC-99"];
+  await writeManifest(root, manifest);
+  const cli = path.resolve("skills/openatdd/scripts/openatdd.mjs");
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [cli, "validate-finalization", taskId, "--json", "--root", root]),
+    (error) => error.code === 1 && JSON.parse(error.stdout).valid === false,
+  );
+  assert.equal(await pathExists(files.finalizePreview), false);
 });
 
 test("multi-file commits roll back validation failures and recover interrupted journals", async (t) => {
@@ -425,7 +643,7 @@ test("multi-file commits roll back validation failures and recover interrupted j
   assert.equal(await pathExists(directory), false);
 });
 
-test("affected history runs once per new fingerprint and later finalizations reuse its cache", async (t) => {
+test("affected history reuses identical epoch evidence and caches distinct replays", async (t) => {
   const root = await temporaryProject(t);
   const criteria = [criterion("AC-01")];
   const manifest = finalizationManifest(criteria);
@@ -454,7 +672,10 @@ test("affected history runs once per new fingerprint and later finalizations reu
   await dryRunFinalization(root, "current-one");
   const first = await finalizeTask(root, "current-one");
   assert.equal(first.result.metrics.affectedHistoryPasses, 1);
-  assert.equal(first.result.metrics.historyRuns, 1);
+  // The replay commands are argv-identical to the broad group that already ran
+  // against this frozen fingerprint, so no historical suite is executed twice.
+  assert.equal(first.result.metrics.historyRuns, 0);
+  assert.equal(first.result.metrics.historyEpochReuse, 1);
   assert.equal(first.result.metrics.historyCacheHits, 0);
   assert.equal(await pathExists(path.join(root, ".openatdd", "reverification", "index.json")), true);
   assert.match((await loadTask(root, "historical")).state.results["AC-01"].summary, /Reverified once/);
@@ -469,8 +690,8 @@ test("affected history runs once per new fingerprint and later finalizations reu
   await beginImplementation(root, "current-two");
   await dryRunFinalization(root, "current-two");
   const second = await finalizeTask(root, "current-two");
-  assert.equal(second.result.metrics.historyCacheHits, 1);
-  assert.equal(second.result.metrics.historyRuns, 1);
+  assert.equal(second.result.metrics.historyRuns, 0);
+  assert.equal(second.result.metrics.historyCacheHits + second.result.metrics.historyEpochReuse, 2);
   assert.deepEqual(new Set(second.result.affectedHistory), new Set(["historical", "current-one"]));
 
   await rm(path.join(root, ".openatdd", "transactions"), { recursive: true, force: true });

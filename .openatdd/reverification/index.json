@@ -892,6 +892,126 @@
         }
       ],
       "verifiedAt": "2026-07-24T03:56:39.979Z"
+    },
+    {
+      "key": "42b383ae3e1aa9d8ecf6f1d29a78c50411af3a9bba8cad0aec461566f7915d74",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "c6ba71f558f8634a72e2971ed56cc3c369e2100d72b6f82d63028b3b57f3081d",
+      "fingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
+          "size": 9255,
+          "modifiedAt": "2026-07-25T22:47:56.642Z",
+          "capturedAt": "2026-07-25T22:47:56.643Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
+          "size": 4684,
+          "modifiedAt": "2026-07-25T22:47:59.675Z",
+          "capturedAt": "2026-07-25T22:47:59.675Z"
+        }
+      ],
+      "verifiedAt": "2026-07-25T22:47:59.677Z"
+    },
+    {
+      "key": "ef6fb6bedadfc027da2aa19153d0b1ce2c6a2748f262594056579121bdb7ed3d",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "779791f7ae6736f3ebf5689219bd5ab4a96d9ca4b118867629c7fdb45a500604",
+      "fingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
+          "size": 9255,
+          "modifiedAt": "2026-07-25T22:47:56.642Z",
+          "capturedAt": "2026-07-25T22:47:56.643Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
+          "size": 4684,
+          "modifiedAt": "2026-07-25T22:47:59.675Z",
+          "capturedAt": "2026-07-25T22:47:59.675Z"
+        }
+      ],
+      "verifiedAt": "2026-07-25T22:47:59.678Z"
+    },
+    {
+      "key": "49a506e56fa526d9b59b1b007d7a0abdec1219df00fb71c89b584c3c46630484",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "85401e15098ca641e1f2d4a21b01a636d4fabd52d9b9ce863de4b7c3f3ecfed0",
+      "fingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
+          "size": 9255,
+          "modifiedAt": "2026-07-25T22:47:56.642Z",
+          "capturedAt": "2026-07-25T22:47:56.643Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
+          "size": 4684,
+          "modifiedAt": "2026-07-25T22:47:59.675Z",
+          "capturedAt": "2026-07-25T22:47:59.675Z"
+        }
+      ],
+      "verifiedAt": "2026-07-25T22:47:59.679Z"
+    },
+    {
+      "key": "9d33d28a8feab329d54d6faa3e2baa2c662666118b13575c746a71cd54d0b0d3",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "782bf574e3fb7dd1dcdc050ca9630fe1c9b4b2bc164d809c5cfc998d07bb1a42",
+      "fingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
+          "size": 9255,
+          "modifiedAt": "2026-07-25T22:47:56.642Z",
+          "capturedAt": "2026-07-25T22:47:56.643Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
+          "size": 4684,
+          "modifiedAt": "2026-07-25T22:47:59.675Z",
+          "capturedAt": "2026-07-25T22:47:59.675Z"
+        }
+      ],
+      "verifiedAt": "2026-07-25T22:47:59.680Z"
+    },
+    {
+      "key": "488e57bef5515d7fc5e341ea6472094fab07be2a9ed21af619b7d5c4788ef80d",
+      "taskId": "strategy-visibility",
+      "contractDigest": "420e928f44f3d64070501baba5e41db48216414df52ae9792719d97ecb7d3d43",
+      "replayDigest": "62bf03220ec7c0162ab9df2edf3b48f24fbaa1e0ed4a632a04bb57ceac7747eb",
+      "fingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
+          "size": 9255,
+          "modifiedAt": "2026-07-25T22:47:56.642Z",
+          "capturedAt": "2026-07-25T22:47:56.643Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
+          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
+          "size": 4684,
+          "modifiedAt": "2026-07-25T22:47:59.675Z",
+          "capturedAt": "2026-07-25T22:47:59.675Z"
+        }
+      ],
+      "verifiedAt": "2026-07-25T22:47:59.680Z"
     }
   ]
 }

@@ -1,0 +1,469 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-26T13:00:37.639Z",
+  "taskId": "optimize-quick-delivery",
+  "language": "zh-CN",
+  "phase": "READY_FOR_UAT",
+  "lane": "standard",
+  "laneReasons": [
+    "cross-module-scope",
+    "medium-uncertainty"
+  ],
+  "summary": {
+    "selectedCapabilities": [
+      "acceptance-first",
+      "adaptive-depth",
+      "recommended-decisions",
+      "progressive-solution-review",
+      "scoped-context-recovery",
+      "conditional-agents",
+      "knowledge-learning",
+      "evidence-finalization"
+    ],
+    "observedCapabilities": [
+      "acceptance-first",
+      "adaptive-depth",
+      "progressive-solution-review",
+      "scoped-context-recovery",
+      "knowledge-learning",
+      "evidence-finalization"
+    ],
+    "notUsedCapabilities": [
+      "recommended-decisions",
+      "conditional-agents",
+      "risk-research",
+      "agent-evaluation"
+    ]
+  },
+  "capabilities": [
+    {
+      "id": "acceptance-first",
+      "label": "验收优先与风险分层确认",
+      "sources": [
+        {
+          "name": "OpenATDD / ATDD",
+          "url": "https://github.com/denvey/OpenATDD"
+        },
+        {
+          "name": "GitHub Spec Kit",
+          "url": "https://github.com/github/spec-kit"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "core-contract"
+      },
+      "execution": {
+        "status": "observed",
+        "evidence": [
+          {
+            "source": "state.json",
+            "summary": "已记录 2/2 个合同批准"
+          }
+        ]
+      }
+    },
+    {
+      "id": "adaptive-depth",
+      "label": "Quick / Standard / Deep 自适应深度",
+      "sources": [
+        {
+          "name": "GSD Core",
+          "url": "https://github.com/open-gsd/gsd-core"
+        },
+        {
+          "name": "Trellis",
+          "url": "https://github.com/mindfold-ai/Trellis"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "lane:standard"
+      },
+      "execution": {
+        "status": "observed",
+        "evidence": [
+          {
+            "source": "state.json",
+            "summary": "深度=standard；原因=cross-module-scope,medium-uncertainty"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recommended-decisions",
+      "label": "推荐式人类决策",
+      "sources": [
+        {
+          "name": "BMAD-METHOD",
+          "url": "https://github.com/bmad-code-org/BMAD-METHOD"
+        },
+        {
+          "name": "OpenATDD / ATDD",
+          "url": "https://github.com/denvey/OpenATDD"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "human-decisions-only-when-material"
+      },
+      "execution": {
+        "status": "not-used",
+        "evidence": [
+          {
+            "source": "state.json",
+            "summary": "本次没有需要人的实质决策"
+          }
+        ]
+      }
+    },
+    {
+      "id": "progressive-solution-review",
+      "label": "渐进方案与简洁性审查",
+      "sources": [
+        {
+          "name": "Compound Engineering",
+          "url": "https://github.com/EveryInc/compound-engineering-plugin"
+        },
+        {
+          "name": "GitHub Spec Kit",
+          "url": "https://github.com/github/spec-kit"
+        },
+        {
+          "name": "Superpowers",
+          "url": "https://github.com/obra/superpowers"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "acceptance-approved"
+      },
+      "execution": {
+        "status": "observed",
+        "evidence": [
+          {
+            "source": "state.json",
+            "summary": "方案审查=passed；审查者=main"
+          }
+        ]
+      }
+    },
+    {
+      "id": "scoped-context-recovery",
+      "label": "作用域上下文与恢复",
+      "sources": [
+        {
+          "name": "GSD Core",
+          "url": "https://github.com/open-gsd/gsd-core"
+        },
+        {
+          "name": "Trellis",
+          "url": "https://github.com/mindfold-ai/Trellis"
+        },
+        {
+          "name": "Agent OS",
+          "url": "https://github.com/buildermethods/agent-os"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "lane:standard"
+      },
+      "execution": {
+        "status": "observed",
+        "evidence": [
+          {
+            "source": "context.json",
+            "summary": "上下文摘要=4a900b31ec279f55c94a8e62754c3f8f018bb5db6a63ca0879da6750c7c615f4"
+          }
+        ]
+      }
+    },
+    {
+      "id": "conditional-agents",
+      "label": "条件式 Agent 与独立审查",
+      "sources": [
+        {
+          "name": "Superpowers",
+          "url": "https://github.com/obra/superpowers"
+        },
+        {
+          "name": "BMAD-METHOD",
+          "url": "https://github.com/bmad-code-org/BMAD-METHOD"
+        },
+        {
+          "name": "GSD Core",
+          "url": "https://github.com/open-gsd/gsd-core"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "lane:standard;optional-roles:independent-review"
+      },
+      "execution": {
+        "status": "not-used",
+        "evidence": [
+          {
+            "source": "state.json",
+            "summary": "没有记录 Agent 调用"
+          }
+        ]
+      }
+    },
+    {
+      "id": "risk-research",
+      "label": "按风险启用外部调研",
+      "sources": [
+        {
+          "name": "GSD Core",
+          "url": "https://github.com/open-gsd/gsd-core"
+        },
+        {
+          "name": "Trellis",
+          "url": "https://github.com/mindfold-ai/Trellis"
+        }
+      ],
+      "selection": {
+        "status": "not-used",
+        "reason": "lane:standard;local-discovery-sufficient"
+      },
+      "execution": {
+        "status": "not-used",
+        "evidence": [
+          {
+            "source": "state.json",
+            "summary": "没有记录外部调研调用"
+          }
+        ]
+      }
+    },
+    {
+      "id": "knowledge-learning",
+      "label": "事故、不变量与长期知识",
+      "sources": [
+        {
+          "name": "Compound Engineering",
+          "url": "https://github.com/EveryInc/compound-engineering-plugin"
+        },
+        {
+          "name": "CodeStable",
+          "url": "https://github.com/codestable/CodeStable"
+        },
+        {
+          "name": "Agent OS",
+          "url": "https://github.com/buildermethods/agent-os"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "scoped-memory-and-impact-policy"
+      },
+      "execution": {
+        "status": "observed",
+        "evidence": [
+          {
+            "source": "state.json",
+            "summary": "0 个已解决问题；5 个受影响历史任务"
+          }
+        ]
+      }
+    },
+    {
+      "id": "evidence-finalization",
+      "label": "证据门禁、恢复与原子 Finalization",
+      "sources": [
+        {
+          "name": "Comet",
+          "url": "https://github.com/rpamis/comet"
+        },
+        {
+          "name": "OpenATDD / ATDD",
+          "url": "https://github.com/denvey/OpenATDD"
+        }
+      ],
+      "selection": {
+        "status": "selected",
+        "reason": "deterministic-delivery-contract"
+      },
+      "execution": {
+        "status": "observed",
+        "evidence": [
+          {
+            "source": "finalize-result.json",
+            "summary": "epoch=2; fingerprint=4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a"
+          }
+        ]
+      }
+    },
+    {
+      "id": "agent-evaluation",
+      "label": "真实 Agent、裸基线与能力消融评测",
+      "sources": [
+        {
+          "name": "Comet",
+          "url": "https://github.com/rpamis/comet"
+        },
+        {
+          "name": "OpenATDD / ATDD",
+          "url": "https://github.com/denvey/OpenATDD"
+        }
+      ],
+      "selection": {
+        "status": "not-used",
+        "reason": "no-evaluation-report-supplied"
+      },
+      "execution": {
+        "status": "not-used",
+        "evidence": []
+      }
+    }
+  ],
+  "metrics": {
+    "approvals": 2,
+    "decisions": {
+      "total": 0,
+      "resolved": 0,
+      "pending": 0
+    },
+    "agents": {
+      "total": 0,
+      "passed": 0,
+      "criticalPathMs": 0,
+      "integrationTailMs": 0
+    },
+    "repairs": 0,
+    "repairAttempts": 0,
+    "issues": {
+      "total": 0,
+      "resolved": 0,
+      "open": 0,
+      "repairDurationMs": 0
+    },
+    "preflight": {
+      "attempts": 0,
+      "failed": 0,
+      "passed": 0
+    },
+    "timing": {
+      "taskWallTimeMs": 1001298,
+      "deliveryActiveMs": 689141,
+      "contractElapsedMs": 295638,
+      "phases": [
+        {
+          "phase": "IMPLEMENTING",
+          "durationMs": 678700
+        },
+        {
+          "phase": "ACCEPTANCE_DRAFT",
+          "durationMs": 246014
+        },
+        {
+          "phase": "SOLUTION_DRAFT",
+          "durationMs": 49624
+        },
+        {
+          "phase": "PRE_UAT",
+          "durationMs": 10441
+        },
+        {
+          "phase": "CONTRACT_APPROVED",
+          "durationMs": 8321
+        },
+        {
+          "phase": "ACCEPTANCE_APPROVED",
+          "durationMs": 8198
+        }
+      ]
+    },
+    "acceptance": {
+      "passed": 4,
+      "manual": 0,
+      "failed": 0,
+      "affected": 0,
+      "unverified": 0
+    },
+    "checks": {
+      "passed": 2,
+      "failed": 0,
+      "affected": 0,
+      "other": 0
+    },
+    "finalization": {
+      "mode": "final",
+      "startedAt": "2026-07-25T22:47:49.305Z",
+      "wallTimeMs": 10476,
+      "dryRunRuns": 1,
+      "finalRuns": 1,
+      "commandInvocations": 3,
+      "cliInvocations": 3,
+      "commandDurationMs": 10364,
+      "checkGroupRuns": {
+        "focused": 1,
+        "module": 0,
+        "broad": 1
+      },
+      "uatJourneyRuns": 1,
+      "uatBatchRuns": 1,
+      "browserRoundTrips": 1,
+      "affectedHistoryPasses": 1,
+      "historyRuns": 5,
+      "historyCacheHits": 0,
+      "evidenceWrites": 3,
+      "evidenceWritesByPhase": {
+        "checks": 2,
+        "uat": 1
+      },
+      "phaseDurationsMs": {
+        "preflight": 0,
+        "checks": 7336,
+        "uat": 3032,
+        "acceptance-mapping": 1,
+        "history": 4,
+        "handoff-readiness": 67
+      },
+      "linkChecks": 0,
+      "warnings": []
+    },
+    "evaluationGroups": []
+  },
+  "bottlenecks": [
+    {
+      "phase": "IMPLEMENTING",
+      "durationMs": 678700
+    },
+    {
+      "phase": "ACCEPTANCE_DRAFT",
+      "durationMs": 246014
+    },
+    {
+      "phase": "SOLUTION_DRAFT",
+      "durationMs": 49624
+    },
+    {
+      "phase": "PRE_UAT",
+      "durationMs": 10441
+    },
+    {
+      "phase": "CONTRACT_APPROVED",
+      "durationMs": 8321
+    }
+  ],
+  "comparisons": [],
+  "recommendations": [
+    {
+      "action": "observe",
+      "capabilityId": "agent-evaluation",
+      "reason": "未提供评测报告，不能判断能力带来的质量或 Token 差异。"
+    },
+    {
+      "action": "keep",
+      "capabilityId": "conditional-agents",
+      "reason": "本次未调用 Agent，条件式策略避免了不必要的多 Agent 成本。"
+    }
+  ],
+  "caveats": [
+    "借鉴来源表示设计启发，不表示运行外部框架。",
+    "策略选择、实际调用和效果相关性分开展示；单次对照不能证明因果。",
+    "缺失数据保持不可用，不由模型猜测补全。"
+  ]
+}

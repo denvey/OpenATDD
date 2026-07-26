@@ -23,7 +23,7 @@ import {
   validateAcceptance,
   validateSolution,
 } from "./contracts.mjs";
-import { classifyTask, interactionPolicyForLane } from "./routing.mjs";
+import { authorizationOverlays, classifyTask, interactionPolicyForLane } from "./routing.mjs";
 import { profileForDispatch } from "./agent-profiles.mjs";
 import {
   blockingDecisions,
@@ -264,6 +264,7 @@ export function taskFiles(root, taskId) {
     preflight: path.join(task, "preflight.json"),
     uatPlan: path.join(task, "uat-plan.json"),
     handoff: path.join(task, "handoff.json"),
+    finalizationManifest: path.join(task, "finalization.manifest.json"),
     finalization: path.join(task, "finalization.json"),
     finalizePreview: path.join(task, "finalize-preview.json"),
     previewReport: path.join(task, "report.preview.md"),
@@ -841,6 +842,18 @@ export async function approveSolution(root, taskId, clock = () => new Date()) {
     if (state.routing?.lane === "deep") {
       assert(review.reviewer === "independent", "INDEPENDENT_REVIEW_REQUIRED", "Deep tasks require an independent solution review before approval.");
     }
+    const overlays = authorizationOverlays(state.routing);
+    if (overlays.length > 0) {
+      const authorized = (state.decisions ?? []).some(
+        (decision) => decision.owner === "authorization" && decision.status === "resolved",
+      );
+      assert(
+        authorized,
+        "AUTHORIZATION_DECISION_REQUIRED",
+        "A dangerous or externally mutating change requires a recorded and resolved authorization decision before product code is modified.",
+        { errors: overlays.map((signal) => `risk overlay ${signal} requires explicit authorization`) },
+      );
+    }
   }
 
   if (state.solution.sha256 === digest && state.solution.approvedAt) {
@@ -891,6 +904,77 @@ export async function beginImplementation(root, taskId, clock = () => new Date()
   });
   const saved = await saveTask(files, state, clock);
   return { ...saved, context };
+}
+
+/**
+ * Run the Quick lane's compact autonomous approval chain in one invocation:
+ * acceptance approval, solution draft, the structured main review, solution
+ * approval, and implementation start. Every persisted gate keeps its own
+ * validation and error; only the round trips between the commands are removed.
+ * Standard and Deep keep two separate human confirmations and must use the
+ * individual gate commands.
+ */
+export async function advanceQuickTask(root, taskId, input = {}, clock = () => new Date()) {
+  const initial = await loadTask(root, taskId);
+  assert(
+    initial.state.routing?.lane === "quick",
+    "ADVANCE_REQUIRES_QUICK",
+    "advance merges the compact autonomous Quick approvals; Standard and Deep tasks keep their two separate human confirmations.",
+  );
+  assertPhase(initial.state, [
+    PHASES.ACCEPTANCE_DRAFT,
+    PHASES.ACCEPTANCE_APPROVED,
+    PHASES.SOLUTION_DRAFT,
+    PHASES.CONTRACT_APPROVED,
+    PHASES.IMPLEMENTING,
+  ], "Advance");
+  const steps = [];
+  const warnings = [];
+  let phase = initial.state.phase;
+  let affectedDependencies = initial.state.affectedDependencies ?? [];
+
+  if ([PHASES.ACCEPTANCE_DRAFT, PHASES.ACCEPTANCE_APPROVED].includes(phase)) {
+    const acceptance = await approveAcceptance(root, taskId, clock);
+    warnings.push(...acceptance.warnings);
+    steps.push({ step: "approve-acceptance", performed: true, unchanged: acceptance.unchanged });
+    phase = acceptance.state.phase;
+  } else steps.push({ step: "approve-acceptance", performed: false });
+
+  if ([PHASES.ACCEPTANCE_APPROVED, PHASES.SOLUTION_DRAFT].includes(phase)) {
+    const drafted = await draftSolution(root, taskId, clock);
+    steps.push({ step: "draft-solution", performed: phase === PHASES.ACCEPTANCE_APPROVED });
+    phase = drafted.state.phase;
+  } else steps.push({ step: "draft-solution", performed: false });
+
+  if (phase === PHASES.SOLUTION_DRAFT) {
+    const { state, files } = await loadTask(root, taskId);
+    const markdown = await readUtf8(files.solution);
+    const validation = validateSolution(markdown, state.acceptance.items, { progressive: state.deliveryVersion >= 3 });
+    validationFailure("INVALID_SOLUTION", "Solution card is not ready for autonomous approval.", validation);
+    const review = state.reviews?.solution;
+    if (review?.status === "passed" && review.solutionSha256 === fingerprint(markdown)) {
+      steps.push({ step: "review-solution", performed: false });
+    } else {
+      await recordSolutionReview(root, taskId, {
+        status: "passed",
+        reviewer: "main",
+        summary: input.summary,
+        findings: input.findings,
+        checks: "all",
+      }, clock);
+      steps.push({ step: "review-solution", performed: true });
+    }
+    const approved = await approveSolution(root, taskId, clock);
+    warnings.push(...approved.warnings);
+    affectedDependencies = approved.affectedDependencies;
+    steps.push({ step: "approve-solution", performed: true, unchanged: approved.unchanged });
+  } else {
+    steps.push({ step: "review-solution", performed: false }, { step: "approve-solution", performed: false });
+  }
+
+  const begun = await beginImplementation(root, taskId, clock);
+  steps.push({ step: "begin", performed: true });
+  return { state: begun.state, files: begun.files, context: begun.context ?? null, steps, warnings, affectedDependencies };
 }
 
 export async function resumeTask(root, taskId, clock = () => new Date()) {
@@ -1771,7 +1855,8 @@ export async function readinessErrorsForState(root, state, files, options = {}) 
         }
       }
     }
-    const credentials = await loadLocalCredentials(root, profile.credential_variables);
+    const credentialVariables = state.preflight?.scope === "project" ? "" : profile.credential_variables;
+    const credentials = await loadLocalCredentials(root, credentialVariables);
     const leaks = await scanEnvironmentArtifacts(root, credentials.secretValues);
     for (const leak of leaks) errors.push(`Secret-like runtime value leaked into persisted artifact: ${path.relative(files.root, leak.path)}.`);
   }

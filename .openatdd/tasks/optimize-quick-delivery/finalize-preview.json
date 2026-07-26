@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 1,
+  "taskId": "optimize-quick-delivery",
+  "status": "passed",
+  "createdAt": "2026-07-25T22:47:37.959Z",
+  "candidateFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+  "inventoryCount": 15,
+  "candidateFiles": [
+    {
+      "path": "README.md",
+      "mode": 420,
+      "size": 18120,
+      "sha256": "c39065f6729631b08ade5adc344283f0afe3d05debbb3cd5e9126678ea81e5c3",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/SKILL.md",
+      "mode": 420,
+      "size": 21549,
+      "sha256": "ac2b741c362d10e7fb6dccf2e00780117af5ca91812c1199cd7535192d5f0109",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/fast-finalization.md",
+      "mode": 420,
+      "size": 9295,
+      "sha256": "49145855eb68eb13a1131f7e1b32295dc5bdbd77a1d8090c8858dafe21107def",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/agent-profiles.mjs",
+      "mode": 420,
+      "size": 690,
+      "sha256": "383e82e4718338fce2264d92b92ec2f1269333f68fdb0de673b8547185b89889",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/finalization.mjs",
+      "mode": 420,
+      "size": 39883,
+      "sha256": "5781dbd043ce60993bfd5deb38944a6dbd9f3cd84b66a4b0fa91b97d23cac227",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/manifest.mjs",
+      "mode": 420,
+      "size": 15461,
+      "sha256": "1cfb79f589c73f718e25f3cec595c91823fc7df41116c7c3eabb8bc526780861",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/openatdd.mjs",
+      "mode": 493,
+      "size": 30315,
+      "sha256": "2fd22d9ecaf3801fbdbd3cfa55a16b5232e7fa28849a4f0dd07b4a147d74f159",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/profiles.mjs",
+      "mode": 420,
+      "size": 19943,
+      "sha256": "3280971ec48d324dc5cd2cd9b4782d189944bdd57b8c1525ec5ab167435a26a7",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/routing.mjs",
+      "mode": 420,
+      "size": 9010,
+      "sha256": "0aaab59ad8660d4e72ae722a261797169722ef0a794728dad9fe084a74a7e859",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/workflow.mjs",
+      "mode": 420,
+      "size": 102436,
+      "sha256": "d5c748a337488ae61efbc9d2cc205850872c81e9cf989c686ecc6ee90b809c70",
+      "type": "file"
+    },
+    {
+      "path": "tests/delivery-v2.test.mjs",
+      "mode": 420,
+      "size": 15240,
+      "sha256": "0d2a7e7f3919b811c4d5c88241eec81dadb6204037b5060a66e1e79060dd42e2",
+      "type": "file"
+    },
+    {
+      "path": "tests/finalization.test.mjs",
+      "mode": 420,
+      "size": 27573,
+      "sha256": "10cc0d436c2a81971a88fe511b4a74b42aae7535bc4f1ac013fd9872d479ba99",
+      "type": "file"
+    },
+    {
+      "path": "tests/intelligence-integration.test.mjs",
+      "mode": 420,
+      "size": 11475,
+      "sha256": "14de0bc027bf4ea013003288a332787517f1c8167e4e48a8004235f0ed0b9f29",
+      "type": "file"
+    },
+    {
+      "path": "tests/intelligence.test.mjs",
+      "mode": 420,
+      "size": 8478,
+      "sha256": "26b958a7fa32370dde08d8265bd357ff8c2806da5a41727802aa4fcc6134f5b1",
+      "type": "file"
+    },
+    {
+      "path": "tests/strategy.test.mjs",
+      "mode": 420,
+      "size": 9880,
+      "sha256": "579201c3e0bad370919a746af84088fab0ecc9ed2748d6f9b5bbeec956107340",
+      "type": "file"
+    }
+  ],
+  "manifestPath": ".openatdd/tasks/optimize-quick-delivery/finalization.json",
+  "manifestDigest": "b058c05b2a529014d3fd110824fe601fdc9c0ba9d312de9d6b2f54ce8b900fe2",
+  "profileDigest": "7d3584bcc58d89c5551e2d71f9e7e3bcea684ef13cd9f1c4a9d8f657e60025a2",
+  "commandResults": [
+    {
+      "id": "validate-finalization-smoke",
+      "argv": [
+        "node",
+        "skills/openatdd/scripts/openatdd.mjs",
+        "validate-finalization",
+        "optimize-quick-delivery",
+        "--json"
+      ],
+      "durationMs": 71,
+      "exitCode": 0,
+      "evidencePath": ".openatdd/tasks/optimize-quick-delivery/preview/validate-finalization-smoke.md",
+      "stdout": "{\n  \"schemaVersion\": 1,\n  \"taskId\": \"optimize-quick-delivery\",\n  \"phase\": \"IMPLEMENTING\",\n  \"valid\": true,\n  \"errors\": [],\n  \"warnings\": [],\n  \"manifestPath\": \".openatdd/tasks/optimize-quick-delivery/finalization.json\",\n  \"manifestDigest\": \"b058c05b2a529014d3fd110824fe601fdc9c0ba9d312de9d6b2f54ce8b900fe2\",\n  \"preflight\": {\n    \"scope\": \"project\",\n    \"reason\": \"The approved CLI journey uses deterministic local Node test harnesses and has no live service, account, organization, integration, fixture, workaround, credential, or declared command environment dependency.\"\n  }\n}\n"
+    }
+  ],
+  "metrics": {
+    "mode": "dry-run",
+    "startedAt": "2026-07-25T22:47:37.868Z",
+    "wallTimeMs": 124,
+    "dryRunRuns": 1,
+    "finalRuns": 0,
+    "commandInvocations": 1,
+    "cliInvocations": 1,
+    "commandDurationMs": 71,
+    "checkGroupRuns": {
+      "focused": 0,
+      "module": 0,
+      "broad": 0
+    },
+    "uatJourneyRuns": 0,
+    "uatBatchRuns": 0,
+    "browserRoundTrips": 0,
+    "affectedHistoryPasses": 0,
+    "historyRuns": 0,
+    "historyCacheHits": 0,
+    "evidenceWrites": 1,
+    "evidenceWritesByPhase": {
+      "entry-points": 1
+    },
+    "phaseDurationsMs": {
+      "preflight": 0,
+      "entry-points": 72,
+      "handoff-preview": 2,
+      "source-stability": 16
+    },
+    "linkChecks": 0,
+    "warnings": []
+  },
+  "errors": []
+}

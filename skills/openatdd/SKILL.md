@@ -1,6 +1,6 @@
 ---
 name: openatdd
-description: Run a risk-routed acceptance-first AI delivery workflow from a natural-language requirement to autonomous implementation, verification, learning, and a detailed UAT handoff. Quick work uses compact autonomously approved contracts; Standard and Deep work use two concise human confirmations. Ask only material human decisions with grounded recommendations and 2-3 choices; preserve deterministic contracts, evidence, recovery, and affected-history reverification.
+description: Run a complexity-routed, risk-overlaid acceptance-first AI delivery workflow from a natural-language requirement to autonomous implementation, verification, learning, and a detailed UAT handoff. Quick work uses compact autonomously approved contracts; Standard and Deep work use two concise human confirmations. Ask only material human decisions with grounded recommendations and 2-3 choices; preserve deterministic contracts, evidence, recovery, and affected-history reverification.
 ---
 
 # OpenATDD
@@ -90,30 +90,54 @@ Never hand-edit `state.json`, `issues.md`, `report.md`, or the memory index.
      --uncertainty low|medium|high [--risk <signal>]
    ```
 
-   - **Quick:** local, established, reversible, low uncertainty, no hard risk.
+   - **Quick:** local, established, and low uncertainty. This is the normal lane
+     for a small bug, including one on a sensitive surface or with a guarded
+     operational risk.
      Use the compact autonomous contract path, work directly, do not wait for
      routine approvals or external research, and do not spawn routine Agents.
    - **Standard:** ordinary cross-module or moderately uncertain work. Use
      local discovery and optional independent review only when useful.
-   - **Deep:** system/novel/high-uncertainty work or any hard risk such as
-     migration, auth, authorization, payment, privacy, security, external
-     services, production, deletion, irreversibility, or public compatibility.
+   - **Deep:** system-wide, novel cross-cutting, or high-uncertainty problem
+     solving. New product work is more likely to qualify, but task type does not
+     decide the lane: a complex system defect may also be Deep, while a small
+     feature may stay Quick or Standard.
      Perform parallel local discovery and relevant external research. Add
-     clean-context execution and independent review when they materially reduce
-     risk. If research access is unavailable, record that limitation instead of
-     silently treating the Deep task like Standard.
+     independent read-only review when it materially reduces risk. If research
+     access is unavailable, record that limitation instead of silently treating
+     the Deep task like Standard.
+
+   Routing depth measures investigation and solution complexity only. Keep
+   reversibility and every `--risk` signal as a safety and verification overlay;
+   none of them changes Quick, Standard, or Deep by itself. This includes
+   migration, authentication, authorization, payment, privacy, security,
+   external services, production, deletion, irreversibility, public
+   compatibility, sensitive-boundary changes, shared-data migrations, and
+   external side effects. Use those facts to strengthen preflight, denial-path,
+   redaction, rollback, compatibility, and evidence requirements. Never infer
+   solution complexity from sensitive nouns in a requirement, file, stack trace,
+   or unchanged path.
+
+   The `deletion`, `production`, `irreversible`, `shared-data-migration`, and
+   `external-side-effect` overlays additionally require a recorded and resolved
+   `authorization` decision before any product code changes; `approve-solution`
+   rejects the approval otherwise, in every lane including Quick. The remaining
+   overlays stay verification-only and never add a pause.
 
    Routing controls both internal effort and routine interaction: Quick uses
    autonomous compact approvals; Standard and Deep use two human confirmations.
-6. Before either card, query relevant memory and the rebuildable graph:
+6. Before either card, query only relevant memory and graph relationships:
 
    ```bash
-   openatdd memory "<requirement and likely paths>" --json
-   openatdd graph-query "<requirement and likely paths>" --json
+   openatdd memory "<requirement and likely paths>" --limit 5 --json
+   openatdd graph-query "<requirement and likely paths>" --limit 5 --json
    ```
 
-Read only matched incident files and relevant code. Do not load all project
-memory. Before both approvals, perform read-only discovery only.
+For a known-target Quick change, exact text uses one scoped `rg`; a known file
+uses one targeted batch read. Skip semantic search, CodeGraph, and unrelated
+architecture material unless the task actually needs location discovery,
+relationship tracing, or a governed boundary. Do not repeat a CodeGraph result
+with broad grep/read. Read only matched incident files and relevant code; never
+load all project memory. Before both approvals, perform read-only discovery only.
 
 If discovery exposes a material human-owned decision, record it with
 `openatdd decision <task-id> --input <json-file>`. The record must contain the
@@ -194,13 +218,23 @@ rejected.
 Any solution edit invalidates the review hash. If feedback changes user behavior
 or outcomes, run `openatdd reopen-acceptance <task-id> --reason "..."` and return
 to Gate 1. Otherwise update the solution. Quick persists approval
-autonomously; Standard and Deep wait for human approval. Then run:
+autonomously; Standard and Deep wait for human approval, then run:
 
 ```bash
-openatdd approve-solution <task-id>
-openatdd begin <task-id>
+openatdd approve-solution <task-id> --begin
 ```
 
+For Quick, once both compact cards are written and validated, run the whole
+autonomous chain in one invocation instead of the five separate commands:
+
+```bash
+openatdd advance <task-id> --summary "<concise review finding>"
+```
+
+`advance` performs acceptance approval, solution draft, the structured main
+review, solution approval, and implementation start. Every persisted gate keeps
+its own validation and error; a blocking or authorization decision still stops
+the chain at its own stage, and rerunning `advance` resumes from there.
 Solution approval automatically performs conservative path-overlap analysis.
 Report any historical tasks marked `affected` before implementation.
 
@@ -208,8 +242,9 @@ Report any historical tasks marked `affected` before implementation.
 
 After both gates pass:
 
-1. Run `openatdd begin <task-id>`; this prepares distinct implementation and
-   verification context. Quick context stays in memory, while Standard/Deep
+1. `advance` and `approve-solution --begin` already prepared distinct
+   implementation and verification context; otherwise run
+   `openatdd begin <task-id>`. Quick context stays in memory, while Standard/Deep
    context is persisted to the task's single `context.json` recovery boundary.
 2. Establish relevant baseline checks.
 3. Recall the scoped environment profile and verified project observations.
@@ -226,29 +261,54 @@ After both gates pass:
    Do not create a new task-local preflight script when an equivalent project
    adapter can be reused.
 
+   A manifest whose commands are a deterministic component or local project
+   harness with no live service, account, organization, integration, fixture,
+   workaround, credential, or declared command environment dependency may use
+   `preflight.scope: project` with a non-empty reason. This keeps workspace,
+   project, start-command, and version checks while marking live checks not
+   applicable. Never fabricate assertions or evidence to bypass preflight.
+
 5. Implement using the project's existing architecture and conventions.
 6. Add risk-proportionate unit, integration, API, file, or browser coverage.
 7. Use `focused` checks during edits and `module` checks after repairs. Do not
-   run the final broad group or record formal passed evidence yet.
+   run the final broad group or record formal passed evidence yet. Do not run a
+   known-failing repository-wide check merely for ceremony: use the affected
+   checks, report the established baseline separately, and keep a real passing
+   broad group in the finalization manifest.
 8. Review the actual diff and affected call paths.
-9. Read [fast-finalization.md](references/fast-finalization.md), then run the
-   default pre-freeze rehearsal:
+9. When the project already has a finalization manifest and the source
+   fingerprint is stable, use the single-invocation path:
 
    ```bash
-   openatdd finalize <task-id> --dry-run [--assertions <file>]
+   openatdd finalize <task-id> --fast [--manifest <path>] [--assertions <file>]
    ```
 
-10. Repair every rehearsal finding with focused checks. When the rehearsal is
-   green and the complete source fingerprint is stable, run exactly one formal
-   finalization for that fingerprint:
+   `--fast` performs static manifest validation, the non-formal rehearsal, and
+   exactly one formal finalization for the same frozen fingerprint. Each stage
+   keeps its own diagnostics and aborts on its own findings, so nothing is
+   weakened; only the waiting between three commands is removed.
+
+10. Split the ladder only when you need the intermediate output: a project
+   without a manifest, a rehearsal you expect to fail, or a narrow diagnosis.
+   Then read [fast-finalization.md](references/fast-finalization.md) and run:
 
    ```bash
+   openatdd validate-finalization <task-id> [--manifest <path>]
+   openatdd finalize <task-id> --dry-run [--assertions <file>]
    openatdd finalize <task-id> [--assertions <file>]
    ```
 
-   This one operation performs final preflight, ordered check groups, the
+   Repair every rehearsal finding with focused checks before the formal run.
+   Without `--manifest`, resolution is the task manifest
+   (`.openatdd/tasks/<task>/finalization.manifest.json`) first, then the project
+   manifest. Static validation executes no commands and writes no preview; fix
+   all of its diagnostics together before rehearsal. The formal operation
+   performs final preflight, ordered check groups, the
    complete batched UAT journey, acceptance evidence mapping, affected-history
-   reverification, handoff generation, and readiness validation.
+   reverification, handoff generation, and readiness validation. A Quick task
+   skips a frozen check group that is narrower than `broad` and maps to no
+   acceptance or history evidence, because its focused checks already ran during
+   implementation; the recorded metrics name every skipped group.
 
 For Quick tasks, keep the critical path to:
 
@@ -259,6 +319,14 @@ reproduce the observable failure
 → affected tests
 → one formal real user journey
 ```
+
+For a known-target Quick change, the default work budget is one location step,
+one targeted batch read, one `advance` approval chain, one smallest-complete
+patch, affected checks, one diff review, and one `finalize --fast`. This is an
+optimization budget, not a correctness cap: exceed it only for a concrete risk
+or failed hypothesis and record why. Do not add routine subagents, irrelevant
+foundational reading, repeated equivalent searches, a known-failing full-project
+check, or a reference file that the CLI already validates deterministically.
 
 Do not first run a manual browser journey and then declare a JSON verifier to
 be the formal journey. The batch command itself must execute the observable
@@ -294,12 +362,13 @@ outcomes, and progress fingerprints with `openatdd repair-attempt`; three
 repeated no-progress attempts without a new hypothesis form a recoverable
 blocked boundary rather than an endless loop.
 
-Use the deterministic role profiles: Luna/low/read-only for local discovery and
-external research, Terra/medium/workspace-write for clean-context execution,
-and Terra/high/read-only for independent review. Escalate only hard-risk review
-or clean-context execution after two consecutive failed repair attempts to
-Sol/high. Always use `forkTurns: none`. Record actual token counts and duration
-when available; never invent missing metrics.
+All subagent task labels resolve to the single `default` scout profile:
+Luna/low/read-only with `forkTurns: none`. Subagents only explore, search, and
+verify; the main Agent reads code it will modify, makes decisions, edits files,
+and performs final validation. Dispatch independent searches together, then the
+main Agent must wait rather than duplicate their work. Use every scout for one
+round only and intervene after ten minutes instead of waiting indefinitely.
+Record actual token counts and duration when available; never invent metrics.
 
 The semantic graph under `.openatdd/knowledge/graph.json` is a local,
 source-hashed, rebuildable index, never a source of truth or an external graph

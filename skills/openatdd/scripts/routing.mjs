@@ -6,8 +6,7 @@ export const LANES = Object.freeze({
   DEEP: "deep",
 });
 
-export const HARD_ESCALATORS = Object.freeze([
-  "deletion",
+export const RISK_OVERLAYS = Object.freeze([
   "migration",
   "authentication",
   "authorization",
@@ -15,9 +14,28 @@ export const HARD_ESCALATORS = Object.freeze([
   "privacy",
   "security",
   "external-service",
+  "deletion",
   "production",
   "irreversible",
   "public-compatibility",
+  "sensitive-boundary-change",
+  "shared-data-migration",
+  "external-side-effect",
+]);
+
+export const RISK_SIGNALS = RISK_OVERLAYS;
+
+/**
+ * Overlays that describe a materially dangerous or externally mutating change.
+ * They never change the lane, but they do require a recorded and resolved
+ * authorization decision before product code may be modified.
+ */
+export const AUTHORIZATION_OVERLAYS = Object.freeze([
+  "deletion",
+  "production",
+  "irreversible",
+  "shared-data-migration",
+  "external-side-effect",
 ]);
 
 export const AGENT_POLICIES = Object.freeze({
@@ -34,7 +52,6 @@ export const AGENT_POLICIES = Object.freeze({
     roles: Object.freeze([
       "local-discovery",
       "external-research",
-      "clean-context-execution",
       "independent-review",
     ]),
   }),
@@ -60,7 +77,21 @@ const PROJECT_PATTERNS = new Set(["established", "partial", "none"]);
 const REVERSIBILITIES = new Set(["reversible", "costly", "irreversible"]);
 const UNCERTAINTIES = new Set(["low", "medium", "high"]);
 const LANE_VALUES = new Set(Object.values(LANES));
-const HARD_ESCALATOR_SET = new Set(HARD_ESCALATORS);
+const RISK_OVERLAY_SET = new Set(RISK_OVERLAYS);
+const RISK_SIGNAL_SET = new Set(RISK_SIGNALS);
+const AUTHORIZATION_OVERLAY_SET = new Set(AUTHORIZATION_OVERLAYS);
+
+/**
+ * Return the recorded overlays that require an explicit authorization decision.
+ * Accepts either a routing record or a bare signal list so persisted schema-v1
+ * tasks without `riskOverlays` still resolve from `assessment.riskSignals`.
+ */
+export function authorizationOverlays(source) {
+  const signals = Array.isArray(source)
+    ? source
+    : source?.riskOverlays ?? source?.assessment?.riskSignals ?? [];
+  return RISK_OVERLAYS.filter((signal) => AUTHORIZATION_OVERLAY_SET.has(signal) && signals.includes(signal));
+}
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -88,7 +119,7 @@ function collectRiskSignals(assessment) {
     if (active) signals.add(name);
   }
   if (assessment.reversibility === "irreversible") signals.add("irreversible");
-  return HARD_ESCALATORS.filter((name) => signals.has(name));
+  return RISK_SIGNALS.filter((name) => signals.has(name));
 }
 
 function canonicalAssessment(assessment) {
@@ -122,8 +153,8 @@ export function validateAssessment(assessment) {
     } else {
       const seen = new Set();
       for (const signal of assessment.riskSignals) {
-        if (!HARD_ESCALATOR_SET.has(signal)) errors.push(`Unknown hard risk signal: ${signal}.`);
-        if (seen.has(signal)) errors.push(`Duplicate hard risk signal: ${signal}.`);
+        if (!RISK_SIGNAL_SET.has(signal)) errors.push(`Unknown risk signal: ${signal}.`);
+        if (seen.has(signal)) errors.push(`Duplicate risk signal: ${signal}.`);
         seen.add(signal);
       }
     }
@@ -134,8 +165,8 @@ export function validateAssessment(assessment) {
       errors.push("risks must be an object when provided.");
     } else {
       for (const [name, active] of Object.entries(assessment.risks)) {
-        if (!HARD_ESCALATOR_SET.has(name)) errors.push(`Unknown hard risk flag: ${name}.`);
-        if (typeof active !== "boolean") errors.push(`Hard risk flag ${name} must be boolean.`);
+        if (!RISK_SIGNAL_SET.has(name)) errors.push(`Unknown risk flag: ${name}.`);
+        if (typeof active !== "boolean") errors.push(`Risk flag ${name} must be boolean.`);
       }
     }
   }
@@ -165,8 +196,6 @@ export function classifyTask(assessment) {
   const reasons = [];
   let lane;
 
-  for (const signal of normalized.riskSignals) reasons.push(`hard-escalator:${signal}`);
-
   if (normalized.scope === "system") reasons.push("system-scope");
   if (normalized.uncertainty === "high") reasons.push("high-uncertainty");
   if (normalized.projectPattern === "none" && normalized.scope !== "local") {
@@ -178,17 +207,15 @@ export function classifyTask(assessment) {
   } else {
     const quick = normalized.scope === "local"
       && normalized.projectPattern === "established"
-      && normalized.reversibility === "reversible"
       && normalized.uncertainty === "low";
 
     if (quick) {
       lane = LANES.QUICK;
-      reasons.push("local-scope", "established-project-pattern", "low-uncertainty", "reversible");
+      reasons.push("local-scope", "established-project-pattern", "low-uncertainty");
     } else {
       lane = LANES.STANDARD;
       if (normalized.scope === "cross-module") reasons.push("cross-module-scope");
       if (normalized.projectPattern !== "established") reasons.push(`${normalized.projectPattern}-project-pattern`);
-      if (normalized.reversibility === "costly") reasons.push("costly-to-reverse");
       if (normalized.uncertainty === "medium") reasons.push("medium-uncertainty");
       if (reasons.length === 0) reasons.push("standard-by-conservative-default");
     }
@@ -199,6 +226,7 @@ export function classifyTask(assessment) {
     lane,
     reasons,
     assessment: normalized,
+    riskOverlays: normalized.riskSignals.filter((signal) => RISK_OVERLAY_SET.has(signal)),
     investigation: {
       externalResearch: lane === LANES.DEEP,
     },
@@ -223,6 +251,15 @@ export function validateRouting(routing) {
 
   const assessmentValidation = validateAssessment(routing.assessment);
   errors.push(...assessmentValidation.errors.map((error) => `assessment: ${error}`));
+
+  if (routing.riskOverlays !== undefined) {
+    const expected = routing.assessment?.riskSignals?.filter((signal) => RISK_OVERLAY_SET.has(signal)) ?? [];
+    if (!Array.isArray(routing.riskOverlays)
+      || routing.riskOverlays.some((signal) => !RISK_OVERLAY_SET.has(signal))
+      || JSON.stringify(routing.riskOverlays) !== JSON.stringify(expected)) {
+      errors.push("riskOverlays must match assessment.riskSignals.");
+    }
+  }
 
   if (!isRecord(routing.investigation) || typeof routing.investigation.externalResearch !== "boolean") {
     errors.push("investigation.externalResearch must be boolean.");

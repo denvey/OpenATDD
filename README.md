@@ -73,15 +73,25 @@ openatdd status order-export
 openatdd resume order-export
 openatdd assess order-export --scope cross-module --project-pattern established \
   --reversibility reversible --uncertainty medium
+openatdd advance order-export --summary "方案简洁，并沿用现有项目边界"
 openatdd approve-acceptance order-export
 openatdd draft-solution order-export
 openatdd review-solution order-export --status passed --reviewer main \
   --check all --summary "方案简洁，并沿用现有项目边界"
-openatdd approve-solution order-export
-openatdd begin order-export
+openatdd approve-solution order-export --begin
+openatdd finalize order-export --fast
 openatdd finalize order-export --dry-run
 openatdd finalize order-export
 ```
+
+A Quick task merges its five autonomous approval commands — acceptance
+approval, solution draft, main review, solution approval, and implementation
+start — into one `advance` invocation; every persisted gate keeps its own
+validation, and a blocking or authorization decision still stops the chain.
+Standard and Deep keep the two human confirmations and combine the
+post-confirmation approval with `approve-solution --begin`. Within one formal
+finalization, a narrower check group whose commands are argv-identical to an
+already executed group reuses that evidence; the broad group always executes.
 
 These workflow commands are normally executed by the agent, not by a person.
 They use `.openatdd/finalization.json`; the successful formal command prepares
@@ -93,15 +103,28 @@ projects that have not adopted the manifest yet.
 
 OpenATDD records one deterministic lane from repository-derived facts:
 
-- **Quick** — local, established, reversible, and low uncertainty. Work stays
-  direct and local with compact autonomous approvals; no routine confirmation,
-  subagent, or external research wait.
+- **Quick** — local, established, and low uncertainty. Small bugs normally stay
+  here, even when they touch sensitive code or require guarded operations. Work
+  stays direct and local with compact autonomous approvals; no routine
+  confirmation, subagent, or external research wait.
 - **Standard** — ordinary cross-module or moderately uncertain work. Local
   discovery is normal and an independent review is optional.
-- **Deep** — system-wide, novel, highly uncertain, irreversible, or sensitive
-  work such as migrations, auth, payments, privacy, production, deletion, and
-  public compatibility. Relevant external research accompanies local discovery;
-  clean-context execution and independent review are used when they reduce risk.
+- **Deep** — system-wide, novel cross-cutting, or highly uncertain problem
+  solving. New product work is more likely to qualify, but a complex system bug
+  can also be Deep and a small feature can remain Quick or Standard. Relevant
+  external research accompanies local discovery; independent read-only review
+  is used when it reduces risk.
+
+Depth measures complexity only. Reversibility plus migration, authentication,
+authorization, payment, privacy, security, external-service, production,
+deletion, compatibility, and external-side-effect signals remain explicit
+safety and verification overlays, but never change the lane by themselves.
+Dangerous or externally mutating operations still require explicit authorization
+regardless of lane, and that requirement is enforced rather than advisory: the
+`deletion`, `production`, `irreversible`, `shared-data-migration`, and
+`external-side-effect` overlays make `approve-solution` fail until the task
+records a resolved `authorization` decision. The other overlays only strengthen
+preflight, redaction, rollback, compatibility, and evidence requirements.
 
 Routing changes internal effort and routine interaction. Quick uses compact
 autonomous approvals; Standard and Deep use the two human confirmations.
@@ -137,15 +160,21 @@ the deterministic path fallback continues to work.
 
 Each task can produce one `context.json` with distinct implementation and
 verification references. Quick context stays in memory; Standard and Deep
-context persists by default for clean-context Agents and recovery. Source
+context persists by default for recovery and scoped verification. Source
 digests cause stale context to rebuild instead of silently drifting.
 
-Agent dispatches use role-level defaults instead of inheriting the main model:
-local discovery and external research use `gpt-5.6-luna/low`, clean-context
-execution uses `gpt-5.6-terra/medium`, and independent review uses
-`gpt-5.6-terra/high`. Hard-risk review and execution after two consecutive
-failed repair attempts escalate to `gpt-5.6-sol/high`. Every dispatch records
-the selected profile, isolation settings, available token counts, and duration.
+Every subagent task label resolves to one `default` read-only scout profile:
+`gpt-5.6-luna/low` with no inherited conversation history. Independent searches
+run in parallel; the main Agent waits for their compressed evidence, then owns
+all decisions, code changes, and final validation. Dispatch records preserve the
+selected profile, isolation settings, available token counts, and duration.
+
+Known-target Quick changes use a compact default work budget: one location
+step, one targeted batch read, one smallest-complete patch, affected checks,
+and one diff review. This is a warning boundary rather than a correctness cap;
+semantic search, graph tracing, additional reads, or broader checks require a
+concrete risk or failed hypothesis. Known-failing repository-wide checks are
+reported as baseline limitations instead of being rerun ceremonially.
 
 Useful diagnostic commands include `graph-rebuild`, `graph-query`,
 `graph-impact`, `context-build`, and `context-show`. They are internal tools,
@@ -229,10 +258,32 @@ Automatic acceptance must be exercised by real argv-only UAT commands.
 `runner: "internal"` is only a manual handoff for `ASSISTED` or `MANUAL`
 criteria; it records `manual` and can never satisfy an `AUTO` criterion.
 
+Manifest resolution prefers an explicit path, then
+`.openatdd/tasks/<task>/finalization.manifest.json`, then the reusable project
+manifest. The frozen `finalization.json` snapshot that a successful finalization
+writes into the task is evidence, never an input for a later run.
+`validate-finalization` checks schema and current acceptance mappings without
+executing commands or writing a preview. Deterministic component/project
+harnesses with no live dependencies may explicitly use
+`preflight.scope: "project"` plus a reason; default environment preflight
+remains strict and project scope cannot consume declared command environment
+variables.
+
+`openatdd finalize <task> --fast` performs static validation, the rehearsal, and
+one formal finalization in a single invocation. Every stage keeps its own
+diagnostics; the split ladder below stays available when the intermediate output
+is what you need. Affected-history reverification reuses evidence from the same
+frozen epoch when a replay would execute argv-identical commands, so a growing
+history no longer multiplies the broad suite. A Quick task also skips a frozen
+check group narrower than `broad` that maps to no acceptance or history
+evidence, and records every skipped group in its metrics.
+
 The default order is:
 
 ```text
 focused implementation and repair
+→ openatdd finalize <task> --fast   (or the explicit ladder below)
+→ openatdd validate-finalization <task>
 → openatdd finalize <task> --dry-run
 → repair all rehearsal findings
 → freeze the complete source fingerprint
