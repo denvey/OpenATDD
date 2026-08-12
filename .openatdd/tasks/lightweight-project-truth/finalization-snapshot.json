@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "taskId": "lightweight-project-truth",
+  "createdAt": "2026-07-29T16:58:32.389Z",
+  "acceptanceSha256": "bb137c81f62a7dbe5e24eef9a6938f6e37c2c0dbb23f49d9e0f5b58c266924e5",
+  "solutionSha256": "5c7becd76b7744072404cec55ddf1b65ea1ca612ded59cae12c3ab0964e81c0a",
+  "manifestDigest": "0ad07a2a3bdca5c1d6b894c166cabde1f7314c84dd888da37664d02be20fb1c9",
+  "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+  "replay": {
+    "commands": [
+      {
+        "id": "broad-project-check",
+        "argv": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "timeoutMs": 180000
+      }
+    ],
+    "acceptanceIds": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04"
+    ]
+  }
+}

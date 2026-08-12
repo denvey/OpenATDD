@@ -2,14 +2,17 @@
 
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { capabilityProfile } from "./strategy.mjs";
 
 const SCENARIO_SCHEMA_VERSION = 1;
+const DELIVERY_SCENARIO_SCHEMA_VERSION = 2;
+const DELIVERY_REPORT_SCHEMA_VERSION = 2;
 const RUBRIC_SCHEMA_VERSION = 1;
+const DELIVERY_PROFILES = Object.freeze(["bare", "thin-atdd", "full-openatdd"]);
 
 function invariant(condition, message) {
   if (!condition) throw new Error(message);
@@ -42,11 +45,17 @@ async function readJson(target) {
 
 function validateScenario(scenario, source = "scenario") {
   invariant(scenario && typeof scenario === "object" && !Array.isArray(scenario), `${source} must be an object.`);
-  invariant(scenario.schemaVersion === SCENARIO_SCHEMA_VERSION, `${source} uses unsupported schemaVersion ${scenario.schemaVersion}.`);
+  invariant([SCENARIO_SCHEMA_VERSION, DELIVERY_SCENARIO_SCHEMA_VERSION].includes(scenario.schemaVersion), `${source} uses unsupported schemaVersion ${scenario.schemaVersion}.`);
   invariant(typeof scenario.id === "string" && scenario.id.length > 0, `${source} requires an id.`);
   invariant(typeof scenario.prompt === "string" && scenario.prompt.trim().length > 0, `${source} requires a prompt.`);
   invariant(typeof scenario.rubric === "string" && scenario.rubric.length > 0, `${source} requires a rubric path.`);
-  invariant(scenario.expect && typeof scenario.expect === "object", `${source} requires expect rules.`);
+  if (scenario.schemaVersion === SCENARIO_SCHEMA_VERSION) {
+    invariant(scenario.expect && typeof scenario.expect === "object", `${source} requires expect rules.`);
+  } else {
+    invariant(scenario.kind === "delivery", `${source} schemaVersion 2 requires kind=delivery.`);
+    invariant(["simple", "medium", "complex"].includes(scenario.difficulty), `${source} requires simple, medium, or complex difficulty.`);
+    invariant(typeof scenario.seed?.directory === "string" && scenario.seed.directory.length > 0, `${source} delivery scenario requires seed.directory.`);
+  }
   invariant(Array.isArray(scenario.hiddenChecks) && scenario.hiddenChecks.length > 0, `${source} requires at least one hidden check.`);
   for (const check of scenario.hiddenChecks) {
     invariant(typeof check.id === "string" && check.id.length > 0, `${source} hidden checks require an id.`);
@@ -92,6 +101,12 @@ function normalizeResult(value, fallbackDurationMs) {
     },
     architecture: Array.isArray(result.architecture) ? [...result.architecture].map(String) : [],
     contractViolations: Array.isArray(result.contractViolations) ? [...result.contractViolations].map(String) : [],
+    commands: Array.isArray(result.commands) ? result.commands.map((item) => ({
+      command: String(item?.command ?? ""),
+      status: String(item?.status ?? ""),
+      exitCode: Number.isFinite(item?.exitCode) ? item.exitCode : null,
+    })) : [],
+    profile: result.profile && typeof result.profile === "object" ? clone(result.profile) : null,
     metrics: {
       ...(Number.isFinite(result.metrics?.inputTokens) ? { inputTokens: result.metrics.inputTokens } : {}),
       ...(Number.isFinite(result.metrics?.cachedInputTokens) ? { cachedInputTokens: result.metrics.cachedInputTokens } : {}),
@@ -190,6 +205,7 @@ export function createCommandAdapter(options = {}) {
     argv: [...options.argv],
     model: options.model ?? null,
     reasoningEffort: options.reasoningEffort ?? null,
+    configMode: options.configMode ?? null,
     async run({ prompt, workspace }) {
       const command = await runArgv(options.argv, {
         cwd: workspace,
@@ -226,24 +242,37 @@ export function createCodexAdapter(options = {}) {
   const suffix = disabledCapabilities.length > 0 ? `without-${disabledCapabilities.join("-")}` : null;
   const model = options.model?.trim() || null;
   const reasoningEffort = options.reasoningEffort?.trim() || "low";
+  const isolateUserConfig = options.isolateUserConfig === true;
+  const evaluationMode = options.evaluationMode ?? "planning";
+  const profileName = options.profile ?? (options.bare === true ? "bare" : "full-openatdd");
+  const timeoutMs = options.timeoutMs ?? (evaluationMode === "delivery" ? 600_000 : 240_000);
+  invariant(["planning", "delivery"].includes(evaluationMode), "Codex adapter evaluationMode is invalid.");
+  if (evaluationMode === "delivery") invariant(DELIVERY_PROFILES.includes(profileName), "Codex adapter delivery profile is invalid.");
   invariant(["low", "medium", "high", "xhigh", "max", "ultra"].includes(reasoningEffort), "Codex adapter reasoningEffort is invalid.");
   return createCommandAdapter({
-    name: options.name ?? (options.bare === true ? "codex-bare" : suffix ? `codex-${suffix}` : "codex-openatdd"),
+    name: options.name ?? (evaluationMode === "delivery" ? `codex-${profileName}` : options.bare === true ? "codex-bare" : suffix ? `codex-${suffix}` : "codex-openatdd"),
     argv: [
       process.execPath,
       adapterPath,
+      "--evaluation-mode",
+      evaluationMode,
       "--mode",
       options.bare === true ? "bare" : "primary",
+      ...(evaluationMode === "delivery" ? ["--profile", profileName] : []),
       ...(model ? ["--model", model] : []),
       "--reasoning-effort",
       reasoningEffort,
+      "--timeout-ms",
+      String(timeoutMs),
+      ...(isolateUserConfig ? ["--isolated-config"] : []),
       ...disabledCapabilities.flatMap((id) => ["--disable-capability", id]),
     ],
     provenance: "bundled-codex-exec-adapter",
     realModel: true,
     model,
     reasoningEffort,
-    timeoutMs: options.timeoutMs ?? 240_000,
+    configMode: isolateUserConfig ? "isolated" : evaluationMode === "delivery" ? "user-provider-minimal" : "user",
+    timeoutMs: timeoutMs * (evaluationMode === "delivery" && profileName === "full-openatdd" ? 2 : 1) + 15_000,
     maxOutputBytes: options.maxOutputBytes ?? 2 * 1024 * 1024,
   });
 }
@@ -262,14 +291,34 @@ async function prepareWorkspace(scenario, scenarioPath) {
   return workspace;
 }
 
-function expandedArgv(argv, workspace) {
-  return argv.map((part) => part === "<node>" ? process.execPath : part.replaceAll("<workspace>", workspace));
+function expandedArgv(argv, workspace, scenarioPath = "") {
+  const scenarioDirectory = scenarioPath ? path.dirname(path.resolve(scenarioPath)) : "";
+  return argv.map((part) => part === "<node>" ? process.execPath : part
+    .replaceAll("<workspace>", workspace)
+    .replaceAll("<scenario-directory>", scenarioDirectory));
 }
 
-async function executeHiddenChecks(checks, workspace) {
+async function hiddenCheckSourceDigests(scenario, scenarioPath) {
+  const scenarioDirectory = path.dirname(path.resolve(scenarioPath));
+  const sources = {};
+  for (const check of scenario.hiddenChecks) {
+    for (const part of check.argv) {
+      if (!part.includes("<scenario-directory>")) continue;
+      const candidate = path.resolve(part.replaceAll("<scenario-directory>", scenarioDirectory));
+      try {
+        sources[path.relative(process.cwd(), candidate)] = hash(await readFile(candidate));
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+      }
+    }
+  }
+  return sources;
+}
+
+async function executeHiddenChecks(checks, workspace, scenarioPath = "") {
   const results = [];
   for (const check of checks) {
-    const observed = await runArgv(expandedArgv(check.argv, workspace), {
+    const observed = await runArgv(expandedArgv(check.argv, workspace, scenarioPath), {
       cwd: workspace,
       stdin: check.stdin ?? "",
       timeoutMs: check.timeoutMs ?? 15_000,
@@ -289,6 +338,152 @@ async function executeHiddenChecks(checks, workspace) {
     });
   }
   return results;
+}
+
+async function workspaceHashes(root) {
+  const entries = {};
+  async function visit(directory) {
+    for (const entry of (await readdir(directory, { withFileTypes: true })).sort((left, right) => left.name.localeCompare(right.name))) {
+      if ([".git", "node_modules"].includes(entry.name)) continue;
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) await visit(absolute);
+      else if (entry.isFile()) entries[path.relative(root, absolute)] = hash(await readFile(absolute));
+    }
+  }
+  await visit(root);
+  return entries;
+}
+
+function changedWorkspaceFiles(before, after) {
+  return [...new Set([...Object.keys(before), ...Object.keys(after)])]
+    .filter((file) => before[file] !== after[file])
+    .sort();
+}
+
+function deliveryTranscript(result) {
+  return result.transcript.map((entry) => entry.text).join("\n");
+}
+
+function deliveryObservation(result, hiddenChecks, before, after) {
+  const text = deliveryTranscript(result);
+  const successfulVerificationCommands = result.commands.filter((item) => {
+    const verificationCommand = /(^|\s)(npm|pnpm|yarn|bun)\s+(run\s+)?(test|check|lint|build|typecheck)\b|node\s+--test\b|\b(test|check|lint|build|typecheck)\b/i.test(item.command);
+    return verificationCommand && (item.exitCode === 0 || item.status === "completed");
+  });
+  const changedFiles = changedWorkspaceFiles(before, after);
+  const functionalPass = hiddenChecks.length > 0 && hiddenChecks.every((check) => check.passed);
+  const claimedReady = /(implemented|completed|finished|ready|done|fixed|passed|\u5df2\u5b9e\u73b0|\u5df2\u5b8c\u6210|\u5df2\u4fee\u590d|\u5df2\u5c31\u7eea|\u901a\u8fc7)/i.test(text);
+  const technicalPlanPresent = changedFiles.some((file) => file === "TECHNICAL_PLAN.md" || /^\.openatdd\/tasks\/[^/]+\/solution\.md$/.test(file));
+  const handoffComplete = /(implemented|changed|added|fixed|\u5b9e\u73b0|\u4fee\u6539|\u65b0\u589e|\u4fee\u590d)/i.test(text)
+    && /(test|verified|verification|passed|\u6d4b\u8bd5|\u9a8c\u8bc1|\u901a\u8fc7)/i.test(text)
+    && /(try|usage|run\s+[`'"\w]|how to test|acceptance|\b(node|npm|pnpm|yarn|bun)\s+|\u8bd5\u7528|\u8fd0\u884c|\u9a8c\u6536|\u4f7f\u7528)/i.test(text);
+  return {
+    functionalPass,
+    selfVerification: successfulVerificationCommands.length > 0,
+    verificationCommands: successfulVerificationCommands,
+    claimedReady,
+    falseReady: claimedReady && !functionalPass,
+    technicalPlanPresent,
+    handoffComplete,
+    changedFiles,
+    hiddenChecks,
+  };
+}
+
+function scoreDeliveryObservation(observation) {
+  const passedChecks = observation.hiddenChecks.filter((check) => check.passed).length;
+  const score = observation.hiddenChecks.length === 0 ? 0 : (passedChecks / observation.hiddenChecks.length) * 100;
+  return {
+    score,
+    passed: observation.functionalPass,
+    gates: { hiddenChecks: observation.functionalPass },
+  };
+}
+
+async function executeDeliveryRun({ scenario, scenarioPath, adapter, profileName, index, keepWorkspace }) {
+  const workspace = await prepareWorkspace(scenario, scenarioPath);
+  const before = await workspaceHashes(workspace);
+  let adapterError = null;
+  let result;
+  const started = Date.now();
+  try {
+    try {
+      const raw = await adapter.run({ prompt: scenario.prompt, workspace, run: index });
+      result = normalizeResult(raw, Date.now() - started);
+    } catch (error) {
+      adapterError = error.message;
+      result = normalizeResult({ transcript: `Agent adapter failed: ${error.message}` }, Date.now() - started);
+    }
+    const after = await workspaceHashes(workspace);
+    const hiddenChecks = await executeHiddenChecks(scenario.hiddenChecks, workspace, scenarioPath);
+    const observation = deliveryObservation(result, hiddenChecks, before, after);
+    const scoring = scoreDeliveryObservation(observation);
+    return {
+      run: index,
+      adapter: adapter.name,
+      profile: profileName,
+      profileMetadata: result.profile,
+      transcript: result.transcript,
+      commands: result.commands,
+      metrics: result.metrics,
+      observation,
+      scoring,
+      transcriptSha256: hash(JSON.stringify(result.transcript)),
+      ...(adapterError ? { adapterError } : {}),
+      ...(result.stderr ? { adapterStderr: result.stderr } : {}),
+      ...(keepWorkspace ? { workspace } : {}),
+    };
+  } finally {
+    if (!keepWorkspace) await rm(workspace, { recursive: true, force: true });
+  }
+}
+
+function aggregateDeliveryRuns(runs) {
+  const suppliedInputTokens = runs.map((run) => run.metrics.inputTokens).filter(Number.isFinite);
+  const suppliedCachedInputTokens = runs.map((run) => run.metrics.cachedInputTokens).filter(Number.isFinite);
+  const suppliedOutputTokens = runs.map((run) => run.metrics.outputTokens).filter(Number.isFinite);
+  const inputTokens = suppliedInputTokens.length === runs.length ? suppliedInputTokens.reduce((sum, value) => sum + value, 0) : null;
+  const cachedInputTokens = suppliedCachedInputTokens.length === runs.length ? suppliedCachedInputTokens.reduce((sum, value) => sum + value, 0) : null;
+  const rate = (predicate) => runs.length === 0 ? 0 : runs.filter(predicate).length / runs.length;
+  return {
+    runs: runs.length,
+    passedRuns: runs.filter((run) => run.observation.functionalPass).length,
+    passRate: rate((run) => run.observation.functionalPass),
+    selfVerificationRate: rate((run) => run.observation.selfVerification),
+    claimedReadyRate: rate((run) => run.observation.claimedReady),
+    falseReadyRate: rate((run) => run.observation.falseReady),
+    technicalPlanRate: rate((run) => run.observation.technicalPlanPresent),
+    handoffCompleteRate: rate((run) => run.observation.handoffComplete),
+    meanScore: runs.length === 0 ? 0 : runs.reduce((sum, run) => sum + run.scoring.score, 0) / runs.length,
+    durationMs: runs.reduce((sum, run) => sum + run.metrics.durationMs, 0),
+    commandInvocations: runs.reduce((sum, run) => sum + run.commands.length, 0),
+    adapterErrors: runs.filter((run) => run.adapterError).length,
+    ...(inputTokens !== null ? { inputTokens } : {}),
+    ...(cachedInputTokens !== null ? { cachedInputTokens, uncachedInputTokens: Math.max(0, inputTokens - cachedInputTokens) } : {}),
+    ...(suppliedOutputTokens.length === runs.length ? { outputTokens: suppliedOutputTokens.reduce((sum, value) => sum + value, 0) } : {}),
+  };
+}
+
+async function runDeliveryProfileSet({ scenario, scenarioPath, adapter, profileName, repetitions, keepWorkspace }) {
+  const runs = [];
+  for (let index = 1; index <= repetitions; index += 1) {
+    runs.push(await executeDeliveryRun({ scenario, scenarioPath, adapter, profileName, index, keepWorkspace }));
+  }
+  const profileMetadata = runs.map((run) => run.profileMetadata).find(Boolean) ?? null;
+  return {
+    profile: profileMetadata ?? { name: profileName },
+    adapter: {
+      name: adapter.name,
+      kind: adapter.kind,
+      provenance: adapter.provenance,
+      realModelEvaluated: adapter.realModel === true,
+      model: adapter.model ?? null,
+      reasoningEffort: adapter.reasoningEffort ?? null,
+      configMode: adapter.configMode ?? null,
+    },
+    runs,
+    summary: aggregateDeliveryRuns(runs),
+  };
 }
 
 function actionType(action) {
@@ -448,6 +643,7 @@ async function runAdapterSet({ scenario, scenarioPath, rubric, adapter, repetiti
       realModelEvaluated: adapter.realModel === true,
       model: adapter.model ?? null,
       reasoningEffort: adapter.reasoningEffort ?? null,
+      configMode: adapter.configMode ?? null,
     },
     runs,
     summary: aggregateRuns(runs),
@@ -555,12 +751,407 @@ export async function runAgentEvaluation(options) {
   return report;
 }
 
+function deliveryDelta(profile, bare) {
+  const delta = (key) => Number.isFinite(profile.summary[key]) && Number.isFinite(bare.summary[key])
+    ? profile.summary[key] - bare.summary[key]
+    : null;
+  return {
+    profile: profile.profile.name,
+    baseline: bare.profile.name,
+    passRateDelta: delta("passRate"),
+    falseReadyRateDelta: delta("falseReadyRate"),
+    selfVerificationRateDelta: delta("selfVerificationRate"),
+    technicalPlanRateDelta: delta("technicalPlanRate"),
+    handoffCompleteRateDelta: delta("handoffCompleteRate"),
+    durationMsDelta: delta("durationMs"),
+    commandInvocationsDelta: delta("commandInvocations"),
+    inputTokensDelta: delta("inputTokens"),
+    uncachedInputTokensDelta: delta("uncachedInputTokens"),
+    outputTokensDelta: delta("outputTokens"),
+  };
+}
+
+export async function runDeliveryEvaluation(options) {
+  invariant(options?.scenarioPath, "runDeliveryEvaluation requires scenarioPath.");
+  invariant(Array.isArray(options?.profileAdapters) && options.profileAdapters.length > 0, "runDeliveryEvaluation requires profileAdapters.");
+  const scenarioPath = path.resolve(options.scenarioPath);
+  const scenario = validateScenario(await readJson(scenarioPath), scenarioPath);
+  invariant(scenario.schemaVersion === DELIVERY_SCENARIO_SCHEMA_VERSION && scenario.kind === "delivery", "runDeliveryEvaluation requires a delivery scenario.");
+  const rubricPath = path.resolve(path.dirname(scenarioPath), scenario.rubric);
+  const rubric = validateRubric(await readJson(rubricPath), rubricPath);
+  const repetitions = options.repetitions ?? scenario.repetitions ?? 1;
+  invariant(Number.isInteger(repetitions) && repetitions > 0, "repetitions must be a positive integer.");
+  const adaptersByProfile = new Map(options.profileAdapters.map((item) => [item.profileName, item.adapter]));
+  const requestedProfiles = options.profileNames ?? scenario.profiles ?? DELIVERY_PROFILES;
+  invariant(requestedProfiles.length > 0 && requestedProfiles.every((name) => DELIVERY_PROFILES.includes(name)), "Delivery scenario profiles are invalid.");
+  for (const profileName of requestedProfiles) invariant(adaptersByProfile.has(profileName), `Missing delivery adapter for profile ${profileName}.`);
+
+  const profiles = {};
+  for (const profileName of requestedProfiles) {
+    profiles[profileName] = await runDeliveryProfileSet({
+      scenario,
+      scenarioPath,
+      adapter: adaptersByProfile.get(profileName),
+      profileName,
+      repetitions,
+      keepWorkspace: options.keepWorkspace === true,
+    });
+  }
+  const generatedAt = (options.clock ?? (() => new Date()))().toISOString();
+  const bare = profiles.bare;
+  const hiddenSources = await hiddenCheckSourceDigests(scenario, scenarioPath);
+  const report = {
+    schemaVersion: DELIVERY_REPORT_SCHEMA_VERSION,
+    evaluationMode: "delivery",
+    generatedAt,
+    scenario: {
+      id: scenario.id,
+      schemaVersion: scenario.schemaVersion,
+      difficulty: scenario.difficulty,
+      source: path.relative(process.cwd(), scenarioPath),
+      promptSha256: hash(scenario.prompt),
+      hiddenChecksSha256: hash(JSON.stringify(scenario.hiddenChecks)),
+      hiddenSources,
+    },
+    rubric: {
+      name: rubric.name,
+      schemaVersion: rubric.schemaVersion,
+      passScore: rubric.passScore,
+    },
+    sampleLimit: `Each profile has ${repetitions} run(s); observed differences are descriptive, not causal or statistically significant.`,
+    profiles,
+    comparisons: bare ? requestedProfiles.filter((name) => name !== "bare").map((name) => deliveryDelta(profiles[name], bare)) : [],
+    claims: {
+      fixtureOnly: requestedProfiles.every((name) => profiles[name].adapter.kind === "mock"),
+      realModelComplete: requestedProfiles.every((name) => profiles[name].adapter.realModelEvaluated === true && profiles[name].summary.runs === repetitions),
+      functionalPassDerivedFromHiddenChecks: true,
+    },
+  };
+  if (options.reportPath !== false) {
+    const reportPath = path.resolve(options.reportPath ?? path.join("evals", "reports", `${scenario.id}-${generatedAt.replace(/[^0-9]/g, "")}.json`));
+    await mkdir(path.dirname(reportPath), { recursive: true });
+    await writeFile(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+    report.reportPath = reportPath;
+  }
+  return report;
+}
+
+function normalizedRecordedCommandCount(commands = []) {
+  let count = 0;
+  let previous = null;
+  for (const command of commands) {
+    const previousIsRunning = ["in_progress", "running", "started"].includes(previous?.status);
+    const currentIsTerminal = ["completed", "failed", "blocked", "cancelled"].includes(command?.status);
+    if (previous?.command === command?.command && previousIsRunning && currentIsTerminal) {
+      previous = command;
+      continue;
+    }
+    count += 1;
+    previous = command;
+  }
+  return count;
+}
+
+function deliveryProfileSummary(report, profileName) {
+  const profile = report.profiles[profileName];
+  const summary = { ...profile.summary };
+  if (!Number.isFinite(summary.commandInvocations)) {
+    summary.commandInvocations = profile.runs.reduce((sum, run) => sum + normalizedRecordedCommandCount(run.commands), 0);
+  }
+  return summary;
+}
+
+function summedDeliveryProfile(reports, profileName) {
+  const summaries = reports.map((report) => deliveryProfileSummary(report, profileName));
+  const runs = summaries.reduce((sum, item) => sum + item.runs, 0);
+  const sum = (key) => summaries.every((item) => Number.isFinite(item[key])) ? summaries.reduce((total, item) => total + item[key], 0) : null;
+  const rateFromCounts = (key) => runs === 0 ? 0 : summaries.reduce((total, item) => total + item[key] * item.runs, 0) / runs;
+  return {
+    runs,
+    passedRuns: summaries.reduce((total, item) => total + item.passedRuns, 0),
+    passRate: runs === 0 ? 0 : summaries.reduce((total, item) => total + item.passedRuns, 0) / runs,
+    selfVerificationRate: rateFromCounts("selfVerificationRate"),
+    falseReadyRate: rateFromCounts("falseReadyRate"),
+    technicalPlanRate: rateFromCounts("technicalPlanRate"),
+    handoffCompleteRate: rateFromCounts("handoffCompleteRate"),
+    durationMs: sum("durationMs"),
+    commandInvocations: sum("commandInvocations"),
+    inputTokens: sum("inputTokens"),
+    cachedInputTokens: sum("cachedInputTokens"),
+    uncachedInputTokens: sum("uncachedInputTokens"),
+    outputTokens: sum("outputTokens"),
+  };
+}
+
+function deliverySummaryDelta(profileName, profile, baselineName, baseline) {
+  const delta = (key) => Number.isFinite(profile[key]) && Number.isFinite(baseline[key])
+    ? profile[key] - baseline[key]
+    : null;
+  const relativeChange = (key) => Number.isFinite(profile[key]) && Number.isFinite(baseline[key]) && baseline[key] !== 0
+    ? (profile[key] - baseline[key]) / baseline[key]
+    : null;
+  return {
+    profile: profileName,
+    baseline: baselineName,
+    passRateDelta: delta("passRate"),
+    falseReadyRateDelta: delta("falseReadyRate"),
+    selfVerificationRateDelta: delta("selfVerificationRate"),
+    technicalPlanRateDelta: delta("technicalPlanRate"),
+    handoffCompleteRateDelta: delta("handoffCompleteRate"),
+    durationMsDelta: delta("durationMs"),
+    durationRelativeChange: relativeChange("durationMs"),
+    commandInvocationsDelta: delta("commandInvocations"),
+    commandInvocationsRelativeChange: relativeChange("commandInvocations"),
+    inputTokensDelta: delta("inputTokens"),
+    inputTokensRelativeChange: relativeChange("inputTokens"),
+    cachedInputTokensDelta: delta("cachedInputTokens"),
+    cachedInputTokensRelativeChange: relativeChange("cachedInputTokens"),
+    uncachedInputTokensDelta: delta("uncachedInputTokens"),
+    uncachedInputTokensRelativeChange: relativeChange("uncachedInputTokens"),
+    outputTokensDelta: delta("outputTokens"),
+    outputTokensRelativeChange: relativeChange("outputTokens"),
+  };
+}
+
+function deliverySummaryMarkdown(summary) {
+  const percent = (value) => `${(value * 100).toFixed(1)}%`;
+  const signedPercent = (value) => Number.isFinite(value) ? `${value >= 0 ? "+" : ""}${percent(value)}` : "n/a";
+  const percentagePoints = (value) => Number.isFinite(value) ? `${value >= 0 ? "+" : ""}${(value * 100).toFixed(1)} pp` : "n/a";
+  const lines = [
+    "# End-to-end Agent delivery evaluation",
+    "",
+    `Generated: ${summary.generatedAt}`,
+    "",
+    "| Difficulty | Profile | Pass | False ready | Self verification | Technical plan | Handoff | Mean seconds/run | Commands | Input tokens | Output tokens |",
+    "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+  ];
+  for (const report of summary.scenarios) {
+    for (const profileName of DELIVERY_PROFILES) {
+      const item = report.profiles[profileName];
+      lines.push(`| ${report.difficulty} | ${profileName} | ${percent(item.passRate)} | ${percent(item.falseReadyRate)} | ${percent(item.selfVerificationRate)} | ${percent(item.technicalPlanRate)} | ${percent(item.handoffCompleteRate)} | ${(item.durationMs / item.runs / 1000).toFixed(2)} | ${item.commandInvocations ?? "n/a"} | ${item.inputTokens ?? "n/a"} | ${item.outputTokens ?? "n/a"} |`);
+    }
+  }
+  lines.push("", "## Totals", "", "| Profile | Pass | False ready | Self verification | Technical plan | Handoff | Mean seconds/run | Commands | Input tokens | Non-cached input | Output tokens |", "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
+  for (const profileName of DELIVERY_PROFILES) {
+    const item = summary.totals[profileName];
+    lines.push(`| ${profileName} | ${percent(item.passRate)} | ${percent(item.falseReadyRate)} | ${percent(item.selfVerificationRate)} | ${percent(item.technicalPlanRate)} | ${percent(item.handoffCompleteRate)} | ${(item.durationMs / item.runs / 1000).toFixed(2)} | ${item.commandInvocations ?? "n/a"} | ${item.inputTokens ?? "n/a"} | ${item.uncachedInputTokens ?? "n/a"} | ${item.outputTokens ?? "n/a"} |`);
+  }
+  lines.push("", "## Relative to bare", "", "| Profile | Pass | False ready | Self verification | Technical plan | Handoff | Time | Commands | Input tokens | Non-cached input | Output tokens |", "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|");
+  for (const comparison of summary.comparisons) {
+    lines.push(`| ${comparison.profile} | ${percentagePoints(comparison.passRateDelta)} | ${percentagePoints(comparison.falseReadyRateDelta)} | ${percentagePoints(comparison.selfVerificationRateDelta)} | ${percentagePoints(comparison.technicalPlanRateDelta)} | ${percentagePoints(comparison.handoffCompleteRateDelta)} | ${signedPercent(comparison.durationRelativeChange)} | ${signedPercent(comparison.commandInvocationsRelativeChange)} | ${signedPercent(comparison.inputTokensRelativeChange)} | ${signedPercent(comparison.uncachedInputTokensRelativeChange)} | ${signedPercent(comparison.outputTokensRelativeChange)} |`);
+  }
+  lines.push("", `> ${summary.sampleLimit}`, "");
+  return `${lines.join("\n")}\n`;
+}
+
+export async function summarizeDeliveryEvaluationReports(reportPaths, options = {}) {
+  invariant(Array.isArray(reportPaths) && reportPaths.length > 0, "At least one delivery report is required.");
+  const reports = [];
+  const contracts = [];
+  for (const reportPath of reportPaths) {
+    const absoluteReportPath = path.resolve(reportPath);
+    const reportSource = await readFile(absoluteReportPath, "utf8");
+    const report = JSON.parse(reportSource);
+    invariant(report.schemaVersion === DELIVERY_REPORT_SCHEMA_VERSION && report.evaluationMode === "delivery", `${reportPath} is not a delivery report.`);
+    for (const profileName of DELIVERY_PROFILES) invariant(report.profiles?.[profileName], `${reportPath} is missing profile ${profileName}.`);
+    const scenarioPath = path.resolve(report.scenario.source);
+    const scenario = validateScenario(await readJson(scenarioPath), scenarioPath);
+    invariant(hash(scenario.prompt) === report.scenario.promptSha256, `${reportPath} no longer matches its scenario prompt.`);
+    const hiddenChecksSha256 = hash(JSON.stringify(scenario.hiddenChecks));
+    const hiddenSources = await hiddenCheckSourceDigests(scenario, scenarioPath);
+    if (report.scenario.hiddenChecksSha256) invariant(report.scenario.hiddenChecksSha256 === hiddenChecksSha256, `${reportPath} no longer matches its hidden checks.`);
+    if (report.scenario.hiddenSources) invariant(JSON.stringify(report.scenario.hiddenSources) === JSON.stringify(hiddenSources), `${reportPath} no longer matches its hidden source files.`);
+    contracts.push({
+      report: path.relative(process.cwd(), absoluteReportPath),
+      reportSha256: hash(reportSource),
+      scenario: path.relative(process.cwd(), scenarioPath),
+      promptSha256: report.scenario.promptSha256,
+      hiddenChecksSha256,
+      hiddenSources,
+    });
+    reports.push(report);
+  }
+  const generatedAt = (options.clock ?? (() => new Date()))().toISOString();
+  const totals = Object.fromEntries(DELIVERY_PROFILES.map((name) => [name, summedDeliveryProfile(reports, name)]));
+  const summary = {
+    schemaVersion: 1,
+    generatedAt,
+    sampleLimit: "Two runs per scenario/profile are descriptive only; differences are not causal or statistically significant.",
+    contracts,
+    scenarios: reports.map((report) => ({
+      id: report.scenario.id,
+      difficulty: report.scenario.difficulty,
+      profiles: Object.fromEntries(DELIVERY_PROFILES.map((name) => [name, deliveryProfileSummary(report, name)])),
+    })),
+    totals,
+    comparisons: DELIVERY_PROFILES
+      .filter((name) => name !== "bare")
+      .map((name) => deliverySummaryDelta(name, totals[name], "bare", totals.bare)),
+  };
+  if (options.jsonPath) {
+    const target = path.resolve(options.jsonPath);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, `${JSON.stringify(summary, null, 2)}\n`);
+  }
+  if (options.markdownPath) {
+    const target = path.resolve(options.markdownPath);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, deliverySummaryMarkdown(summary));
+  }
+  return summary;
+}
+
+const DEFAULT_OPTIMIZATION_THRESHOLDS = Object.freeze({
+  "thin-atdd": Object.freeze({ inputTokensReduction: 0.15, durationReduction: 0.10 }),
+  "full-openatdd": Object.freeze({ inputTokensReduction: 0.80, durationReduction: 0.50, maximumBareInputMultiple: 2 }),
+});
+
+function deliveryOptimizationMarkdown(comparison) {
+  const percent = (value) => Number.isFinite(value) ? `${(value * 100).toFixed(1)}%` : "n/a";
+  const lines = [
+    "# OpenATDD delivery cost optimization",
+    "",
+    `Generated: ${comparison.generatedAt}`,
+    "",
+    `Result: **${comparison.passed ? "passed" : "failed"}**`,
+    "",
+    "| Profile | Input reduction | Time reduction | Candidate / bare input | Quality | Thresholds |",
+    "|---|---:|---:|---:|---:|---:|",
+  ];
+  for (const item of comparison.profiles) {
+    lines.push(`| ${item.profile} | ${percent(item.inputTokensReduction)} | ${percent(item.durationReduction)} | ${Number.isFinite(item.candidateBareInputMultiple) ? `${item.candidateBareInputMultiple.toFixed(2)}×` : "n/a"} | ${item.qualityPassed ? "pass" : "fail"} | ${item.passed ? "pass" : "fail"} |`);
+  }
+  lines.push("", "## Checks", "");
+  for (const check of comparison.checks) lines.push(`- [${check.passed ? "x" : " "}] ${check.id}: ${check.summary}`);
+  lines.push("", "> Two runs per scenario/profile are descriptive only; differences are not causal or statistically significant.", "");
+  return `${lines.join("\n")}\n`;
+}
+
+export function compareDeliverySummaryObjects(baseline, candidate, options = {}) {
+  invariant(baseline?.schemaVersion === 1 && candidate?.schemaVersion === 1, "Optimization comparison requires schema-v1 delivery summaries.");
+  const thresholds = options.thresholds ?? DEFAULT_OPTIMIZATION_THRESHOLDS;
+  const checks = [];
+  const profiles = ["thin-atdd", "full-openatdd"].map((profileName) => {
+    const before = baseline.totals?.[profileName];
+    const after = candidate.totals?.[profileName];
+    const bare = candidate.totals?.bare;
+    invariant(before && after && bare, `Optimization comparison is missing ${profileName} or bare totals.`);
+    const reduction = (key) => Number.isFinite(before[key]) && before[key] !== 0 && Number.isFinite(after[key])
+      ? (before[key] - after[key]) / before[key]
+      : null;
+    const inputTokensReduction = reduction("inputTokens");
+    const durationReduction = reduction("durationMs");
+    const candidateBareInputMultiple = Number.isFinite(after.inputTokens) && Number.isFinite(bare.inputTokens) && bare.inputTokens !== 0
+      ? after.inputTokens / bare.inputTokens
+      : null;
+    const qualityPassed = after.passRate === 1
+      && after.falseReadyRate === 0
+      && after.selfVerificationRate === 1
+      && after.technicalPlanRate === 1
+      && after.handoffCompleteRate === 1;
+    const profileThresholds = thresholds[profileName];
+    const profileChecks = [
+      {
+        id: `${profileName}-quality`,
+        passed: qualityPassed,
+        summary: "functional, self-verification, technical-plan, and handoff rates are 100% with zero false readiness",
+      },
+      {
+        id: `${profileName}-input`,
+        passed: Number.isFinite(inputTokensReduction) && inputTokensReduction >= profileThresholds.inputTokensReduction,
+        summary: `input reduction ${Number.isFinite(inputTokensReduction) ? (inputTokensReduction * 100).toFixed(1) : "n/a"}% >= ${(profileThresholds.inputTokensReduction * 100).toFixed(1)}%`,
+      },
+      {
+        id: `${profileName}-time`,
+        passed: Number.isFinite(durationReduction) && durationReduction >= profileThresholds.durationReduction,
+        summary: `time reduction ${Number.isFinite(durationReduction) ? (durationReduction * 100).toFixed(1) : "n/a"}% >= ${(profileThresholds.durationReduction * 100).toFixed(1)}%`,
+      },
+    ];
+    if (Number.isFinite(profileThresholds.maximumBareInputMultiple)) {
+      profileChecks.push({
+        id: `${profileName}-bare-multiple`,
+        passed: Number.isFinite(candidateBareInputMultiple) && candidateBareInputMultiple <= profileThresholds.maximumBareInputMultiple,
+        summary: `candidate/bare input ${Number.isFinite(candidateBareInputMultiple) ? candidateBareInputMultiple.toFixed(2) : "n/a"}x <= ${profileThresholds.maximumBareInputMultiple.toFixed(2)}x`,
+      });
+    }
+    checks.push(...profileChecks);
+    return {
+      profile: profileName,
+      baseline: before,
+      candidate: after,
+      inputTokensReduction,
+      durationReduction,
+      candidateBareInputMultiple,
+      qualityPassed,
+      passed: profileChecks.every((check) => check.passed),
+    };
+  });
+  return {
+    schemaVersion: 1,
+    generatedAt: (options.clock ?? (() => new Date()))().toISOString(),
+    baselineSha256: options.baselineSha256 ?? null,
+    candidateSha256: options.candidateSha256 ?? null,
+    thresholds,
+    profiles,
+    checks,
+    passed: checks.every((check) => check.passed),
+    sampleLimit: "Two runs per scenario/profile are descriptive only; differences are not causal or statistically significant.",
+  };
+}
+
+export async function compareDeliveryEvaluationSummaries(baselinePath, candidatePath, options = {}) {
+  invariant(baselinePath && candidatePath, "Optimization comparison requires baseline and candidate summary paths.");
+  const baselineSource = await readFile(path.resolve(baselinePath), "utf8");
+  const candidateSource = await readFile(path.resolve(candidatePath), "utf8");
+  const comparison = compareDeliverySummaryObjects(JSON.parse(baselineSource), JSON.parse(candidateSource), {
+    ...options,
+    baselineSha256: hash(baselineSource),
+    candidateSha256: hash(candidateSource),
+  });
+  if (options.jsonPath) {
+    const target = path.resolve(options.jsonPath);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, `${JSON.stringify(comparison, null, 2)}\n`);
+  }
+  if (options.markdownPath) {
+    const target = path.resolve(options.markdownPath);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, deliveryOptimizationMarkdown(comparison));
+  }
+  return comparison;
+}
+
 export async function verifyAgentEvaluationReport(reportPath, options = {}) {
   invariant(reportPath, "verifyAgentEvaluationReport requires reportPath.");
   const absolute = path.resolve(reportPath);
   const report = await readJson(absolute);
   const minimumRuns = options.minimumRuns ?? 2;
   invariant(Number.isInteger(minimumRuns) && minimumRuns > 0, "minimumRuns must be a positive integer.");
+  if (report.schemaVersion === DELIVERY_REPORT_SCHEMA_VERSION) {
+    invariant(report.evaluationMode === "delivery", "Delivery report is missing evaluationMode=delivery.");
+    const requiredProfiles = Array.isArray(options.requiredProfiles) && options.requiredProfiles.length > 0 ? options.requiredProfiles : DELIVERY_PROFILES;
+    for (const profileName of requiredProfiles) {
+      const profile = report.profiles?.[profileName];
+      invariant(profile, `Delivery report is missing profile ${profileName}.`);
+      invariant(profile.adapter?.realModelEvaluated === true, `Delivery profile ${profileName} did not use a declared real-model adapter.`);
+      invariant(profile.adapter?.provenance === "bundled-codex-exec-adapter", `Delivery profile ${profileName} did not use the bundled Codex adapter.`);
+      invariant(profile.summary?.runs >= minimumRuns, `Delivery profile ${profileName} requires at least ${minimumRuns} runs.`);
+      invariant(profile.summary?.adapterErrors === 0, `Delivery profile ${profileName} contains adapter errors.`);
+      invariant(profile.runs.every((run) => Array.isArray(run.observation?.hiddenChecks) && run.observation.hiddenChecks.length > 0), `Delivery profile ${profileName} has missing hidden checks.`);
+      invariant(profile.runs.every((run) => Number.isFinite(run.metrics?.durationMs)
+        && Number.isFinite(run.metrics?.inputTokens)
+        && Number.isFinite(run.metrics?.cachedInputTokens)
+        && Number.isFinite(run.metrics?.outputTokens)), `Delivery profile ${profileName} has incomplete usage metrics.`);
+    }
+    invariant(report.claims?.realModelComplete === true, "Delivery report does not contain a complete real-model matrix.");
+    return {
+      valid: true,
+      reportPath: absolute,
+      scenarioId: report.scenario?.id ?? null,
+      difficulty: report.scenario?.difficulty ?? null,
+      profiles: Object.fromEntries(requiredProfiles.map((name) => [name, report.profiles[name].summary])),
+    };
+  }
   invariant(report.schemaVersion === 1, `Unsupported Agent evaluation report schemaVersion ${report.schemaVersion}.`);
   invariant(report.primary?.adapter?.realModelEvaluated === true, "Primary evaluation did not use a declared real-model adapter.");
   invariant(report.primary?.adapter?.provenance === "bundled-codex-exec-adapter", "Primary evaluation did not use the bundled Codex adapter.");
@@ -621,7 +1212,29 @@ function parseArgvJson(value, label) {
 
 async function cli(argv) {
   if (argv.includes("--help") || argv.length === 0) {
-    process.stdout.write(`Usage:\n  agent-eval.mjs --scenario <file> [--adapter mock|command|codex] [--argv-json '["command","arg"]'] [--real-model] [--adapter-name NAME] [--model MODEL] [--reasoning-effort LEVEL] [--bare-agent] [--ablate CAPABILITY] [--runs N] [--report <file>]\n  agent-eval.mjs --verify-report <file> [--min-runs N] [--require-baseline] [--require-ablation CAPABILITY]\n`);
+    process.stdout.write(`Usage:\n  agent-eval.mjs --scenario <file> [--adapter mock|command|codex] [--delivery-profile PROFILE] [--argv-json '["command","arg"]'] [--real-model] [--adapter-name NAME] [--model MODEL] [--reasoning-effort LEVEL] [--isolated-config] [--bare-agent] [--ablate CAPABILITY] [--runs N] [--report <file>]\n  Schema-v2 delivery scenarios run bare, thin-atdd, and full-openatdd unless --delivery-profile narrows a diagnostic run.\n  agent-eval.mjs --verify-report <file> [--min-runs N] [--require-baseline] [--require-ablation CAPABILITY] [--require-profile PROFILE]\n  agent-eval.mjs --summarize-report <file> [--summarize-report <file> ...] [--summary-json <file>] [--summary-markdown <file>]\n  agent-eval.mjs --compare-baseline <summary.json> --compare-candidate <summary.json> [--comparison-json <file>] [--comparison-markdown <file>] [--enforce-optimization]\n`);
+    return;
+  }
+  if (optionValue(argv, "--compare-baseline") || optionValue(argv, "--compare-candidate")) {
+    const comparison = await compareDeliveryEvaluationSummaries(
+      optionValue(argv, "--compare-baseline"),
+      optionValue(argv, "--compare-candidate"),
+      {
+        jsonPath: optionValue(argv, "--comparison-json"),
+        markdownPath: optionValue(argv, "--comparison-markdown"),
+      },
+    );
+    process.stdout.write(`${JSON.stringify(comparison, null, 2)}\n`);
+    invariant(!argv.includes("--enforce-optimization") || comparison.passed, "Delivery optimization thresholds failed.");
+    return;
+  }
+  const summaryReports = optionValues(argv, "--summarize-report");
+  if (summaryReports.length > 0) {
+    const summary = await summarizeDeliveryEvaluationReports(summaryReports, {
+      jsonPath: optionValue(argv, "--summary-json"),
+      markdownPath: optionValue(argv, "--summary-markdown"),
+    });
+    process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
     return;
   }
   if (optionValue(argv, "--verify-report")) {
@@ -629,6 +1242,7 @@ async function cli(argv) {
       minimumRuns: Number(optionValue(argv, "--min-runs") ?? 2),
       requireBaseline: argv.includes("--require-baseline"),
       requiredAblations: optionValues(argv, "--require-ablation"),
+      requiredProfiles: optionValues(argv, "--require-profile").length > 0 ? optionValues(argv, "--require-profile") : undefined,
     });
     process.stdout.write(`${JSON.stringify(verified, null, 2)}\n`);
     return;
@@ -640,7 +1254,51 @@ async function cli(argv) {
   const codexOptions = {
     model: optionValue(argv, "--model"),
     reasoningEffort: optionValue(argv, "--reasoning-effort"),
+    isolateUserConfig: argv.includes("--isolated-config"),
   };
+  if (scenario.schemaVersion === DELIVERY_SCENARIO_SCHEMA_VERSION) {
+    const selectedProfiles = optionValues(argv, "--delivery-profile");
+    const requestedProfiles = selectedProfiles.length > 0 ? [...new Set(selectedProfiles)] : DELIVERY_PROFILES;
+    invariant(requestedProfiles.every((name) => DELIVERY_PROFILES.includes(name)), "--delivery-profile is invalid.");
+    const profileAdapters = requestedProfiles.map((profileName) => {
+      if (adapterKind === "codex") {
+        return {
+          profileName,
+          adapter: createCodexAdapter({
+            evaluationMode: "delivery",
+            profile: profileName,
+            bare: profileName === "bare",
+            ...codexOptions,
+          }),
+        };
+      }
+      if (adapterKind === "command") {
+        return {
+          profileName,
+          adapter: createCommandAdapter({
+            name: `${optionValue(argv, "--adapter-name") ?? "delivery-command"}-${profileName}`,
+            argv: parseArgvJson(optionValue(argv, "--argv-json"), "--argv-json"),
+            realModel: argv.includes("--real-model"),
+            provenance: argv.includes("--real-model") ? "declared-real-model-command" : undefined,
+            env: { OPENATDD_EVAL_PROFILE: profileName },
+          }),
+        };
+      }
+      const fixture = scenario.mock?.profiles?.[profileName];
+      invariant(fixture, `Scenario ${scenario.id} has no mock profile fixture for ${profileName}.`);
+      return { profileName, adapter: createMockAdapter(fixture, { name: `mock-${profileName}` }) };
+    });
+    const repetitionsValue = optionValue(argv, "--runs");
+    const report = await runDeliveryEvaluation({
+      scenarioPath,
+      profileAdapters,
+      profileNames: requestedProfiles,
+      ...(repetitionsValue ? { repetitions: Number(repetitionsValue) } : {}),
+      ...(optionValue(argv, "--report") ? { reportPath: optionValue(argv, "--report") } : {}),
+    });
+    process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
+    return;
+  }
   let adapter;
   if (adapterKind === "mock") {
     invariant(scenario.mock?.primary, `Scenario ${scenario.id} has no mock.primary fixture.`);
@@ -704,5 +1362,7 @@ if (direct) {
 
 export const agentEvalVersions = Object.freeze({
   scenario: SCENARIO_SCHEMA_VERSION,
+  deliveryScenario: DELIVERY_SCENARIO_SCHEMA_VERSION,
+  deliveryReport: DELIVERY_REPORT_SCHEMA_VERSION,
   rubric: RUBRIC_SCHEMA_VERSION,
 });

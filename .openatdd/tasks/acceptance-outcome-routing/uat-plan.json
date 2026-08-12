@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "environment": "local",
+  "entryUrl": null,
+  "batches": [
+    {
+      "id": "automatic-delivery",
+      "name": "Automatic and API-style results deliver evidence without repeated UAT",
+      "runner": "command",
+      "reuseSession": true,
+      "steps": [
+        {
+          "id": "ac-01-1",
+          "acceptanceId": "AC-01",
+          "action": "完成正式 finalization。",
+          "expected": "系统进入 `DELIVERED`，报告明确列出已通过证据，不要求人重复执行测试，也不增加第三次批准。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-02-2",
+          "acceptanceId": "AC-02",
+          "action": "负责人打开验收报告查看请求、响应、状态码、权限、异常和副作用等结果。",
+          "expected": "负责人不必为了形式重新调用接口，也不必回复“批准”；没有异议即维持 `DELIVERED`，有异议则反馈具体问题。",
+          "checkpoint": true
+        }
+      ]
+    },
+    {
+      "id": "manual-objection",
+      "name": "Manual UAT remains report-only and objections reopen repair",
+      "runner": "command",
+      "reuseSession": true,
+      "steps": [
+        {
+          "id": "ac-03-1",
+          "acceptanceId": "AC-03",
+          "action": "完成正式 finalization。",
+          "expected": "系统仍进入 `DELIVERED`，但报告清楚区分 AI 已验证部分和建议人执行的 UAT 步骤；人执行后没有问题无需回复，发现问题才提出异议。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-04-2",
+          "acceptanceId": "AC-04",
+          "action": "用户描述具体异议，无需填写新卡。",
+          "expected": "系统进入修复流程，记录缺陷、重新验证完整旅程并再次交付；没有异议时不产生额外状态转换。",
+          "checkpoint": true
+        }
+      ]
+    },
+    {
+      "id": "compatibility-package",
+      "name": "Legacy state, documentation, package, and Skill remain compatible",
+      "runner": "command",
+      "reuseSession": true,
+      "steps": [
+        {
+          "id": "ac-05-1",
+          "acceptanceId": "AC-05",
+          "action": "升级后继续使用现有 CLI 创建、恢复、验证和 finalize 任务。",
+          "expected": "旧 `READY_FOR_UAT` 数据可读取；现有验证语义不削弱；CLI 输出、README、Skill 指令和测试与异议驱动的交付闭环一致。",
+          "checkpoint": true
+        }
+      ]
+    }
+  ],
+  "estimatedRoundTrips": 3,
+  "failureRecovery": "Repair preview failures before freeze; after freeze, use the issue flow and rerun one complete finalization."
+}

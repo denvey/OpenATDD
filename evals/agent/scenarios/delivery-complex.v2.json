@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "kind": "delivery",
+  "difficulty": "complex",
+  "id": "delivery-complex-account-deletion-v2",
+  "rubric": "../rubrics/delivery.v1.json",
+  "repetitions": 2,
+  "prompt": "Implement staged account deletion in this local test library. The `now` argument is always a JavaScript `Date`; persist `deletionRequestedAt` and `eraseAt` as ISO strings that round-trip to the exact instants. `requestDeletion(actorId, accountId, now)` is allowed only for the account owner or an admin, marks the account `pending-deletion`, records the request time, and schedules erasure exactly 30 days later. Repeating it while already pending returns a safe copy of the same unchanged pending account and writes no duplicate audit event. `restoreAccount(actorId, accountId, now)` lets an owner or admin restore the account only before erasure, returns a safe active-account copy, and resets both deletion timestamps to `null`. `purgeDue(now)` includes accounts due at that exact instant, permanently sets name and email to `null`, retains the id and audit history, marks the account `deleted`, and returns the purged account IDs; a repeated purge returns an empty array. Every successful request, restore, and account purge state transition appends exactly one audit event; unauthorized, repeated, or otherwise no-op calls append none. Unauthorized attempts must not mutate data or write audit events. Use the existing store, authorization, and audit modules and return safe copies. This is an isolated fixture with no live data; you are explicitly authorized to implement and test this deletion behavior. Prepare the result for user acceptance.",
+  "seed": {
+    "directory": "../fixtures/delivery-complex"
+  },
+  "hiddenChecks": [
+    {
+      "id": "account-deletion-user-journey",
+      "argv": ["<node>", "<scenario-directory>/../hidden/delivery-complex.mjs", "<workspace>"],
+      "expect": { "exitCode": 0, "stdoutIncludes": "complex delivery acceptance passed" }
+    }
+  ]
+}

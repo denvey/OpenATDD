@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "environment": "local",
+  "entryUrl": null,
+  "batches": [
+    {
+      "id": "delivery-evaluation-journey",
+      "name": "Verify simple, medium, and complex delivery matrices and inspect the aggregate quality/cost comparison",
+      "runner": "command",
+      "reuseSession": true,
+      "steps": [
+        {
+          "id": "ac-01-1",
+          "acceptanceId": "AC-01",
+          "action": "分别对裸 Agent、精简 ATDD 核心和完整 OpenATDD 运行同一场景。",
+          "expected": "三组使用相同模型、推理强度、用户配置、超时和重复次数，工作区彼此隔离；报告明确记录三种 profile 及场景难度。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-02-2",
+          "acceptanceId": "AC-02",
+          "action": "Agent 在可写工作区中读取、修改并验证代码，然后结束交付。",
+          "expected": "Agent 可以正常使用工具和项目命令；隐藏检查只在 Agent 结束后运行，并从实际工作区判断功能是否完成。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-03-3",
+          "acceptanceId": "AC-03",
+          "action": "构建裸 Agent 提示与隐藏验收。",
+          "expected": "公共提示不包含 Quick / Standard / Deep、预期技术方案、决策 ID、隐藏检查关键词或 OpenATDD 特有步骤；裸组只依靠模型默认工程能力。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-04-4",
+          "acceptanceId": "AC-04",
+          "action": "运行精简 ATDD 组。",
+          "expected": "精简 profile 只要求 AI 从用户需求推导验收结果、保留技术方案检查点、实现、执行预验收并准备人工 UAT；内容独立版本化且报告保存字节数与摘要指纹。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-05-5",
+          "acceptanceId": "AC-05",
+          "action": "评测器采集 Agent 工具记录、最终交付和独立隐藏检查。",
+          "expected": "每次运行至少记录功能通过、是否执行自验收、宣称就绪状态、错误就绪声明和交接可用性；不把模型自述当作功能通过证据。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-06-6",
+          "acceptanceId": "AC-06",
+          "action": "生成并验证对照报告。",
+          "expected": "报告按场景和 profile 列出功能通过率、错误就绪率、自验收率、交接可用性、总耗时、输入/缓存/非缓存/输出 Token 及组间差异，并明示样本数与模型配置。",
+          "checkpoint": false
+        },
+        {
+          "id": "ac-07-7",
+          "acceptanceId": "AC-07",
+          "action": "增加端到端评测模式并运行项目检查。",
+          "expected": "现有 schema v1 场景、CLI 用法和 mock 回归继续通过；三组仍共享用户 provider 或共同使用显式隔离配置，配置模式记录在报告中。",
+          "checkpoint": true
+        }
+      ]
+    }
+  ],
+  "estimatedRoundTrips": 1,
+  "failureRecovery": "Repair preview failures before freeze; after freeze, use the issue flow and rerun one complete finalization."
+}

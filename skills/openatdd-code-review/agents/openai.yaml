@@ -1,0 +1,4 @@
+interface:
+  display_name: "OpenATDD Code Review"
+  short_description: "基于 OpenATDD 验收合同执行只读代码审查并衔接缺陷修复流程"
+  default_prompt: "Use $openatdd-code-review to review the current changes against approved OpenATDD contracts and repository standards without modifying code."

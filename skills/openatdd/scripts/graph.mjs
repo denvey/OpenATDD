@@ -99,6 +99,7 @@ export function graphFiles(root) {
     memoryIndex: path.join(openatdd, "memory", "index.json"),
     invariants: path.join(openatdd, "memory", "invariants.md"),
     observations: path.join(openatdd, "environments", "observations.json"),
+    projectTruth: path.join(knowledge, "project.md"),
     standards: path.join(knowledge, "standards"),
     research: path.join(knowledge, "research"),
     knowledge,
@@ -227,6 +228,21 @@ async function addKnowledgeDocuments(builder, root, directory, type, sources, wa
       provenance: provenance(`${type.toLowerCase()}-document`, [relative]),
     });
   }
+}
+
+async function addProjectTruth(builder, root, target, sources, warnings) {
+  const file = await sourceFile(root, target, warnings, "project truth");
+  if (!file) return;
+  sources.set(file.source.path, file.source);
+  builder.addNode({
+    id: "project-truth:current",
+    type: "ProjectTruth",
+    title: documentTitle(file, "Project truth"),
+    text: file.text.trim().slice(0, 8_000),
+    path: file.source.path,
+    source: file.source,
+    provenance: provenance("project-truth", ["product-rules", "architecture-boundaries", "technical-decisions"]),
+  });
 }
 
 function addSearchTokens(node) {
@@ -626,6 +642,7 @@ export async function buildGraph(root, options = {}) {
     for (const taskId of taskIds) await addTask(builder, files.root, taskId, sources, warnings, deferredEdges);
     await addMemory(builder, files.root, files, sources, warnings, deferredEdges);
     await addObservations(builder, files.root, files, sources, warnings);
+    await addProjectTruth(builder, files.root, files.projectTruth, sources, warnings);
     await addKnowledgeDocuments(builder, files.root, files.standards, "Standard", sources, warnings);
     await addKnowledgeDocuments(builder, files.root, files.research, "Research", sources, warnings);
     for (const edge of deferredEdges) builder.addEdge(edge.from, edge.type, edge.to, edge);

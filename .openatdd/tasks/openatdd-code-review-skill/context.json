@@ -1,0 +1,502 @@
+{
+  "schemaVersion": 1,
+  "taskId": "openatdd-code-review-skill",
+  "lane": "standard",
+  "createdAt": "2026-07-29T00:36:48.555Z",
+  "implementation": [
+    {
+      "id": "source:.openatdd/tasks/openatdd-code-review-skill/acceptance.md",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/openatdd-code-review-skill/acceptance.md",
+      "digest": "8baad4a497019a4e330d02724a8f29c4560f61182240278919358e91e81acde0",
+      "relevance": 12,
+      "reasons": [
+        "implementation-outcomes"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-code-review-skill:AC-01",
+        "acceptance:openatdd-code-review-skill:AC-02",
+        "acceptance:openatdd-code-review-skill:AC-03",
+        "acceptance:openatdd-code-review-skill:AC-04",
+        "acceptance:openatdd-code-review-skill:AC-05",
+        "acceptance:openatdd-code-review-skill:AC-06"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/openatdd-code-review-skill/solution.md",
+      "type": "SolutionContract",
+      "path": ".openatdd/tasks/openatdd-code-review-skill/solution.md",
+      "digest": "b00b9d31269b4db8d54b58632b6064acd26c8fe37f2338dfe9580f3fecacc228",
+      "relevance": 12,
+      "reasons": [
+        "approved-implementation-boundary"
+      ],
+      "nodeIds": [
+        "solution:openatdd-code-review-skill"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-002",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-002-a-copied-skill-cli-could-exit-silently-when-maco.md",
+      "digest": "66dfa059eb8db415cf94e111478bf6c96f2ac5e2f2ee2b475c8a52185b0e5c92",
+      "relevance": 11,
+      "reasons": [
+        "matched:openatdd,skill,file,pr,cli"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-002"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/openatdd-code-review-skill/state.json",
+      "type": "TaskState",
+      "path": ".openatdd/tasks/openatdd-code-review-skill/state.json",
+      "digest": "e080a69a1c4c3a56b9676612181a0e1051dfed6ad1e04f48d1095714a4d223b1",
+      "relevance": 10,
+      "reasons": [
+        "current-task-state"
+      ],
+      "nodeIds": [
+        "task:openatdd-code-review-skill"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-013",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-013-simple-full-openatdd-finalization-38-1-557-774-t.md",
+      "digest": "fc3a6b399bea2e22ce9081574e7250fa5a41721f4df7d779e729ec46d2cf72ec",
+      "relevance": 9,
+      "reasons": [
+        "matched:openatdd,合同,执行,pr,状态,进入"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-013"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-011",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md",
+      "digest": "57953cbd438e7f162ea0db5c4ba51093a22f1ce65ccfd3ce0d3aed62da273384",
+      "relevance": 8,
+      "reasons": [
+        "matched:openatdd,code,ai,pr,codex"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-011"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-008",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-008-the-solution-summary-order-and-review-gate-do-no.md",
+      "digest": "278bcf1ca3f2f4380e8ea0f0ed50ba784f89d3df94d148f80869a9aa1f775e05",
+      "relevance": 7,
+      "reasons": [
+        "matched:openatdd,review,ai,pr"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-008"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-010",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-010-the-semantic-graph-does-not-ingest-project-stand.md",
+      "digest": "1563b28f55e6b4586a42d2cbad8cd31030614fac55a5676f5ca4ec3a3602b319",
+      "relevance": 7,
+      "reasons": [
+        "matched:openatdd,task,ai,pr"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-010"
+      ]
+    },
+    {
+      "id": "graph:invariant:INV-2026-002",
+      "type": "Invariant",
+      "path": ".openatdd/memory/invariants.md",
+      "digest": "fd28bad14854728d25eb0028951bb49b86ed34867af9a058984dff4aa8ff0605",
+      "relevance": 7,
+      "reasons": [
+        "matched:skill,file,pr,cli",
+        "matched:code,ai,pr,codex",
+        "matched:合同,执行,pr,状态"
+      ],
+      "nodeIds": [
+        "invariant:INV-2026-002",
+        "invariant:INV-2026-011",
+        "invariant:INV-2026-013"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-003",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-003-cli-check-options-scope-source-fingerprint-and-d.md",
+      "digest": "afc7d3df9ed92d6b3294552fd932477e0eec0050b327457b3006dcd6350b3921",
+      "relevance": 6,
+      "reasons": [
+        "matched:ai,pr,cli"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-003"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-004",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-004-acceptance-summary-renders-project-level-evidenc.md",
+      "digest": "35893ff36582f3fcec9228dddd0c712b514f3dff755eb4b836017e1cbc807482",
+      "relevance": 6,
+      "reasons": [
+        "matched:task,ai,pr"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-004"
+      ]
+    },
+    {
+      "id": "graph:environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+      "type": "EnvironmentObservation",
+      "path": ".openatdd/environments/observations.json",
+      "digest": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+      "relevance": 1,
+      "reasons": [
+        "active-project-environment"
+      ],
+      "nodeIds": [
+        "environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A11.653z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A58.459z",
+        "environment:local:start_command:2026-07-23t10%3A33%3A06.724z"
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "id": "source:.openatdd/tasks/openatdd-code-review-skill/acceptance.md",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/openatdd-code-review-skill/acceptance.md",
+      "digest": "8baad4a497019a4e330d02724a8f29c4560f61182240278919358e91e81acde0",
+      "relevance": 110,
+      "reasons": [
+        "verification-source-of-truth",
+        "matched:openatdd,code,review,skill,软链,ai,包含,检查,轻量,可安装且不重复,内核,仓库通过软链和,npm,包向,codex,提供,skills,构建并验证,openatdd-code-review,核心,skill.md,不超过,096,字节,只引用现有,工件和,cli,不复制完整运行内核,包含匹配的,agents/openai.yaml,进入,包并通过全局软链可从其他项目触发",
+        "matched:openatdd,code,review,skill,finding,diff,findings,有统一严重级别和证据门槛,中包含可复现或可由调用路径证明的问题,同时包含只属于格式偏好的噪声,执行,并生成结果,每条,包含,p0,p3,标题,紧凑,file,line,触发条件,实际影响,代码/测试证据和最小修复或验证方向,按严重性排序,不报告,formatter/linter,可处理的问题,不把猜测写成确定缺陷,openatdd-code-review",
+        "matched:openatdd,code,review,skill,finding,diff,全程只读且结果诚实,用户只要求,检查,调用路径和相关测试,不修改文件,提交,pr,评论或,状态,只运行非变异检查,没有,actionable,时明确报告,未发现阻塞问题,并列出测试缺口或未验证边界,而不是制造意见,openatdd-code-review",
+        "matched:openatdd,code,review,skill,finding,task,ai,修复请求与,问题流衔接,已产生有效,用户随后明确要求修复,继续处理该,已有相关,时进入其,issue/repair,否则按复杂度创建新的,bug,修复任务,保留根因,回归保护和验收证据,不在,阶段偷跑实现,openatdd-code-review,进入",
+        "matched:openatdd,code,review,skill,审查优先对照已批准的,合同,目标改动关联一个已有验收卡和方案卡的,task,使用新,审查指定,diff,审查明确区分,是否符合验收/方案,代码本身是否正确,能够指出漏做,错误实现和未要求的范围扩张,仓库规范优先于通用偏好,使用,包含,openatdd-code-review",
+        "matched:openatdd,code,review,skill,task,时仍可安全回退,目标改动没有可定位的,使用,pr/issue/用户描述和仓库规范执行,ai,不伪造需求,能找到规格就继续,规格缺失时只审查可证明的正确性与风险,并明确,需求符合度未验证,执行,pr,没有,openatdd-code-review"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-code-review-skill:AC-01",
+        "acceptance:openatdd-code-review-skill:AC-02",
+        "acceptance:openatdd-code-review-skill:AC-03",
+        "acceptance:openatdd-code-review-skill:AC-04",
+        "acceptance:openatdd-code-review-skill:AC-05",
+        "acceptance:openatdd-code-review-skill:AC-06"
+      ]
+    },
+    {
+      "id": "graph:acceptance:optimize-atdd-runtime-cost:AC-02",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/optimize-atdd-runtime-cost/acceptance.md",
+      "digest": "9bb62cfe6d2ae866c0f7345c44b286e22cf87374ce059aed032418a7318a7234",
+      "relevance": 23,
+      "reasons": [
+        "matched:openatdd,skill,file,检查,pr,不超过,096,字节"
+      ],
+      "nodeIds": [
+        "acceptance:optimize-atdd-runtime-cost:AC-02"
+      ]
+    },
+    {
+      "id": "graph:acceptance:fast-portable-finalization:AC-01",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/fast-portable-finalization/acceptance.md",
+      "digest": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+      "relevance": 22,
+      "reasons": [
+        "matched:openatdd,skill,task,file,pr,npm,cli",
+        "matched:openatdd,review,task,pr,actionable,cli"
+      ],
+      "nodeIds": [
+        "acceptance:fast-portable-finalization:AC-01",
+        "acceptance:fast-portable-finalization:AC-02"
+      ]
+    },
+    {
+      "id": "graph:acceptance:openatdd-1-0:AC-08",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/openatdd-1-0/acceptance.md",
+      "digest": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+      "relevance": 20,
+      "reasons": [
+        "matched:openatdd,skill,ai,file,pr,bug,npm,cli"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-1-0:AC-08"
+      ]
+    },
+    {
+      "id": "graph:acceptance:optimize-quick-delivery:AC-02",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/optimize-quick-delivery/acceptance.md",
+      "digest": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
+      "relevance": 16,
+      "reasons": [
+        "matched:openatdd,review,task,执行,pr,状态,cli"
+      ],
+      "nodeIds": [
+        "acceptance:optimize-quick-delivery:AC-02"
+      ]
+    },
+    {
+      "id": "graph:acceptance:openatdd-mvp:AC-01",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/openatdd-mvp/acceptance.md",
+      "digest": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+      "relevance": 15,
+      "reasons": [
+        "matched:openatdd,task,file,line,pr,cli"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-mvp:AC-01"
+      ]
+    },
+    {
+      "id": "graph:acceptance:detailed-uat-handoff:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/detailed-uat-handoff/acceptance.md",
+      "digest": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:tests/code-review-skill.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:detailed-uat-handoff:AC-01",
+        "acceptance:detailed-uat-handoff:AC-02",
+        "acceptance:detailed-uat-handoff:AC-03",
+        "acceptance:detailed-uat-handoff:AC-04",
+        "acceptance:detailed-uat-handoff:AC-05",
+        "acceptance:detailed-uat-handoff:AC-06",
+        "acceptance:detailed-uat-handoff:AC-07"
+      ]
+    },
+    {
+      "id": "graph:acceptance:end-to-end-agent-eval:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/end-to-end-agent-eval/acceptance.md",
+      "digest": "ba2a9ae6723bd7dba833d07b59904477a522fa869aebb3b9a8cda20746c026a5",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:end-to-end-agent-eval:AC-01",
+        "acceptance:end-to-end-agent-eval:AC-02",
+        "acceptance:end-to-end-agent-eval:AC-03",
+        "acceptance:end-to-end-agent-eval:AC-04",
+        "acceptance:end-to-end-agent-eval:AC-05",
+        "acceptance:end-to-end-agent-eval:AC-06",
+        "acceptance:end-to-end-agent-eval:AC-07"
+      ]
+    },
+    {
+      "id": "graph:acceptance:fast-portable-finalization:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/fast-portable-finalization/acceptance.md",
+      "digest": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:package.json:package.json",
+        "path-overlap:tests/code-review-skill.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:fast-portable-finalization:AC-01",
+        "acceptance:fast-portable-finalization:AC-02",
+        "acceptance:fast-portable-finalization:AC-03",
+        "acceptance:fast-portable-finalization:AC-04",
+        "acceptance:fast-portable-finalization:AC-05",
+        "acceptance:fast-portable-finalization:AC-06",
+        "acceptance:fast-portable-finalization:AC-07",
+        "acceptance:fast-portable-finalization:AC-08"
+      ]
+    },
+    {
+      "id": "graph:acceptance:openatdd-1-0:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/openatdd-1-0/acceptance.md",
+      "digest": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:package.json:package.json",
+        "path-overlap:tests/code-review-skill.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-1-0:AC-01",
+        "acceptance:openatdd-1-0:AC-02",
+        "acceptance:openatdd-1-0:AC-03",
+        "acceptance:openatdd-1-0:AC-04",
+        "acceptance:openatdd-1-0:AC-05",
+        "acceptance:openatdd-1-0:AC-06",
+        "acceptance:openatdd-1-0:AC-07",
+        "acceptance:openatdd-1-0:AC-08"
+      ]
+    },
+    {
+      "id": "graph:acceptance:openatdd-mvp:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/openatdd-mvp/acceptance.md",
+      "digest": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:tests/code-review-skill.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-mvp:AC-01",
+        "acceptance:openatdd-mvp:AC-02",
+        "acceptance:openatdd-mvp:AC-03",
+        "acceptance:openatdd-mvp:AC-04",
+        "acceptance:openatdd-mvp:AC-05",
+        "acceptance:openatdd-mvp:AC-06",
+        "acceptance:openatdd-mvp:AC-07",
+        "acceptance:openatdd-mvp:AC-08",
+        "acceptance:openatdd-mvp:AC-09"
+      ]
+    },
+    {
+      "id": "graph:acceptance:optimize-atdd-runtime-cost:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/optimize-atdd-runtime-cost/acceptance.md",
+      "digest": "9bb62cfe6d2ae866c0f7345c44b286e22cf87374ce059aed032418a7318a7234",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:optimize-atdd-runtime-cost:AC-01",
+        "acceptance:optimize-atdd-runtime-cost:AC-02",
+        "acceptance:optimize-atdd-runtime-cost:AC-03",
+        "acceptance:optimize-atdd-runtime-cost:AC-04",
+        "acceptance:optimize-atdd-runtime-cost:AC-05",
+        "acceptance:optimize-atdd-runtime-cost:AC-06",
+        "acceptance:optimize-atdd-runtime-cost:AC-07",
+        "acceptance:optimize-atdd-runtime-cost:AC-08"
+      ]
+    },
+    {
+      "id": "graph:acceptance:optimize-quick-delivery:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/optimize-quick-delivery/acceptance.md",
+      "digest": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:optimize-quick-delivery:AC-01",
+        "acceptance:optimize-quick-delivery:AC-02",
+        "acceptance:optimize-quick-delivery:AC-03",
+        "acceptance:optimize-quick-delivery:AC-04"
+      ]
+    },
+    {
+      "id": "graph:acceptance:strategy-visibility:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/strategy-visibility/acceptance.md",
+      "digest": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:tests/code-review-skill.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:strategy-visibility:AC-01",
+        "acceptance:strategy-visibility:AC-02",
+        "acceptance:strategy-visibility:AC-03",
+        "acceptance:strategy-visibility:AC-04"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/openatdd-code-review-skill/state.json",
+      "type": "TaskState",
+      "path": ".openatdd/tasks/openatdd-code-review-skill/state.json",
+      "digest": "e080a69a1c4c3a56b9676612181a0e1051dfed6ad1e04f48d1095714a4d223b1",
+      "relevance": 10,
+      "reasons": [
+        "verification-boundary-and-status"
+      ],
+      "nodeIds": [
+        "task:openatdd-code-review-skill"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/openatdd-code-review-skill/solution.md",
+      "type": "SolutionContract",
+      "path": ".openatdd/tasks/openatdd-code-review-skill/solution.md",
+      "digest": "b00b9d31269b4db8d54b58632b6064acd26c8fe37f2338dfe9580f3fecacc228",
+      "relevance": 9,
+      "reasons": [
+        "acceptance-trace-and-impact-paths"
+      ],
+      "nodeIds": [
+        "solution:openatdd-code-review-skill"
+      ]
+    },
+    {
+      "id": "graph:environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+      "type": "EnvironmentObservation",
+      "path": ".openatdd/environments/observations.json",
+      "digest": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+      "relevance": 1,
+      "reasons": [
+        "verification-environment"
+      ],
+      "nodeIds": [
+        "environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A11.653z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A58.459z",
+        "environment:local:start_command:2026-07-23t10%3A33%3A06.724z"
+      ]
+    }
+  ],
+  "sourceDigests": {
+    ".openatdd/environments/observations.json": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+    ".openatdd/memory/incidents/INC-2026-002-a-copied-skill-cli-could-exit-silently-when-maco.md": "66dfa059eb8db415cf94e111478bf6c96f2ac5e2f2ee2b475c8a52185b0e5c92",
+    ".openatdd/memory/incidents/INC-2026-003-cli-check-options-scope-source-fingerprint-and-d.md": "afc7d3df9ed92d6b3294552fd932477e0eec0050b327457b3006dcd6350b3921",
+    ".openatdd/memory/incidents/INC-2026-004-acceptance-summary-renders-project-level-evidenc.md": "35893ff36582f3fcec9228dddd0c712b514f3dff755eb4b836017e1cbc807482",
+    ".openatdd/memory/incidents/INC-2026-008-the-solution-summary-order-and-review-gate-do-no.md": "278bcf1ca3f2f4380e8ea0f0ed50ba784f89d3df94d148f80869a9aa1f775e05",
+    ".openatdd/memory/incidents/INC-2026-010-the-semantic-graph-does-not-ingest-project-stand.md": "1563b28f55e6b4586a42d2cbad8cd31030614fac55a5676f5ca4ec3a3602b319",
+    ".openatdd/memory/incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md": "57953cbd438e7f162ea0db5c4ba51093a22f1ce65ccfd3ce0d3aed62da273384",
+    ".openatdd/memory/incidents/INC-2026-013-simple-full-openatdd-finalization-38-1-557-774-t.md": "fc3a6b399bea2e22ce9081574e7250fa5a41721f4df7d779e729ec46d2cf72ec",
+    ".openatdd/memory/invariants.md": "fd28bad14854728d25eb0028951bb49b86ed34867af9a058984dff4aa8ff0605",
+    ".openatdd/tasks/detailed-uat-handoff/acceptance.md": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
+    ".openatdd/tasks/end-to-end-agent-eval/acceptance.md": "ba2a9ae6723bd7dba833d07b59904477a522fa869aebb3b9a8cda20746c026a5",
+    ".openatdd/tasks/fast-portable-finalization/acceptance.md": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+    ".openatdd/tasks/openatdd-1-0/acceptance.md": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+    ".openatdd/tasks/openatdd-code-review-skill/acceptance.md": "8baad4a497019a4e330d02724a8f29c4560f61182240278919358e91e81acde0",
+    ".openatdd/tasks/openatdd-code-review-skill/solution.md": "b00b9d31269b4db8d54b58632b6064acd26c8fe37f2338dfe9580f3fecacc228",
+    ".openatdd/tasks/openatdd-code-review-skill/state.json": "e080a69a1c4c3a56b9676612181a0e1051dfed6ad1e04f48d1095714a4d223b1",
+    ".openatdd/tasks/openatdd-mvp/acceptance.md": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+    ".openatdd/tasks/optimize-atdd-runtime-cost/acceptance.md": "9bb62cfe6d2ae866c0f7345c44b286e22cf87374ce059aed032418a7318a7234",
+    ".openatdd/tasks/optimize-quick-delivery/acceptance.md": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
+    ".openatdd/tasks/strategy-visibility/acceptance.md": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca"
+  },
+  "graphDigest": "555279c2227864329d395e1d23b401de8e291d4aec5eb56e3853310a66dfbe84",
+  "warnings": [],
+  "digest": "6a021698fa80323cce9cfeda6d5a468be1d6e03850875b774068a7e2d32f44c2"
+}

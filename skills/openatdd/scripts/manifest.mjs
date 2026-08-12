@@ -99,6 +99,9 @@ function validateCommand(command, label, errors) {
   if (command.expectedExitCodes !== undefined && (!Array.isArray(command.expectedExitCodes) || command.expectedExitCodes.some((item) => !Number.isInteger(item)))) {
     errors.push(`${label}.expectedExitCodes must contain integers.`);
   }
+  if (command.deterministic !== undefined && typeof command.deterministic !== "boolean") {
+    errors.push(`${label}.deterministic must be boolean when provided.`);
+  }
 }
 
 function allCommandIds(manifest) {
@@ -161,6 +164,27 @@ export function validateFinalizationManifest(manifest, acceptanceItems = []) {
     for (const [commandIndex, command] of (group.commands ?? []).entries()) validateCommand(command, `${label}.commands[${commandIndex}]`, errors);
   }
   if (broadGroups !== 1) errors.push("Exactly one broad check group is required.");
+
+  // Same-epoch evidence reuse is opt-in via deterministic: true. Surface the
+  // opportunity, otherwise identical unmarked groups silently run twice.
+  const groupsByContract = new Map();
+  for (const group of (Array.isArray(checks) ? checks : []).filter((item) => item.scope !== "broad")) {
+    if (!Array.isArray(group.commands) || group.commands.length === 0) continue;
+    const contract = JSON.stringify(group.commands.map((command) => ({
+      argv: command.argv,
+      cwd: command.cwd ?? null,
+      env: command.env ?? [],
+      timeoutMs: command.timeoutMs ?? null,
+      expectedExitCodes: command.expectedExitCodes ?? null,
+    })));
+    if (!groupsByContract.has(contract)) groupsByContract.set(contract, []);
+    groupsByContract.get(contract).push(group);
+  }
+  for (const identical of groupsByContract.values()) {
+    if (identical.length < 2) continue;
+    if (identical.every((group) => group.commands.every((command) => command.deterministic === true))) continue;
+    warnings.push(`Check groups ${identical.map((group) => group.id).join(", ")} execute identical commands but are not marked deterministic; each will run independently. Mark hermetic commands "deterministic": true to reuse evidence, or differentiate the groups.`);
+  }
 
   const batches = manifest?.uat?.batches;
   if (!Array.isArray(batches) || batches.length === 0 || batches.length > 5) errors.push("uat.batches requires one to five cohesive batches.");
@@ -270,6 +294,14 @@ async function fallbackFiles(root) {
   return (await filesBelow(root)).map((file) => toPosix(path.relative(root, file)));
 }
 
+// Fast finalization walks the same frozen tree up to five times (validation,
+// rehearsal before/after, formal start and pre-commit). Re-reading file bytes
+// dominates that cost, so content hashes are cached per process keyed by
+// (size, mtimeMs); any stat-visible change re-reads the file. A rewrite that
+// preserves both size and mtime within one process is not detected, which is
+// below the accidental-mutation threshold this fingerprint defends against.
+const contentHashCache = new Map();
+
 async function inventoryItem(root, relative) {
   const absolute = path.join(root, relative);
   try {
@@ -279,8 +311,14 @@ async function inventoryItem(root, relative) {
       const target = await readlink(absolute);
       return { path: relative, mode: info.mode & 0o777, size: Buffer.byteLength(target), sha256: sha256(`symlink:${target}`), type: "symlink" };
     }
+    const cached = contentHashCache.get(absolute);
+    if (cached && cached.size === info.size && cached.mtimeMs === info.mtimeMs) {
+      return { path: relative, mode: info.mode & 0o777, size: info.size, sha256: cached.sha256, type: "file" };
+    }
     const bytes = await readFile(absolute);
-    return { path: relative, mode: info.mode & 0o777, size: info.size, sha256: sha256(bytes), type: "file" };
+    const digest = sha256(bytes);
+    contentHashCache.set(absolute, { size: info.size, mtimeMs: info.mtimeMs, sha256: digest });
+    return { path: relative, mode: info.mode & 0o777, size: info.size, sha256: digest, type: "file" };
   } catch (error) {
     if (error?.code === "ENOENT") return { path: relative, mode: 0, size: 0, sha256: sha256("missing"), type: "missing" };
     throw error;

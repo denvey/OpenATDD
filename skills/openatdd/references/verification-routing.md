@@ -54,8 +54,13 @@ evidence must be recaptured in the new verification epoch.
   without formal evidence or historical reruns;
 - `broad`: the full risk-proportionate suite once inside formal finalization
   after the complete source fingerprint is frozen;
-- final UAT: one complete approved journey in the same formal operation;
+- approved journey: one complete command-backed journey in the same formal operation;
 - history: one affected-history pass after current acceptance succeeds.
+
+Successful formal verification enters `DELIVERED`. Automatic and API evidence
+is presented without asking the person to repeat it. Only blocking `MANUAL`
+criteria remain as human UAT steps; passing requires no reply, while an
+objection enters the existing issue and repair flow.
 
 If the rehearsal fails, return to focused repair and rehearse again. If a
 post-freeze failure or source mutation occurs, use the issue flow, advance the

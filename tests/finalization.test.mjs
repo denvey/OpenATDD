@@ -103,6 +103,7 @@ async function approvedImplementation(testContext, taskId = "fast-finalize", opt
   const criteria = options.criteria ?? [criterion("AC-01")];
   await prepareApprovedTask(root, taskId, {
     criteria,
+    requirement: options.requirement,
     impactPaths: options.impactPaths ?? ["src/shared"],
     createdAt: options.createdAt,
     acceptanceAt: options.acceptanceAt,
@@ -142,6 +143,40 @@ test("strict manifests require argv commands, ordered scopes, complete UAT, and 
   unsafeProjectScope.preflight.reason = "Only deterministic component commands run.";
   unsafeProjectScope.checks[0].commands[0].env = ["TEST_SECRET"];
   assert(validateFinalizationManifest(unsafeProjectScope, criteria).errors.some((item) => item.includes("cannot run commands with declared environment variables")));
+
+  const invalidDeterminism = finalizationManifest(criteria);
+  invalidDeterminism.checks[0].commands[0].deterministic = "yes";
+  assert(validateFinalizationManifest(invalidDeterminism, criteria).errors.some((item) => item.includes("deterministic must be boolean")));
+
+  const duplicated = finalizationManifest(criteria);
+  duplicated.checks[1].commands = [{ ...structuredClone(duplicated.checks[0].commands[0]), id: "module-check" }];
+  const duplicateValidation = validateFinalizationManifest(duplicated, criteria);
+  assert.equal(duplicateValidation.errors.length, 0);
+  assert(duplicateValidation.warnings.some((item) => item.includes("identical commands")));
+  duplicated.checks[0].commands[0].deterministic = true;
+  duplicated.checks[1].commands[0].deterministic = true;
+  assert(!validateFinalizationManifest(duplicated, criteria).warnings.some((item) => item.includes("identical commands")));
+});
+
+test("project fingerprinting caches unchanged content and tracks stat-visible changes", async (t) => {
+  const root = await temporaryProject(t);
+  const file = path.join(root, "cached.txt");
+  await writeFile(file, "original");
+  const first = await fingerprintProject(root, {});
+  const repeat = await fingerprintProject(root, {});
+  assert.equal(repeat.fingerprint, first.fingerprint);
+
+  await writeFile(file, "changed content with a different size");
+  const grown = await fingerprintProject(root, {});
+  assert.notEqual(grown.fingerprint, first.fingerprint);
+
+  // A same-size rewrite is still tracked once the modification time moves.
+  await writeFile(file, "same-size-content-aa");
+  const before = await fingerprintProject(root, {});
+  await writeFile(file, "same-size-content-bb");
+  await utimes(file, new Date(), new Date(Date.now() + 2000));
+  const after = await fingerprintProject(root, {});
+  assert.notEqual(after.fingerprint, before.fingerprint);
 });
 
 test("task finalization manifest wins over the project default unless an explicit path is supplied", async (t) => {
@@ -295,7 +330,7 @@ test("formal finalization commits one complete journey and is idempotent for the
   await dryRunFinalization(root, taskId);
   const completed = await finalizeTask(root, taskId);
   assert.equal(completed.unchanged, false);
-  assert.equal(completed.state.phase, "READY_FOR_UAT");
+  assert.equal(completed.state.phase, "DELIVERED");
   assert.equal(completed.state.finalization.status, "complete");
   assert.equal(completed.state.results["AC-01"].status, "passed");
   assert.equal(completed.result.metrics.checkGroupRuns.broad, 1);
@@ -308,6 +343,10 @@ test("formal finalization commits one complete journey and is idempotent for the
   assert.equal(await pathExists(files.report), true);
   assert.equal(await pathExists(files.notification), true);
   assert.equal(await pathExists(files.finalizationSnapshot), true);
+  const report = await readFile(files.report, "utf8");
+  assert.match(report, /^# Delivery report:/);
+  assert.match(report, /Automatic verification complete/);
+  assert.doesNotMatch(report, /Suggested human UAT/);
 
   const stateBefore = await readFile(files.state);
   const repeated = await finalizeTask(root, taskId);
@@ -321,7 +360,7 @@ test("formal finalization prepares ASSISTED evidence without claiming the human 
     classification: "ASSISTED",
     title: "A person judges the concise handoff",
   })];
-  const { root, taskId } = await approvedImplementation(t, "assisted-finalize", {
+  const { root, taskId, files } = await approvedImplementation(t, "assisted-finalize", {
     criteria,
     manifest: {
       uat: {
@@ -333,13 +372,40 @@ test("formal finalization prepares ASSISTED evidence without claiming the human 
   await dryRunFinalization(root, taskId);
   const completed = await finalizeTask(root, taskId);
 
-  assert.equal(completed.state.phase, "READY_FOR_UAT");
+  assert.equal(completed.state.phase, "DELIVERED");
   assert.equal(completed.state.results["AC-01"].status, "manual");
   assert.match(completed.state.results["AC-01"].summary, /human judgment remains required/);
   assert(completed.state.results["AC-01"].evidence.length > 0);
   assert.equal(completed.state.uat.batches["manual-handoff"].status, "manual");
   assert.match(completed.state.uat.batches["manual-handoff"].summary, /no automatic journey was executed/);
   assert.equal(completed.result.metrics.uatJourneyRuns, 0);
+  const report = await readFile(files.report, "utf8");
+  assert.match(report, /Human attention/);
+  assert.doesNotMatch(report, /Suggested human UAT/);
+});
+
+test("blocking MANUAL acceptance adds human UAT without adding an approval gate", async (t) => {
+  const criteria = [criterion("AC-01", {
+    classification: "MANUAL",
+    title: "A person observes the physical device result",
+  })];
+  const { root, taskId, files } = await approvedImplementation(t, "manual-delivery", {
+    criteria,
+    manifest: {
+      uat: {
+        batches: [{ id: "manual-handoff", name: "Physical observation", runner: "internal", acceptanceIds: ["AC-01"] }],
+      },
+      acceptance: { "AC-01": ["check:broad", "batch:manual-handoff"] },
+    },
+  });
+  await dryRunFinalization(root, taskId);
+  const completed = await finalizeTask(root, taskId);
+
+  assert.equal(completed.state.phase, "DELIVERED");
+  const report = await readFile(files.report, "utf8");
+  assert.match(report, /Suggested human UAT/);
+  assert.match(report, /no reply is needed when all pass/i);
+  assert.doesNotMatch(report, /ready for formal human acceptance/i);
 });
 
 test("a failed formal command leaves no passed result or READY state", async (t) => {
@@ -495,9 +561,9 @@ test("a formal run reuses evidence for identical narrower commands and never sub
     assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
     manifest: {
       checks: [
-        { id: "focused", name: "Focused checks", scope: "focused", commands: [command("focused-suite", script)] },
-        { id: "module", name: "Module checks", scope: "module", commands: [command("module-suite", script)] },
-        { id: "broad", name: "Broad checks", scope: "broad", commands: [command("broad-suite", script)] },
+        { id: "focused", name: "Focused checks", scope: "focused", commands: [command("focused-suite", script, { deterministic: true })] },
+        { id: "module", name: "Module checks", scope: "module", commands: [command("module-suite", script, { deterministic: true })] },
+        { id: "broad", name: "Broad checks", scope: "broad", commands: [command("broad-suite", script, { deterministic: true })] },
       ],
       acceptance: { "AC-01": ["check:module", "check:broad", "batch:approved-journey"] },
     },
@@ -513,13 +579,35 @@ test("a formal run reuses evidence for identical narrower commands and never sub
   assert.notDeepEqual(result.state.checks.broad.evidence, result.state.checks.focused.evidence);
 });
 
+test("identical commands run independently unless deterministic reuse is explicit", async (t) => {
+  const marker = ".openatdd/tasks/no-implicit-reuse/invocations.txt";
+  const script = `const fs = require("node:fs"); const marker = ${JSON.stringify(marker)}; const count = fs.existsSync(marker) ? Number(fs.readFileSync(marker, "utf8")) : 0; fs.writeFileSync(marker, String(count + 1)); if (count > 0) process.exit(9);`;
+  const { root, taskId } = await approvedImplementation(t, "no-implicit-reuse", {
+    assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
+    manifest: {
+      checks: [
+        { id: "focused", scope: "focused", commands: [command("focused-stateful", script)] },
+        { id: "module", scope: "module", commands: [command("module-stateful", script)] },
+        { id: "broad", scope: "broad", commands: [command("broad-pass")] },
+      ],
+      acceptance: { "AC-01": ["check:module", "check:broad", "batch:approved-journey"] },
+    },
+  });
+  await dryRunFinalization(root, taskId);
+  await assert.rejects(
+    () => finalizeTask(root, taskId),
+    (error) => error.code === "FINALIZATION_COMMAND_FAILED",
+  );
+  assert.equal(await readFile(path.join(root, marker), "utf8"), "2");
+});
+
 test("fast finalization validates, rehearses, and commits one frozen journey in a single call", async (t) => {
   const { root, taskId, files } = await approvedImplementation(t, "fast-single-call");
   const result = await fastFinalize(root, taskId);
   assert.equal(result.validation.valid, true);
   assert.equal(result.preview.status, "passed");
   assert.equal(result.unchanged, false);
-  assert.equal(result.state.phase, "READY_FOR_UAT");
+  assert.equal(result.state.phase, "DELIVERED");
   assert.equal(result.result.metrics.checkGroupRuns.broad, 1);
   assert.equal(result.result.metrics.uatJourneyRuns, 1);
   assert.equal(await pathExists(files.report), true);
@@ -570,6 +658,29 @@ test("project-scoped finalization preflight skips live assertions without fabric
   assert.deepEqual(completed.state.preflight.credentialVariables, []);
 });
 
+test("project scope never requires credentials but still scans artifacts for existing local values", async (t) => {
+  const secret = "ultrasecrettoken9931";
+  const { root, taskId } = await approvedImplementation(t, "project-scope-leak", {
+    requirement: `Deliver the export token ${secret} to finance`,
+    manifest: {
+      preflight: {
+        scope: "project",
+        reason: "The approved journey is a deterministic component harness with no live environment dependency.",
+      },
+    },
+  });
+  const profile = path.join(root, ".openatdd", "environments", "local.yaml");
+  await writeFile(profile, (await readFile(profile, "utf8"))
+    .replace('credential_variables: ""', "credential_variables: OPENATDD_TEST_TOKEN"));
+  await writeFile(path.join(root, ".env.openatdd.local"), `OPENATDD_TEST_TOKEN=${secret}\n`);
+  // Not requiring credentials is not the same as not scanning for them.
+  await assert.rejects(
+    () => dryRunFinalization(root, taskId),
+    (error) => error.code === "FINALIZATION_DRY_RUN_FAILED"
+      && error.details.errors.some((item) => String(item).includes("credential value")),
+  );
+});
+
 test("CLI exposes both finalize modes and forwards JSON results", async (t) => {
   const { root, taskId } = await approvedImplementation(t, "cli-finalize");
   const cli = path.resolve("skills/openatdd/scripts/openatdd.mjs");
@@ -591,7 +702,11 @@ test("CLI fast finalization needs one invocation and rejects a combined dry-run"
   assert.equal(payload.status, "passed");
   assert.equal(payload.validation.valid, true);
   assert.equal(payload.preview.status, "passed");
-  assert.equal((await loadTask(root, taskId)).state.phase, "READY_FOR_UAT");
+  assert.equal((await loadTask(root, taskId)).state.phase, "DELIVERED");
+
+  const repeated = await execFileAsync(process.execPath, [cli, "finalize", taskId, "--fast", "--root", root]);
+  assert.match(repeated.stdout, /Rehearsal skipped/);
+  assert.match(repeated.stdout, /Finalization remains complete/);
 
   await assert.rejects(
     () => execFileAsync(process.execPath, [cli, "finalize", taskId, "--fast", "--dry-run", "--root", root]),
@@ -647,6 +762,7 @@ test("affected history reuses identical epoch evidence and caches distinct repla
   const root = await temporaryProject(t);
   const criteria = [criterion("AC-01")];
   const manifest = finalizationManifest(criteria);
+  manifest.checks.find((group) => group.scope === "broad").commands[0].deterministic = true;
 
   await prepareApprovedTask(root, "historical", {
     criteria,

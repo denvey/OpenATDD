@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "taskId": "eval-user-config",
+  "createdAt": "2026-07-28T02:58:16.998Z",
+  "acceptanceSha256": "ff1b1181b3eb59b5f3af0594a3e1a0b7580f445ff3958124647c05c59bf4085d",
+  "solutionSha256": "9a6b994d0c3cc6fe84bb190e9caecdddadce6c431c3d0045ab64d73dba86565a",
+  "manifestDigest": "04b514e75d8a3cf9cf6c26712731c7985cd23ae944a8a19e9b2a693f7c3bce29",
+  "sourceFingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+  "replay": {
+    "commands": [
+      {
+        "id": "broad-project-check",
+        "argv": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "deterministic": true,
+        "timeoutMs": 180000
+      }
+    ],
+    "acceptanceIds": [
+      "AC-01",
+      "AC-02",
+      "AC-03"
+    ]
+  }
+}

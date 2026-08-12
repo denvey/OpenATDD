@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "kind": "delivery",
+  "difficulty": "medium",
+  "id": "delivery-medium-order-export-v2",
+  "rubric": "../rubrics/delivery.v1.json",
+  "repetitions": 2,
+  "prompt": "Finance needs `node src/cli.mjs export --status paid --min-total 20` to print a synchronous CSV export. Reuse the existing filtered-order query and CSV stream modules. The columns must be `id,customer,total,status`; only matching orders are included, CSV quoting must remain correct, and an empty result still prints the header. Reject a missing, negative, or non-numeric `--min-total` with a clear non-zero error. Implement this request in the current local project and prepare it for the user to test.",
+  "seed": {
+    "directory": "../fixtures/delivery-medium"
+  },
+  "hiddenChecks": [
+    {
+      "id": "order-export-user-journey",
+      "argv": ["<node>", "<scenario-directory>/../hidden/delivery-medium.mjs", "<workspace>"],
+      "expect": { "exitCode": 0, "stdoutIncludes": "medium delivery acceptance passed" }
+    }
+  ]
+}

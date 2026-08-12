@@ -238,11 +238,15 @@ test("browser plans use cohesive batches, warn on round-trip budgets, and isolat
   const criteria = Array.from({ length: 7 }, (_, index) => criterion(`AC-${String(index + 1).padStart(2, "0")}`));
   await prepareApprovedTask(root, "browser-batches", { criteria });
   await beginImplementation(root, "browser-batches");
-  await writeProfile(root, { browser_round_trip_budget: "2" });
+  await writeProfile(root, { surface: "web", browser_round_trip_budget: "2" });
   await preflightTask(root, "browser-batches");
   await beginPreUat(root, "browser-batches");
   const planned = await prepareUatPlan(root, "browser-batches");
   assert.equal(planned.plan.batches.length, 3);
+  assert.equal(planned.plan.execution.mode, "browser-low");
+  assert.equal(planned.plan.execution.model, "gpt-5.6-luna");
+  assert.equal(planned.plan.execution.reuseSession, true);
+  assert.equal(planned.plan.execution.screenshotPolicy, "checkpoint-or-failure");
   assert.equal(new Set(planned.plan.batches.flatMap((batch) => batch.steps.map((step) => step.acceptanceId))).size, 7);
   assert.equal(planned.warnings.length, 1);
 
@@ -255,7 +259,7 @@ test("browser plans use cohesive batches, warn on round-trip budgets, and isolat
   assert.equal(state.uat.batches["batch-2"].status, "failed");
 });
 
-test("focused, module, and broad checks preserve order and handoff renders fast step-by-step UAT", async (t) => {
+test("focused, module, and broad checks preserve order and automatic handoff avoids repeated UAT", async (t) => {
   const root = await temporaryProject(t);
   const criteria = [criterion("AC-01"), criterion("AC-02")];
   await prepareApprovedTask(root, "detailed-handoff", { criteria, impactPaths: ["README.md"] });
@@ -293,10 +297,14 @@ test("focused, module, and broad checks preserve order and handoff renders fast 
   const ready = await markReady(root, "detailed-handoff");
   const report = await readFile(ready.files.report, "utf8");
   const notification = await readFile(ready.files.notification, "utf8");
+  assert.equal(ready.state.phase, "DELIVERED");
   assert.match(report, /## Start here/);
-  assert.match(report, /### Step 1/);
-  assert.match(report, /\[ \] Pass  \[ \] Fail/);
+  assert.match(report, /## Automatic verification complete/);
+  assert.doesNotMatch(report, /### Step 1/);
+  assert.doesNotMatch(report, /\[ \] Pass  \[ \] Fail/);
   assert.match(report, /## Relevant links/);
   assert.match(report, /\[observations\.json\]\(\.\.\/\.\.\/environments\/observations\.json\)/);
-  assert.match(notification, /First action: open the report, complete \*\*Step 1\*\*/);
+  assert.match(notification, /has completed AI verification and been delivered/);
+  assert.match(notification, /no reply is required when there is no objection/);
+  assert.doesNotMatch(notification, /First action/);
 });

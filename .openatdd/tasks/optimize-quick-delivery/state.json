@@ -3,9 +3,9 @@
   "deliveryVersion": 3,
   "taskId": "optimize-quick-delivery",
   "requirement": "优化 Quick 小改动的检索、验证与最终化路径，避免无关读取、重复 dry-run、伪造 preflight 证据和已知失败的全量检查",
-  "phase": "READY_FOR_UAT",
+  "phase": "DELIVERED",
   "createdAt": "2026-07-25T22:31:18.449Z",
-  "updatedAt": "2026-07-25T22:47:59.747Z",
+  "updatedAt": "2026-07-29T16:58:26.495Z",
   "acceptance": {
     "approvedAt": "2026-07-25T22:35:24.463Z",
     "sha256": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
@@ -169,12 +169,12 @@
     "lastHypothesis": null,
     "consecutiveNoProgress": 0
   },
-  "verificationNotBefore": "2026-07-25T22:47:49.306Z",
+  "verificationNotBefore": "2026-07-29T16:34:07.500Z",
   "verification": {
-    "epoch": 2,
-    "startedAt": "2026-07-25T22:47:49.306Z",
+    "epoch": 9,
+    "startedAt": "2026-07-29T16:34:07.500Z",
     "clean": true,
-    "reason": "final source frozen: 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a"
+    "reason": "affected by lightweight-project-truth"
   },
   "results": {
     "AC-01": {
@@ -182,121 +182,72 @@
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Finalization manifest for AC-01 verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
-        },
-        {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.675Z",
-      "epoch": 2
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9
     },
     "AC-02": {
       "acceptanceId": "AC-02",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Finalization manifest for AC-02 verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
-          "sha256": "ee0fd08c6aebf0f4a2fe2cb577a5dda643aace45feb6159b7a7509492b549dc5",
-          "size": 5052,
-          "modifiedAt": "2026-07-25T22:47:52.686Z",
-          "capturedAt": "2026-07-25T22:47:52.687Z"
-        },
-        {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
-        },
-        {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.676Z",
-      "epoch": 2
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9
     },
     "AC-03": {
       "acceptanceId": "AC-03",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Finalization manifest for AC-03 verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
-          "sha256": "ee0fd08c6aebf0f4a2fe2cb577a5dda643aace45feb6159b7a7509492b549dc5",
-          "size": 5052,
-          "modifiedAt": "2026-07-25T22:47:52.686Z",
-          "capturedAt": "2026-07-25T22:47:52.687Z"
-        },
-        {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
-        },
-        {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.676Z",
-      "epoch": 2
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9
     },
     "AC-04": {
       "acceptanceId": "AC-04",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Finalization manifest for AC-04 verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
-          "sha256": "ee0fd08c6aebf0f4a2fe2cb577a5dda643aace45feb6159b7a7509492b549dc5",
-          "size": 5052,
-          "modifiedAt": "2026-07-25T22:47:52.686Z",
-          "capturedAt": "2026-07-25T22:47:52.687Z"
-        },
-        {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
-        },
-        {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.676Z",
-      "epoch": 2
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9
     }
   },
   "checks": {
@@ -306,20 +257,23 @@
       "command": "node --test tests/finalization.test.mjs tests/delivery-v2.test.mjs tests/intelligence.test.mjs tests/intelligence-integration.test.mjs",
       "status": "passed",
       "scope": "focused",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": 3377,
       "summary": "Final focused group passed.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-focused-quick-delivery-focused-quick-delivery-tests.md",
-          "sha256": "ee0fd08c6aebf0f4a2fe2cb577a5dda643aace45feb6159b7a7509492b549dc5",
-          "size": 5052,
-          "modifiedAt": "2026-07-25T22:47:52.686Z",
-          "capturedAt": "2026-07-25T22:47:52.687Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:52.687Z",
-      "epoch": 2
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "broad-project": {
       "id": "broad-project",
@@ -327,20 +281,164 @@
       "command": "npm run check",
       "status": "passed",
       "scope": "broad",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": 3955,
       "summary": "Final broad group passed.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:56.643Z",
-      "epoch": 2
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-eval-user-config": {
+      "id": "finalize-eval-user-config",
+      "name": "finalization reverification for eval-user-config",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-end-to-end-agent-eval": {
+      "id": "finalize-end-to-end-agent-eval",
+      "name": "finalization reverification for end-to-end-agent-eval",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-optimize-atdd-runtime-cost": {
+      "id": "finalize-optimize-atdd-runtime-cost",
+      "name": "finalization reverification for optimize-atdd-runtime-cost",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-openatdd-code-review-skill": {
+      "id": "finalize-openatdd-code-review-skill",
+      "name": "finalization reverification for openatdd-code-review-skill",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-acceptance-outcome-routing": {
+      "id": "finalize-acceptance-outcome-routing",
+      "name": "finalization reverification for acceptance-outcome-routing",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-lightweight-project-truth": {
+      "id": "finalize-lightweight-project-truth",
+      "name": "finalization reverification for lightweight-project-truth",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:26.495Z",
+      "epoch": 9
     }
   },
   "checkSequence": [
@@ -626,7 +724,7 @@
     "scope": "project",
     "reason": "The approved CLI journey uses deterministic local Node test harnesses and has no live service, account, organization, integration, fixture, workaround, credential, or declared command environment dependency.",
     "profile": ".openatdd/environments/local.yaml",
-    "status": "passed",
+    "status": "affected",
     "checkedAt": "2026-07-25T22:47:49.307Z",
     "durationMs": 0,
     "checks": [
@@ -700,28 +798,20 @@
     "batches": {
       "quick-finalization": {
         "id": "quick-finalization",
-        "status": "passed",
+        "status": "affected",
         "summary": "Quick task statically validates and completes the approved deterministic finalization journey passed.",
-        "evidence": [
-          {
-            "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-            "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-            "size": 4684,
-            "modifiedAt": "2026-07-25T22:47:59.675Z",
-            "capturedAt": "2026-07-25T22:47:59.675Z"
-          }
-        ],
-        "verifiedAt": "2026-07-25T22:47:59.675Z",
-        "epoch": 2
+        "evidence": [],
+        "verifiedAt": null,
+        "epoch": 2,
+        "previousStatus": "passed"
       }
     },
     "warnings": [],
     "estimatedRoundTrips": 1
   },
   "handoff": {
-    "status": "prepared",
-    "preparedAt": "2026-07-25T22:47:59.681Z",
-    "estimatedMinutes": 5
+    "status": "not_prepared",
+    "preparedAt": null
   },
   "finalization": {
     "status": "complete",
@@ -767,8 +857,8 @@
     }
   },
   "timing": {
-    "currentPhase": "READY_FOR_UAT",
-    "phaseStartedAt": "2026-07-25T22:47:59.747Z",
+    "currentPhase": "PRE_UAT",
+    "phaseStartedAt": "2026-07-29T16:34:07.500Z",
     "phases": [
       {
         "phase": "ACCEPTANCE_DRAFT",
@@ -805,10 +895,52 @@
         "startedAt": "2026-07-25T22:47:49.306Z",
         "endedAt": "2026-07-25T22:47:59.747Z",
         "durationMs": 10441
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-25T22:47:59.747Z",
+        "endedAt": "2026-07-28T02:46:58.651Z",
+        "durationMs": 187138904
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T02:46:58.651Z",
+        "endedAt": "2026-07-28T02:53:58.998Z",
+        "durationMs": 420347
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T02:53:58.998Z",
+        "endedAt": "2026-07-28T16:31:08.549Z",
+        "durationMs": 49029551
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T16:31:08.549Z",
+        "endedAt": "2026-07-28T21:57:28.757Z",
+        "durationMs": 19580208
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T21:57:28.757Z",
+        "endedAt": "2026-07-29T00:36:48.448Z",
+        "durationMs": 9559691
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-29T00:36:48.448Z",
+        "endedAt": "2026-07-29T07:57:47.134Z",
+        "durationMs": 26458686
+      },
+      {
+        "phase": "DELIVERED",
+        "startedAt": "2026-07-29T07:57:47.134Z",
+        "endedAt": "2026-07-29T16:34:07.500Z",
+        "durationMs": 30980366
       }
     ]
   },
-  "readyAt": "2026-07-25T22:47:59.747Z",
+  "readyAt": "2026-07-29T16:58:26.495Z",
   "history": [
     {
       "event": "TASK_CREATED",
@@ -874,6 +1006,205 @@
       "details": {
         "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
         "manifestDigest": "b058c05b2a529014d3fd110824fe601fdc9c0ba9d312de9d6b2f54ce8b900fe2"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T02:46:58.651Z",
+      "details": {
+        "byTask": "eval-user-config",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T02:53:58.998Z",
+      "details": {
+        "byTask": "eval-user-config",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T16:31:08.549Z",
+      "details": {
+        "byTask": "end-to-end-agent-eval",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T21:57:28.757Z",
+      "details": {
+        "byTask": "optimize-atdd-runtime-cost",
+        "overlaps": [
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ],
+          [
+            "tests/delivery-v2.test.mjs",
+            "tests/delivery-v2.test.mjs"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+          "path-overlap:tests/delivery-v2.test.mjs:tests/delivery-v2.test.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T00:36:48.448Z",
+      "details": {
+        "byTask": "openatdd-code-review-skill",
+        "overlaps": [
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T07:57:47.134Z",
+      "details": {
+        "byTask": "acceptance-outcome-routing",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/finalization.mjs",
+            "skills/openatdd/scripts/finalization.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ],
+          [
+            "tests/finalization.test.mjs",
+            "tests/finalization.test.mjs"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+          "path-overlap:skills/openatdd/scripts/finalization.mjs:skills/openatdd/scripts/finalization.mjs",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:tests/finalization.test.mjs:tests/finalization.test.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T16:34:07.500Z",
+      "details": {
+        "byTask": "lightweight-project-truth",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ],
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ]
       }
     }
   ],

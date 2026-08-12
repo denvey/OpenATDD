@@ -16,6 +16,7 @@ import {
   recordAgentDispatch,
   recordRepairAttempt,
   recordTaskDecision,
+  reopenAcceptance,
   resumeTask,
   resolveTaskDecision,
   taskFiles,
@@ -136,6 +137,7 @@ test("a dangerous risk overlay requires resolved authorization before product co
 
   await recordTaskDecision(root, "overlay-authorization", {
     owner: "authorization",
+    coversOverlays: ["deletion", "production"],
     question: "May the irreversible production purge run in this delivery?",
     options: [
       { id: "authorize", label: "Authorize the purge", consequence: "Expired accounts are erased irreversibly." },
@@ -145,6 +147,27 @@ test("a dangerous risk overlay requires resolved authorization before product co
     recommendationBasis: "The retention rule is not yet recorded for this project.",
     status: "resolved",
     resolution: { optionId: "authorize", rationale: "The owner authorized the purge in writing." },
+  });
+  // A resolved authorization only satisfies the overlays it explicitly covers.
+  await assert.rejects(
+    () => approveSolution(root, "overlay-authorization"),
+    (error) => error.code === "AUTHORIZATION_DECISION_REQUIRED"
+      && error.details.errors.some((item) => item.includes("irreversible"))
+      && !error.details.errors.some((item) => item.includes("deletion")),
+  );
+
+  await recordTaskDecision(root, "overlay-authorization", {
+    owner: "authorization",
+    coversOverlays: ["irreversible"],
+    question: "May the purge skip a recoverable retention window?",
+    options: [
+      { id: "authorize", label: "Authorize the irreversible purge", consequence: "No recovery window remains." },
+      { id: "retain", label: "Keep a recovery window", consequence: "Deletion becomes reversible for 30 days." },
+    ],
+    recommendation: "retain",
+    recommendationBasis: "A recovery window is the safer default without a retention rule.",
+    status: "resolved",
+    resolution: { optionId: "authorize", rationale: "The owner accepted the irreversible purge in writing." },
   });
   const approved = await approveSolution(root, "overlay-authorization");
   assert.equal(approved.state.phase, "CONTRACT_APPROVED");
@@ -165,6 +188,107 @@ test("a verification-only risk overlay never adds an authorization pause", async
   assert.equal(state.phase, "CONTRACT_APPROVED");
   assert.deepEqual(state.routing.riskOverlays, ["authentication", "privacy", "security"]);
   assert.deepEqual(state.decisions, []);
+});
+
+async function solutionReadyTask(root, taskId, assessment) {
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, `Deliver ${taskId}`, clock("2026-02-01T00:00:00.000Z"));
+  await assessTask(root, taskId, assessment);
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId);
+  await draftSolution(root, taskId);
+  await writeFile(taskFiles(root, taskId).solution, solutionMarkdown(taskId, criteria));
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The smallest project-fitting change covers the approved acceptance.",
+    checks: "all",
+  });
+  return criteria;
+}
+
+test("project configuration extends authorization overlays and rejects unknown ones", async (t) => {
+  const root = await temporaryProject(t);
+  await solutionReadyTask(root, "configured-payment", {
+    scope: "local",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "low",
+    riskSignals: ["payment"],
+  });
+  await writeFile(path.join(root, ".openatdd", "config.yaml"), "version: 1\nauthorization_overlays: payment\n");
+  await assert.rejects(
+    () => approveSolution(root, "configured-payment"),
+    (error) => error.code === "AUTHORIZATION_DECISION_REQUIRED"
+      && error.details.errors.some((item) => item.includes("payment")),
+  );
+  await recordTaskDecision(root, "configured-payment", {
+    owner: "authorization",
+    coversOverlays: ["payment"],
+    question: "May the refund path change charge behavior in this delivery?",
+    options: [
+      { id: "authorize", label: "Authorize the payment change", consequence: "Refund behavior changes for live charges." },
+      { id: "defer", label: "Defer the payment change", consequence: "Refund behavior stays unchanged." },
+    ],
+    recommendation: "authorize",
+    recommendationBasis: "The change is covered by the approved acceptance journey.",
+    status: "resolved",
+    resolution: { optionId: "authorize", rationale: "The owner authorized the payment change." },
+  });
+  assert.equal((await approveSolution(root, "configured-payment")).state.phase, "CONTRACT_APPROVED");
+
+  // Quoted values and inline comments parse to the same overlay set.
+  await writeFile(
+    path.join(root, ".openatdd", "config.yaml"),
+    'version: 1\nauthorization_overlays: "payment" # includes refund flows\n',
+  );
+  assert.equal((await approveSolution(root, "configured-payment")).state.phase, "CONTRACT_APPROVED");
+
+  await writeFile(path.join(root, ".openatdd", "config.yaml"), "authorization_overlays: nonsense\n");
+  await assert.rejects(
+    () => approveSolution(root, "configured-payment"),
+    (error) => error.code === "INVALID_AUTHORIZATION_CONFIG",
+  );
+});
+
+test("reopening acceptance returns resolved authorization decisions to pending", async (t) => {
+  const root = await temporaryProject(t);
+  await solutionReadyTask(root, "reopen-authorization", {
+    scope: "local",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "low",
+    riskSignals: ["deletion"],
+  });
+  await recordTaskDecision(root, "reopen-authorization", {
+    owner: "authorization",
+    coversOverlays: ["deletion"],
+    question: "May stale exports be purged in this delivery?",
+    options: [
+      { id: "authorize", label: "Authorize the purge", consequence: "Stale exports are removed." },
+      { id: "defer", label: "Defer the purge", consequence: "Nothing is removed now." },
+    ],
+    recommendation: "authorize",
+    recommendationBasis: "The exports are regenerated fixtures.",
+    status: "resolved",
+    resolution: { optionId: "authorize", rationale: "The owner authorized the purge." },
+  });
+  assert.equal((await approveSolution(root, "reopen-authorization")).state.phase, "CONTRACT_APPROVED");
+
+  await reopenAcceptance(root, "reopen-authorization", "Feedback changed the purge journey");
+  const reopened = await loadTask(root, "reopen-authorization");
+  const decision = reopened.state.decisions.find((item) => item.owner === "authorization");
+  assert.equal(decision.status, "pending");
+  assert.equal(decision.resolution, null);
+  assert(reopened.state.history.some((item) => item.event === "AUTHORIZATION_REOPENED"));
+
+  // The pending authorization blocks the next approval until it is re-resolved.
+  await assert.rejects(
+    () => approveAcceptance(root, "reopen-authorization"),
+    (error) => error.code === "BLOCKING_DECISIONS_PENDING",
+  );
+  await resolveTaskDecision(root, "reopen-authorization", decision.id, "authorize", { rationale: "Re-confirmed after the journey change." });
+  assert.equal((await approveAcceptance(root, "reopen-authorization")).state.phase, "ACCEPTANCE_APPROVED");
 });
 
 test("resume and repair automatically restore the scoped context boundary", async (t) => {
@@ -215,6 +339,25 @@ test("resume and repair automatically restore the scoped context boundary", asyn
   const state = (await loadTask(root, "resume-context")).state;
   assert.equal(state.repair.attempts[0].contextDigest, state.context.digest);
   assert(state.repair.attempts[0].contextReferenceCount > 0);
+});
+
+test("legacy delivery tasks can still record their historical execution role", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "legacy-agent-role";
+  await prepareApprovedTask(root, taskId);
+  await beginImplementation(root, taskId);
+  const files = taskFiles(root, taskId);
+  const state = JSON.parse(await readFile(files.state, "utf8"));
+  state.deliveryVersion = 2;
+  await writeFile(files.state, `${JSON.stringify(state, null, 2)}\n`);
+
+  const recorded = await recordAgentDispatch(root, taskId, {
+    role: "clean-context-execution",
+    status: "passed",
+  });
+  assert.equal(recorded.dispatch.profile, "clean-context-execution");
+  assert.equal(recorded.dispatch.model, "gpt-5.6-terra");
+  assert.equal(recorded.dispatch.sandbox, "workspace-write");
 });
 
 test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, context, and eval options", async (t) => {

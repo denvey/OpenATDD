@@ -243,6 +243,69 @@
       "sourceIssue": "ISSUE-006",
       "createdAt": "2026-07-24T02:50:53.392Z",
       "file": "incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md"
+    },
+    {
+      "id": "INC-2026-012",
+      "title": "UAT 发现默认 --ignore-user-config 会丢失自定义 model_provider，却继续复用 ChatGPT 登录缓存，导致评测消耗错误账户额度。",
+      "area": "skills/openatdd/scripts/codex-agent-adapter.mjs",
+      "rootCause": "适配器默认传入 --ignore-user-config，导致 model_provider 与自定义 provider 定义被丢弃，但 ChatGPT 登录缓存仍可用，于是子进程静默切换到错误额度来源。",
+      "invariantId": "INV-2026-012",
+      "invariant": "真实 Agent 评测默认沿用用户 provider；忽略用户配置必须由 --isolated-config 显式选择并记录到报告。",
+      "tests": [
+        "bundled Codex argv 默认与显式隔离模式断言，并通过真实 adapter provider 探测。"
+      ],
+      "paths": [
+        "skills/openatdd/scripts/codex-agent-adapter.mjs",
+        "skills/openatdd/scripts/agent-eval.mjs",
+        "skills/openatdd/scripts/openatdd.mjs",
+        "tests/agent-eval.test.mjs"
+      ],
+      "tags": [],
+      "sourceTask": "eval-user-config",
+      "sourceIssue": "ISSUE-001",
+      "createdAt": "2026-07-28T02:56:45.188Z",
+      "file": "incidents/INC-2026-012-uat-ignore-user-config-model-provider-chatgpt.md"
+    },
+    {
+      "id": "INC-2026-013",
+      "title": "Simple 冒烟中 full-openatdd 仍由主模型反复修复合同和 finalization：38 次命令、1,557,774 输入 Token、451,937 ms，未达到宿主确定性执行目标。",
+      "area": "skills/openatdd/scripts/codex-agent-adapter.mjs",
+      "rootCause": "full delivery 仍要求主模型创建、调试和反复执行合同与 finalization 状态机，确定性流程错误进入模型上下文并造成级联重试。",
+      "invariantId": "INV-2026-013",
+      "invariant": "确定性的门禁、状态、证据和 finalization 由宿主执行；实现模型只接收冻结合同，不操作工作流状态机。",
+      "tests": [
+        "host_gated_full_delivery_rejects_phase_one_product_edits_and_runs_two_clean_contexts"
+      ],
+      "paths": [
+        "skills/openatdd/scripts/codex-agent-adapter.mjs",
+        "evals/agent/profiles/full-openatdd-runtime.v2.md",
+        "tests/agent-eval.test.mjs"
+      ],
+      "tags": [],
+      "sourceTask": "optimize-atdd-runtime-cost",
+      "sourceIssue": "ISSUE-001",
+      "createdAt": "2026-07-28T22:30:24.215Z",
+      "file": "incidents/INC-2026-013-simple-full-openatdd-finalization-38-1-557-774-t.md"
+    },
+    {
+      "id": "INC-2026-014",
+      "title": "Formal complex delivery evaluation full-openatdd run 2 passed generated tests but failed hidden acceptance because eraseAt equaled deletionRequestedAt instead of exactly 30 days later; false-ready rate 50%.",
+      "area": "evals/agent/scenarios/delivery-complex.v2.json",
+      "rootCause": "The complex evaluation hid required JavaScript Date input, ISO persistence, restore/purge audit events, idempotent return value, and null-redaction semantics that were absent from the visible story; generated tests could pass a different valid interpretation and create false readiness.",
+      "invariantId": "INV-2026-014",
+      "invariant": "Every hidden acceptance assertion must trace to an explicit visible requirement; dynamic API input types, exact stored/returned values, state-transition side effects, idempotent results, and time boundaries are part of the acceptance contract.",
+      "tests": [
+        "delivery_complex_public_contract_matches_hidden_observables_and_full_passes_two_runs"
+      ],
+      "paths": [
+        "evals/agent/scenarios/delivery-complex.v2.json",
+        "tests/agent-eval.test.mjs"
+      ],
+      "tags": [],
+      "sourceTask": "optimize-atdd-runtime-cost",
+      "sourceIssue": "ISSUE-002",
+      "createdAt": "2026-07-28T23:30:03.943Z",
+      "file": "incidents/INC-2026-014-formal-complex-delivery-evaluation-full-openatdd.md"
     }
   ]
 }

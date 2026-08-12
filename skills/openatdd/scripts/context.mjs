@@ -145,6 +145,7 @@ function typeForNode(node) {
     Incident: "Incident",
     Invariant: "Invariant",
     Issue: "Issue",
+    ProjectTruth: "ProjectTruth",
     Solution: "SolutionContract",
     Standard: "Standard",
     Research: "Research",
@@ -195,6 +196,21 @@ function addActiveEnvironment(collection, graph, surface) {
       ...source,
       relevance: 1,
       reasons: [surface === "implementation" ? "active-project-environment" : "verification-environment"],
+      nodeIds: [node.id],
+    });
+  }
+}
+
+function addProjectTruth(collection, graph, surface) {
+  for (const node of graph.nodes.filter((candidate) => candidate.type === "ProjectTruth" && !candidate.stale)) {
+    const source = sourceFromNode(node);
+    if (!source) continue;
+    addReference(collection, {
+      id: `graph:${node.id}`,
+      type: "ProjectTruth",
+      ...source,
+      relevance: 11,
+      reasons: [surface === "implementation" ? "current-project-boundary" : "current-project-expectations"],
       nodeIds: [node.id],
     });
   }
@@ -297,6 +313,8 @@ export async function buildScopedContext(root, taskId, options = {}) {
   const implementation = new Map();
   const verification = new Map();
   await directReferences(files, state, implementation, verification, warnings);
+  addProjectTruth(implementation, graph, "implementation");
+  addProjectTruth(verification, graph, "verification");
   const query = [
     options.query,
     state.requirement,

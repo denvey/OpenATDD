@@ -13,7 +13,7 @@ fixture: n/a
 integration: n/a
 known_workarounds: none
 credential_variables: ""
-source: package.json and successful npm pack dry-run
-last_verified_at: "2026-07-24T00:34:43.872Z"
+source: automatic preflight
+last_verified_at: "2026-07-28T02:56:58.025Z"
 discovery_budget_seconds: 300
 browser_round_trip_budget: 12

@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "name": "OpenATDD end-to-end delivery rubric",
+  "passScore": 100,
+  "penalties": {},
+  "gates": {
+    "requireHiddenChecks": true
+  }
+}

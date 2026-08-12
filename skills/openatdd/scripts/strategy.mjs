@@ -101,6 +101,7 @@ function checkStatusCounts(state) {
 }
 
 const DELIVERY_PHASES = new Set(["IMPLEMENTING", "REPAIRING", "PRE_UAT"]);
+const DELIVERY_TERMINAL_PHASES = new Set(["DELIVERED", "READY_FOR_UAT"]);
 
 function elapsedMs(start, end) {
   const started = new Date(start ?? 0).getTime();
@@ -111,7 +112,7 @@ function elapsedMs(start, end) {
 function deliveryTiming(state, clock) {
   const now = isoNow(clock);
   const completed = [...(state.timing?.phases ?? [])];
-  if (state.timing?.currentPhase && state.timing.currentPhase !== "READY_FOR_UAT" && state.timing.phaseStartedAt) {
+  if (state.timing?.currentPhase && !DELIVERY_TERMINAL_PHASES.has(state.timing.currentPhase) && state.timing.phaseStartedAt) {
     completed.push({
       phase: state.timing.currentPhase,
       startedAt: state.timing.phaseStartedAt,
@@ -133,11 +134,25 @@ function deliveryTiming(state, clock) {
     .filter((item) => ["ACCEPTANCE_DRAFT", "SOLUTION_DRAFT"].includes(item.phase))
     .reduce((sum, item) => sum + item.durationMs, 0);
   const end = state.readyAt ?? now;
+  // The largest gaps between consecutive history events show where wall-clock
+  // time actually went — long agent turns, human waits, or command execution —
+  // at a finer grain than per-phase totals.
+  const events = (state.history ?? []).filter((item) => item.at && item.event);
+  const largestGaps = events.slice(1)
+    .map((event, index) => ({
+      fromEvent: events[index].event,
+      toEvent: event.event,
+      startedAt: events[index].at,
+      durationMs: elapsedMs(events[index].at, event.at),
+    }))
+    .sort((left, right) => right.durationMs - left.durationMs)
+    .slice(0, 5);
   return {
     taskWallTimeMs: elapsedMs(state.createdAt, end),
     deliveryActiveMs,
     contractElapsedMs,
     phases,
+    largestGaps,
   };
 }
 
@@ -627,6 +642,14 @@ export function renderStrategyRetrospective(retrospective) {
   lines.push(`| ${zh ? "阶段" : "Phase"} | ${zh ? "耗时" : "Duration"} |`);
   lines.push("|---|---:|");
   for (const phase of retrospective.metrics.timing.phases) lines.push(`| ${phase.phase} | ${duration(phase.durationMs)} |`);
+  if ((retrospective.metrics.timing.largestGaps ?? []).length > 0) {
+    lines.push("", `### ${zh ? "最大事件间隔" : "Largest event gaps"}`, "");
+    lines.push(`| ${zh ? "从" : "From"} | ${zh ? "到" : "To"} | ${zh ? "间隔" : "Gap"} |`);
+    lines.push("|---|---|---:|");
+    for (const gap of retrospective.metrics.timing.largestGaps) {
+      lines.push(`| ${escapeCell(gap.fromEvent)} | ${escapeCell(gap.toEvent)} | ${duration(gap.durationMs)} |`);
+    }
+  }
   lines.push("", `## ${zh ? "优化建议" : "Optimization recommendations"}`, "");
   for (const item of retrospective.recommendations) lines.push(`- **${localizedAction(item.action, retrospective.language)} · ${capabilityLabel(item.capabilityId, retrospective.language)}**：${item.reason}`);
   lines.push("", `## ${zh ? "解释边界" : "Interpretation limits"}`, "");

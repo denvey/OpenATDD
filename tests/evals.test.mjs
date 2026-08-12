@@ -334,10 +334,10 @@ async function probeFastFinalization(t) {
   const repeated = await finalizeTask(root, "fast-finalization-probe");
   return {
     preview_non_mutating: preview.unchangedState && Buffer.compare(before, previewState) === 0,
-    final_ready: final.state.phase === "READY_FOR_UAT" && final.state.finalization.status === "complete",
+    final_ready: final.state.phase === "DELIVERED" && final.state.finalization.status === "complete",
     one_broad_group: final.result.metrics.checkGroupRuns.broad === 1,
     one_complete_journey: final.result.metrics.uatJourneyRuns === 1,
-    budget_warning_non_blocking: preview.preview.metrics.warnings.length > 0 && final.state.phase === "READY_FOR_UAT",
+    budget_warning_non_blocking: preview.preview.metrics.warnings.length > 0 && final.state.phase === "DELIVERED",
     same_fingerprint_idempotent: repeated.unchanged === true,
   };
 }

@@ -85,12 +85,15 @@ const AUTHORIZATION_OVERLAY_SET = new Set(AUTHORIZATION_OVERLAYS);
  * Return the recorded overlays that require an explicit authorization decision.
  * Accepts either a routing record or a bare signal list so persisted schema-v1
  * tasks without `riskOverlays` still resolve from `assessment.riskSignals`.
+ * `additional` extends the built-in set with project-configured overlays; the
+ * configuration can only tighten the requirement, never remove a built-in one.
  */
-export function authorizationOverlays(source) {
+export function authorizationOverlays(source, additional = []) {
   const signals = Array.isArray(source)
     ? source
     : source?.riskOverlays ?? source?.assessment?.riskSignals ?? [];
-  return RISK_OVERLAYS.filter((signal) => AUTHORIZATION_OVERLAY_SET.has(signal) && signals.includes(signal));
+  const required = new Set([...AUTHORIZATION_OVERLAYS, ...additional]);
+  return RISK_OVERLAYS.filter((signal) => required.has(signal) && signals.includes(signal));
 }
 
 function isRecord(value) {

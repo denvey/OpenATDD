@@ -13,7 +13,11 @@ available browser controller for deterministic interaction and screenshots.
 
 Cover authentication, request shape, response and error semantics, persisted
 state, idempotency where relevant, and an unauthorized or invalid request.
-Preserve request/response evidence with secrets removed.
+Preserve request/response evidence with secrets removed. Classify deterministic
+API behavior as `AUTO`: the delivery report gives the person the actual result
+and evidence without asking them to call the endpoint again. Use `ASSISTED`
+only when a person must interpret prepared evidence, and `MANUAL` only when the
+approved outcome cannot be executed or observed automatically.
 
 ## Files and exports
 
@@ -44,6 +48,13 @@ Classify visual comfort, real-device feel, legal review, finance approval,
 hardware, CAPTCHA, or inaccessible third-party steps as `ASSISTED` or `MANUAL`.
 Collect the best available evidence without claiming that AI completed the
 human judgment.
+
+## Delivery disposition
+
+Successful verification enters `DELIVERED` for every surface. `AUTO`,
+`ASSISTED`, and `MANUAL` determine report content, not extra approval gates.
+Only blocking `MANUAL` criteria produce human UAT steps. No reply is required
+when the delivered result is acceptable; a reported objection reopens repair.
 
 ## Risk expansion
 

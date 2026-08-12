@@ -185,6 +185,20 @@ Every matching pagination cursor is consumed exactly once.
   const knowledge = path.join(root, ".openatdd", "knowledge");
   await mkdir(path.join(knowledge, "standards"), { recursive: true });
   await mkdir(path.join(knowledge, "research"), { recursive: true });
+  await writeFile(path.join(knowledge, "project.md"), `# Project truth
+
+## Product rules
+
+- Every export preserves the selected filters.
+
+## Architecture boundaries
+
+- Export orchestration stays in src/export.
+
+## Technical decisions
+
+- Pagination reuses the established cursor loop.
+`);
   await writeFile(path.join(knowledge, "standards", "export.md"), "# Export standard\n\nEvery export consumes deterministic pagination and reuses established paths.\n");
   await writeFile(path.join(knowledge, "research", "filtered-export.md"), "# Filtered export research\n\nLocal analysis favors the existing cursor implementation over new infrastructure.\n");
   await writeJson(path.join(root, ".openatdd", "environments", "observations.json"), {
@@ -210,6 +224,7 @@ test("rebuilds a typed graph with stable provenance and token query", async (t) 
   assert(await readFile(graphFiles(root).graph, "utf8"));
   assert(graph.nodes.some((node) => node.id === "task:current-export" && node.type === "Task"));
   assert(graph.nodes.some((node) => node.id === "invariant:INV-2026-001" && node.type === "Invariant"));
+  assert(graph.nodes.some((node) => node.id === "project-truth:current" && node.type === "ProjectTruth"));
   assert(graph.nodes.some((node) => node.type === "Standard" && node.source.path.endsWith("standards/export.md")));
   assert(graph.nodes.some((node) => node.type === "Research" && node.source.path.endsWith("research/filtered-export.md")));
   assert(graph.nodes.some((node) => node.type === "EnvironmentObservation"));
@@ -284,6 +299,8 @@ test("builds one scoped context with distinct implementation and verification re
   assert.equal(await readFile(files.state, "utf8").then(Boolean), true);
   await assert.rejects(() => readFile(files.context, "utf8"), (error) => error.code === "ENOENT");
   assert(quick.implementation.some((reference) => reference.type === "SolutionContract"));
+  assert(quick.implementation.some((reference) => reference.type === "ProjectTruth"));
+  assert(quick.verification.some((reference) => reference.type === "ProjectTruth"));
   assert(quick.verification.some((reference) => reference.type === "HistoricalAcceptance"));
   assert(!quick.implementation.some((reference) => reference.type === "HistoricalAcceptance"));
   assert(Object.keys(quick.sourceDigests).every((source) => source.startsWith(".openatdd/")));
@@ -291,10 +308,48 @@ test("builds one scoped context with distinct implementation and verification re
   const standard = await buildScopedContext(root, "current-export", { lane: "standard", persist: true });
   assert.equal(JSON.parse(await readFile(files.context, "utf8")).digest, standard.digest);
   assert(standard.implementation.some((reference) => reference.type === "Decision"));
+  assert(standard.implementation.some((reference) => reference.type === "ProjectTruth"));
   assert(standard.implementation.some((reference) => reference.type === "Standard"));
   assert(standard.verification.some((reference) => reference.type === "EnvironmentObservation"));
   const deep = await buildScopedContext(root, "current-export", { lane: "deep", persist: false });
+  assert(deep.implementation.some((reference) => reference.type === "ProjectTruth"));
+  assert(deep.verification.some((reference) => reference.type === "ProjectTruth"));
   assert(deep.implementation.some((reference) => reference.type === "Research"));
+});
+
+test("project truth changes stale and rebuild the derived graph and task context", async (t) => {
+  const { root } = await projectFixture(t);
+  const storedGraph = await buildGraph(root, { persist: true });
+  const storedContext = await buildScopedContext(root, "current-export", { lane: "standard", persist: true });
+  const projectTruth = path.join(root, ".openatdd", "knowledge", "project.md");
+  await writeFile(projectTruth, `# Project truth
+
+## Product rules
+
+- Every export preserves filters and the current sort order.
+
+## Architecture boundaries
+
+- Export orchestration stays in src/export.
+
+## Technical decisions
+
+- Pagination reuses the established cursor loop.
+`);
+
+  const graphStatus = await graphStaleness(root, storedGraph);
+  assert.equal(graphStatus.stale, true);
+  const contextStatus = await checkContextStaleness(root, storedContext, { checkGraph: false });
+  assert.equal(contextStatus.stale, true);
+  assert(contextStatus.reasons.some((reason) => reason.includes(".openatdd/knowledge/project.md")));
+
+  const rebuiltGraph = await loadGraph(root);
+  assert.match(rebuiltGraph.nodes.find((node) => node.type === "ProjectTruth").text, /current sort order/);
+  const rebuiltContext = await loadScopedContext(root, "current-export", { lane: "standard", persist: false });
+  assert.equal(rebuiltContext.loadStatus.rebuilt, true);
+  assert(rebuiltContext.implementation.some((reference) => (
+    reference.type === "ProjectTruth" && reference.digest === rebuiltGraph.nodes.find((node) => node.type === "ProjectTruth").source.sha256
+  )));
 });
 
 test("marks changed scoped sources stale and safely rebuilds missing context", async (t) => {

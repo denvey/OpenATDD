@@ -12,14 +12,18 @@ import {
   beginPreUat,
   createTask,
   draftSolution,
+  initProject,
+  isDeliveryTerminalPhase,
   loadTask,
   markReady,
+  PHASES,
   recordAcceptanceResult,
   recordCheck,
   recordIssue,
   recordSolutionReview,
   recordTaskDecision,
   searchMemory,
+  projectFiles,
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
 import {
@@ -34,6 +38,21 @@ import {
 } from "./helpers.mjs";
 
 const execFileAsync = promisify(execFile);
+
+test("project initialization creates and preserves one compact project truth file", async (t) => {
+  const root = await temporaryProject(t);
+  await initProject(root);
+  const files = projectFiles(root);
+  const template = await readFile(files.projectTruth, "utf8");
+  assert.match(template, /## Product rules/);
+  assert.match(template, /## Architecture boundaries/);
+  assert.match(template, /## Technical decisions/);
+
+  const maintained = `${template}\n- Payments remain inside the billing module.\n`;
+  await writeFile(files.projectTruth, maintained);
+  await initProject(root);
+  assert.equal(await readFile(files.projectTruth, "utf8"), maintained);
+});
 
 test("enforces acceptance approval before solution and solution approval before implementation", async (t) => {
   const root = await temporaryProject(t);
@@ -107,13 +126,42 @@ test("requires fresh evidence and a passing project check before readiness", asy
   });
 
   const ready = await markReady(root, "evidence-gate");
-  assert.equal(ready.state.phase, "READY_FOR_UAT");
-  assert.match(await readFile(ready.files.report, "utf8"), /AC-01/);
+  assert.equal(ready.state.phase, "DELIVERED");
+  const report = await readFile(ready.files.report, "utf8");
+  assert.match(report, /^# Delivery report:/);
+  assert.match(report, /AC-01/);
 
   await writeFile(path.resolve(root, acceptanceEvidence), "mutated after recording\n");
   const validation = await import("../skills/openatdd/scripts/workflow.mjs").then(({ validateTask }) => validateTask(root, "evidence-gate"));
   assert.equal(validation.valid, false);
   assert(validation.errors.some((error) => error.includes("changed after it was recorded")));
+});
+
+test("delivery is final by default and a later objection reopens repair", async (t) => {
+  const root = await temporaryProject(t);
+  await prepareApprovedTask(root, "objection-reopens");
+  await beginImplementation(root, "objection-reopens");
+  await beginPreUat(root, "objection-reopens");
+  let evidence = await writeEvidence(root, "objection-reopens", "acceptance.txt", "journey passed");
+  await recordAcceptanceResult(root, "objection-reopens", { acceptanceId: "AC-01", status: "passed", evidence });
+  evidence = await writeEvidence(root, "objection-reopens", "tests.txt", "tests passed");
+  await recordCheck(root, "objection-reopens", { name: "tests", command: "node --test", status: "passed", evidence });
+  assert.equal((await markReady(root, "objection-reopens")).state.phase, "DELIVERED");
+
+  const reopened = await recordIssue(root, "objection-reopens", {
+    acceptanceId: "AC-01",
+    status: "open",
+    symptom: "The delivered response omits the requested field",
+  });
+  assert.equal(reopened.state.phase, "REPAIRING");
+  assert.equal(reopened.state.readyAt, null);
+  assert.equal(reopened.state.issues[0].status, "open");
+});
+
+test("new and legacy delivery phases are both recognized as terminal", () => {
+  assert.equal(isDeliveryTerminalPhase(PHASES.DELIVERED), true);
+  assert.equal(isDeliveryTerminalPhase(PHASES.READY_FOR_UAT), true);
+  assert.equal(isDeliveryTerminalPhase(PHASES.PRE_UAT), false);
 });
 
 test("schema v3 assisted acceptance cannot be self-declared passed", async (t) => {
@@ -220,7 +268,7 @@ test("shared impact paths mark old acceptance affected and block the new handoff
   await recordAcceptanceResult(root, "old-feature", { acceptanceId: "AC-01", status: "passed", evidence });
   evidence = await writeEvidence(root, "old-feature", "old-tests-rerun.txt", "old tests rerun passed");
   await recordCheck(root, "old-feature", { name: "tests", command: "npm test", status: "passed", evidence });
-  assert.equal((await markReady(root, "new-feature")).state.phase, "READY_FOR_UAT");
+  assert.equal((await markReady(root, "new-feature")).state.phase, "DELIVERED");
 });
 
 test("the Skill CLI runs from a copied standalone directory", async (t) => {
@@ -354,9 +402,9 @@ test("human-facing templates and reports infer Chinese without a language option
     readyAt: null,
   };
   const report = renderTaskReport(state);
-  assert.match(report, /^# UAT 前报告：/);
+  assert.match(report, /^# 交付报告：/);
   assert.match(report, /### 验收结果/);
-  assert.doesNotMatch(report, /# Pre-UAT report/);
+  assert.doesNotMatch(report, /# Delivery report/);
 });
 
 async function quickCards(root, taskId, options = {}) {
@@ -421,6 +469,7 @@ test("advance stops at the authorization gate and resumes after the recorded dec
 
   await recordTaskDecision(root, "quick-advance-authorization", {
     owner: "authorization",
+    coversOverlays: ["deletion"],
     question: "May the stale exports be purged in this delivery?",
     options: [
       { id: "authorize", label: "Authorize the purge", consequence: "Stale exports are removed." },
@@ -438,6 +487,47 @@ test("advance stops at the authorization gate and resumes after the recorded dec
   assert.deepEqual(
     resumed.steps.filter((step) => step.performed).map((step) => step.step),
     ["approve-solution", "begin"],
+  );
+});
+
+test("CLI new accepts inline assessment and returns related knowledge hits", async (t) => {
+  const script = path.resolve("skills/openatdd/scripts/openatdd.mjs");
+  const root = await temporaryProject(t);
+  await initProject(root);
+  await writeFile(projectFiles(root).projectTruth, `# Project truth
+
+## Product rules
+
+- Export button state is deterministic.
+
+## Architecture boundaries
+
+## Technical decisions
+`);
+  const created = await execFileAsync(process.execPath, [
+    script, "new", "one-turn-create", "--requirement", "Fix the export button state",
+    "--scope", "local", "--project-pattern", "established",
+    "--reversibility", "reversible", "--uncertainty", "low",
+    "--json", "--root", root,
+  ]);
+  const payload = JSON.parse(created.stdout);
+  assert.equal(payload.phase, "ACCEPTANCE_DRAFT");
+  assert.equal(payload.routing.lane, "quick");
+  assert(Array.isArray(payload.knowledge.memory.matches));
+  assert(Array.isArray(payload.knowledge.graph.matches));
+  assert.equal(payload.knowledge.graph.projectTruth.path, ".openatdd/knowledge/project.md");
+  assert.deepEqual(Object.keys(payload.knowledge.graph.projectTruth).sort(), ["path", "sha256", "size", "title"]);
+  assert(!payload.knowledge.graph.matches.some((match) => match.node.type === "ProjectTruth"));
+  assert(!created.stdout.includes("Export button state is deterministic."));
+  assert.deepEqual(payload.knowledge.warnings, []);
+
+  // A partial assessment is rejected instead of guessed.
+  await assert.rejects(
+    () => execFileAsync(process.execPath, [
+      script, "new", "partial-assess", "--requirement", "Another change",
+      "--scope", "local", "--json", "--root", root,
+    ]),
+    (error) => error.stderr.includes("--project-pattern"),
   );
 });
 

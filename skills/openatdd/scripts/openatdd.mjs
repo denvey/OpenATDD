@@ -9,7 +9,10 @@ import {
   createCodexAdapter,
   createCommandAdapter,
   createMockAdapter,
+  compareDeliveryEvaluationSummaries,
   runAgentEvaluation,
+  runDeliveryEvaluation,
+  summarizeDeliveryEvaluationReports,
   verifyAgentEvaluationReport,
 } from "./agent-eval.mjs";
 import { capabilityProfile, writeStrategyRetrospective } from "./strategy.mjs";
@@ -44,6 +47,7 @@ import {
   reopenAcceptance,
   reopenSolution,
   rebuildKnowledgeGraph,
+  relatedKnowledge,
   resumeTask,
   resolveTaskDecision,
   searchKnowledgeGraph,
@@ -57,11 +61,13 @@ const HELP = `OpenATDD — acceptance-first AI delivery
 
 Usage:
   openatdd init [--root PATH]
-  openatdd new TASK --requirement TEXT [--root PATH]
+  openatdd new TASK --requirement TEXT [assessment flags] [--root PATH]
   openatdd adopt TASK --requirement TEXT [--root PATH]
   openatdd status TASK [--json]
   openatdd assess TASK --scope SCOPE --project-pattern PATTERN
                   --reversibility LEVEL --uncertainty LEVEL [--risk SIGNAL]
+                  (new accepts the same flags to create, assess, and return
+                   related memory/graph hits in one invocation)
   openatdd decision TASK --input FILE
   openatdd resolve-decision TASK --id DEC-001 --option OPTION [--rationale TEXT]
   openatdd approve-acceptance TASK
@@ -81,7 +87,7 @@ Usage:
   openatdd pre-uat TASK
   openatdd preflight TASK [--environment local] [--assertions FILE]
   openatdd observe-env ENV --key KEY --value VALUE --source TEXT --evidence PATH
-  openatdd plan-uat TASK [--plan FILE]
+  openatdd plan-uat TASK [--plan FILE] [--execution-mode auto|deterministic|browser-low|human]
   openatdd batch TASK --id BATCH --status STATUS --evidence PATH
   openatdd handoff TASK [--estimated-minutes N]
   openatdd record TASK --acceptance AC-01 --status STATUS [--summary TEXT] --evidence PATH
@@ -100,13 +106,18 @@ Usage:
   openatdd graph-impact TASK [--paths PATH]
   openatdd context-build TASK [--persist] [--query TEXT]
   openatdd context-show TASK
-  openatdd agent-eval --scenario FILE [--adapter mock|command|codex] [--argv-json JSON]
+  openatdd agent-eval --scenario FILE [--adapter mock|command|codex] [--delivery-profile PROFILE] [--argv-json JSON]
                   [--real-model] [--adapter-name NAME] [--model MODEL]
-                  [--reasoning-effort LEVEL] [--bare-agent]
+                  [--reasoning-effort LEVEL] [--isolated-config] [--bare-agent]
                   [--bare-argv-json JSON] [--bare-real-model] [--ablate CAPABILITY]
                   [--runs N] [--report FILE]
+                  (schema-v2 delivery scenarios run bare, thin-atdd, full-openatdd)
   openatdd agent-eval --verify-report FILE [--min-runs N] [--require-baseline]
-                  [--require-ablation CAPABILITY]
+                  [--require-ablation CAPABILITY] [--require-profile PROFILE]
+  openatdd agent-eval --summarize-report FILE [--summarize-report FILE]
+                  [--summary-json FILE] [--summary-markdown FILE]
+  openatdd agent-eval --compare-baseline FILE --compare-candidate FILE
+                  [--comparison-json FILE] [--comparison-markdown FILE] [--enforce-optimization]
   openatdd retrospect TASK [--eval-report FILE] [--json]
   openatdd validate TASK [--json]
   openatdd ready TASK
@@ -170,6 +181,18 @@ function outputState(io, state) {
   }
 }
 
+function writeKnowledgeSummary(io, knowledge) {
+  if (knowledge.graph.projectTruth) {
+    io.stdout.write(`Project truth: ${knowledge.graph.projectTruth.path} — ${knowledge.graph.projectTruth.sha256}\n`);
+  }
+  for (const match of knowledge.memory.matches) io.stdout.write(`Memory: ${match.id} [score ${match.score}] ${match.title} — ${match.file}\n`);
+  for (const match of knowledge.memory.environmentMatches) {
+    io.stdout.write(`Memory ENV:${match.environment}/${match.key} [score ${match.score}] ${match.value} — verified ${match.last_verified_at}\n`);
+  }
+  for (const match of knowledge.graph.matches) io.stdout.write(`Graph: ${match.node.id} [${match.score}] ${match.node.title ?? ""}\n`);
+  for (const warning of knowledge.warnings) io.stdout.write(`Warning: ${warning}\n`);
+}
+
 async function readJsonInput(root, value, name) {
   const target = path.resolve(root, required(value, name));
   return JSON.parse(await readFile(target, "utf8"));
@@ -209,9 +232,28 @@ async function execute(parsed, io) {
       return 0;
     }
     case "new": {
-      const result = await createTask(root, taskId(positionals), required(options.requirement, "--requirement"));
-      if (json) outputJson(io, summarizeState(result.state));
-      else io.stdout.write(`Created acceptance draft: ${result.files.acceptance}\n`);
+      const created = await createTask(root, taskId(positionals), required(options.requirement, "--requirement"));
+      const assessmentRequested = [options.scope, options["project-pattern"], options.reversibility, options.uncertainty, options.risk]
+        .some((option) => option !== undefined);
+      if (!assessmentRequested) {
+        if (json) outputJson(io, summarizeState(created.state));
+        else io.stdout.write(`Created acceptance draft: ${created.files.acceptance}\n`);
+        return 0;
+      }
+      const assessed = await assessTask(root, taskId(positionals), {
+        scope: required(options.scope, "--scope"),
+        projectPattern: required(options["project-pattern"], "--project-pattern"),
+        reversibility: required(options.reversibility, "--reversibility"),
+        uncertainty: required(options.uncertainty, "--uncertainty"),
+        riskSignals: asArray(options.risk).map(String),
+      });
+      const knowledge = await relatedKnowledge(root, assessed.state.requirement);
+      if (json) outputJson(io, { ...summarizeState(assessed.state), knowledge });
+      else {
+        io.stdout.write(`Created acceptance draft: ${created.files.acceptance}\n`);
+        io.stdout.write(`Task lane: ${assessed.state.routing.lane} (${assessed.state.routing.reasons.join(", ")})\n`);
+        writeKnowledgeSummary(io, knowledge);
+      }
       return 0;
     }
     case "adopt": {
@@ -235,8 +277,12 @@ async function execute(parsed, io) {
         uncertainty: required(options.uncertainty, "--uncertainty"),
         riskSignals: asArray(options.risk).map(String),
       });
-      if (json) outputJson(io, result.state.routing);
-      else io.stdout.write(`Task lane: ${result.state.routing.lane} (${result.state.routing.reasons.join(", ")})\n`);
+      const knowledge = await relatedKnowledge(root, result.state.requirement);
+      if (json) outputJson(io, { ...result.state.routing, knowledge });
+      else {
+        io.stdout.write(`Task lane: ${result.state.routing.lane} (${result.state.routing.reasons.join(", ")})\n`);
+        writeKnowledgeSummary(io, knowledge);
+      }
       return 0;
     }
     case "decision": {
@@ -394,8 +440,9 @@ async function execute(parsed, io) {
         if (json) outputJson(io, { ...result.result, unchanged: result.unchanged, validation: result.validation, preview: result.preview });
         else {
           io.stdout.write(`Validated manifest: ${result.validation.manifestPath}\n`);
-          io.stdout.write(`Rehearsal passed: ${result.preview.candidateFingerprint}\n`);
-          io.stdout.write(`Finalization completed: ${result.state.taskId}\n`);
+          if (result.preview) io.stdout.write(`Rehearsal passed: ${result.preview.candidateFingerprint}\n`);
+          else io.stdout.write("Rehearsal skipped: finalization is already complete for the current fingerprint.\n");
+          io.stdout.write(`${result.unchanged ? "Finalization remains complete" : "Finalization completed"}: ${result.state.taskId}\n`);
           io.stdout.write(`Report: ${result.files.report}\n`);
           io.stdout.write(`Result: ${result.files.finalizeResult}\n`);
           for (const warning of result.validation.warnings) io.stdout.write(`Warning: ${warning}\n`);
@@ -448,7 +495,10 @@ async function execute(parsed, io) {
     }
     case "plan-uat": {
       const plan = options.plan ? JSON.parse(await readFile(path.resolve(root, String(options.plan)), "utf8")) : undefined;
-      const result = await prepareUatPlan(root, taskId(positionals), { plan });
+      const result = await prepareUatPlan(root, taskId(positionals), {
+        plan,
+        ...(options["execution-mode"] ? { execution: { mode: String(options["execution-mode"]) } } : {}),
+      });
       if (json) outputJson(io, { plan: result.plan, warnings: result.warnings });
       else io.stdout.write(`Prepared ${result.plan.batches.length} cohesive UAT batch(es): ${result.files.uatPlan}\n`);
       return 0;
@@ -471,7 +521,7 @@ async function execute(parsed, io) {
         estimatedMinutes: options["estimated-minutes"],
       });
       if (json) outputJson(io, result.handoff);
-      else io.stdout.write(`Prepared detailed UAT handoff: ${result.files.handoff}\n`);
+      else io.stdout.write(`Prepared detailed delivery handoff: ${result.files.handoff}\n`);
       return 0;
     }
     case "record": {
@@ -592,14 +642,38 @@ async function execute(parsed, io) {
       return 0;
     }
     case "agent-eval": {
+      if (options["compare-baseline"] || options["compare-candidate"]) {
+        const comparison = await compareDeliveryEvaluationSummaries(
+          path.resolve(root, required(options["compare-baseline"], "--compare-baseline")),
+          path.resolve(root, required(options["compare-candidate"], "--compare-candidate")),
+          {
+            jsonPath: options["comparison-json"] ? path.resolve(root, String(options["comparison-json"])) : undefined,
+            markdownPath: options["comparison-markdown"] ? path.resolve(root, String(options["comparison-markdown"])) : undefined,
+          },
+        );
+        if (json) outputJson(io, comparison);
+        else io.stdout.write(`Delivery optimization: ${comparison.passed ? "passed" : "failed"}\n`);
+        assert(!options["enforce-optimization"] || comparison.passed, "OPTIMIZATION_THRESHOLD_FAILED", "Delivery optimization thresholds failed.");
+        return 0;
+      }
+      if (options["summarize-report"]) {
+        const summary = await summarizeDeliveryEvaluationReports(asArray(options["summarize-report"]).map((item) => path.resolve(root, String(item))), {
+          jsonPath: options["summary-json"] ? path.resolve(root, String(options["summary-json"])) : undefined,
+          markdownPath: options["summary-markdown"] ? path.resolve(root, String(options["summary-markdown"])) : undefined,
+        });
+        if (json) outputJson(io, summary);
+        else io.stdout.write(`Delivery evaluation summary: ${summary.scenarios.length} scenarios\n`);
+        return 0;
+      }
       if (options["verify-report"]) {
         const verified = await verifyAgentEvaluationReport(path.resolve(root, String(options["verify-report"])), {
           minimumRuns: Number(options["min-runs"] ?? 2),
           requireBaseline: Boolean(options["require-baseline"]),
           requiredAblations: asArray(options["require-ablation"]).map(String),
+          requiredProfiles: asArray(options["require-profile"]).map(String),
         });
         if (json) outputJson(io, verified);
-        else io.stdout.write(`Real Agent report verified: ${verified.scenarioId} (${verified.primary.runs} runs)\n`);
+        else io.stdout.write(`Real Agent report verified: ${verified.scenarioId}${verified.primary ? ` (${verified.primary.runs} runs)` : ""}\n`);
         return 0;
       }
       const scenarioPath = path.resolve(root, required(options.scenario, "--scenario"));
@@ -608,8 +682,53 @@ async function execute(parsed, io) {
       const codexOptions = {
         model: options.model ? String(options.model) : undefined,
         reasoningEffort: options["reasoning-effort"] ? String(options["reasoning-effort"]) : undefined,
+        isolateUserConfig: Boolean(options["isolated-config"]),
       };
       if (!["mock", "command", "codex"].includes(adapterKind)) throw new OpenATDDError("INVALID_ARGUMENT", `Unknown adapter: ${adapterKind}`);
+      if (scenario.schemaVersion === 2 && scenario.kind === "delivery") {
+        const selectedProfiles = asArray(options["delivery-profile"]).map(String);
+        const profileNames = selectedProfiles.length > 0 ? [...new Set(selectedProfiles)] : ["bare", "thin-atdd", "full-openatdd"];
+        assert(profileNames.every((name) => ["bare", "thin-atdd", "full-openatdd"].includes(name)), "INVALID_ARGUMENT", "--delivery-profile is invalid.");
+        const profileAdapters = profileNames.map((profileName) => {
+          if (adapterKind === "codex") {
+            return {
+              profileName,
+              adapter: createCodexAdapter({
+                evaluationMode: "delivery",
+                profile: profileName,
+                bare: profileName === "bare",
+                ...codexOptions,
+              }),
+            };
+          }
+          if (adapterKind === "command") {
+            return {
+              profileName,
+              adapter: createCommandAdapter({
+                name: `${options["adapter-name"] ?? "delivery-command"}-${profileName}`,
+                argv: jsonArgv(options["argv-json"], "--argv-json"),
+                realModel: Boolean(options["real-model"]),
+                provenance: options["real-model"] ? "declared-real-model-command" : undefined,
+                env: { OPENATDD_EVAL_PROFILE: profileName },
+              }),
+            };
+          }
+          const fixture = scenario.mock?.profiles?.[profileName];
+          if (!fixture) throw new OpenATDDError("INVALID_ARGUMENT", `Scenario ${scenario.id} has no mock profile fixture for ${profileName}.`);
+          return { profileName, adapter: createMockAdapter(fixture, { name: `mock-${profileName}` }) };
+        });
+        const repetitions = options.runs === undefined ? undefined : Number(options.runs);
+        const report = await runDeliveryEvaluation({
+          scenarioPath,
+          profileAdapters,
+          profileNames,
+          ...(repetitions === undefined ? {} : { repetitions }),
+          ...(options.report ? { reportPath: path.resolve(root, String(options.report)) } : {}),
+        });
+        if (json) outputJson(io, report);
+        else io.stdout.write(`Delivery eval ${report.scenario.id}: ${Object.entries(report.profiles).map(([name, value]) => `${name} ${(value.summary.passRate * 100).toFixed(0)}%`).join(", ")}\n`);
+        return 0;
+      }
       const adapter = adapterKind === "command"
         ? createCommandAdapter({
           name: options["adapter-name"],
@@ -678,7 +797,7 @@ async function execute(parsed, io) {
     case "ready": {
       const result = await markReady(root, taskId(positionals));
       if (json) outputJson(io, { ...summarizeState(result.state), report: result.files.report, notification: result.files.notification });
-      else io.stdout.write(`READY_FOR_UAT: ${result.state.taskId}\nReport: ${result.files.report}\nNotification draft: ${result.files.notification}\n`);
+      else io.stdout.write(`DELIVERED: ${result.state.taskId}\nReport: ${result.files.report}\nNotification draft: ${result.files.notification}\n`);
       return 0;
     }
     case "report": {

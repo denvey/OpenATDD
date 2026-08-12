@@ -1,0 +1,183 @@
+{
+  "schemaVersion": 1,
+  "surface": "cli",
+  "environment": "local",
+  "source": {
+    "include": ["**/*"],
+    "exclude": ["evals/reports/**"]
+  },
+  "preflight": {
+    "scope": "project",
+    "reason": "The approved optimization, browser routing, and real-model report verification run entirely in deterministic local Node.js harnesses without a live service or production account."
+  },
+  "dryRun": {
+    "commands": [
+      {
+        "id": "cli-help-smoke",
+        "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "help"],
+        "deterministic": true,
+        "timeoutMs": 30000
+      }
+    ],
+    "checkHttpLinks": false
+  },
+  "checks": [
+    {
+      "id": "focused-runtime-cost",
+      "name": "Runtime profile, report, command lifecycle, and browser routing regressions",
+      "scope": "focused",
+      "commands": [
+        {
+          "id": "focused-runtime-cost-tests",
+          "argv": ["node", "--test", "tests/agent-eval.test.mjs", "tests/intelligence.test.mjs", "tests/delivery-v2.test.mjs"],
+          "deterministic": true,
+          "timeoutMs": 120000
+        }
+      ]
+    },
+    {
+      "id": "module-optimized-evaluation",
+      "name": "Optimized real-model reports and mechanical cost thresholds",
+      "scope": "module",
+      "commands": [
+        {
+          "id": "module-simple-optimized-report",
+          "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--verify-report", "evals/reports/delivery-simple-optimized.json", "--min-runs", "2", "--require-profile", "bare", "--require-profile", "thin-atdd", "--require-profile", "full-openatdd"],
+          "deterministic": true,
+          "timeoutMs": 30000
+        },
+        {
+          "id": "module-medium-optimized-report",
+          "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--verify-report", "evals/reports/delivery-medium-optimized.json", "--min-runs", "2", "--require-profile", "bare", "--require-profile", "thin-atdd", "--require-profile", "full-openatdd"],
+          "deterministic": true,
+          "timeoutMs": 30000
+        },
+        {
+          "id": "module-complex-optimized-report",
+          "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--verify-report", "evals/reports/delivery-complex-optimized.json", "--min-runs", "2", "--require-profile", "bare", "--require-profile", "thin-atdd", "--require-profile", "full-openatdd"],
+          "deterministic": true,
+          "timeoutMs": 30000
+        },
+        {
+          "id": "module-optimization-thresholds",
+          "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--compare-baseline", "evals/reports/delivery-summary.json", "--compare-candidate", "evals/reports/delivery-summary-optimized.json", "--comparison-json", "evals/reports/delivery-optimization.json", "--comparison-markdown", "evals/reports/delivery-optimization.md", "--enforce-optimization"],
+          "deterministic": true,
+          "timeoutMs": 30000
+        }
+      ]
+    },
+    {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "scope": "broad",
+      "commands": [
+        {
+          "id": "broad-project-check",
+          "argv": ["npm", "run", "check"],
+          "timeoutMs": 180000
+        }
+      ]
+    }
+  ],
+  "uat": {
+    "estimatedRoundTrips": 1,
+    "batches": [
+      {
+        "id": "optimization-journey",
+        "name": "Verify three optimized delivery matrices and enforce the approved quality and cost thresholds",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AC-06", "AC-07", "AC-08"],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-simple-optimized-report",
+            "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--verify-report", "evals/reports/delivery-simple-optimized.json", "--min-runs", "2", "--require-profile", "bare", "--require-profile", "thin-atdd", "--require-profile", "full-openatdd"],
+            "deterministic": true,
+            "timeoutMs": 30000
+          },
+          {
+            "id": "uat-medium-optimized-report",
+            "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--verify-report", "evals/reports/delivery-medium-optimized.json", "--min-runs", "2", "--require-profile", "bare", "--require-profile", "thin-atdd", "--require-profile", "full-openatdd"],
+            "deterministic": true,
+            "timeoutMs": 30000
+          },
+          {
+            "id": "uat-complex-optimized-report",
+            "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--verify-report", "evals/reports/delivery-complex-optimized.json", "--min-runs", "2", "--require-profile", "bare", "--require-profile", "thin-atdd", "--require-profile", "full-openatdd"],
+            "deterministic": true,
+            "timeoutMs": 30000
+          },
+          {
+            "id": "uat-optimization-thresholds",
+            "argv": ["node", "skills/openatdd/scripts/openatdd.mjs", "agent-eval", "--compare-baseline", "evals/reports/delivery-summary.json", "--compare-candidate", "evals/reports/delivery-summary-optimized.json", "--comparison-json", "evals/reports/delivery-optimization.json", "--comparison-markdown", "evals/reports/delivery-optimization.md", "--enforce-optimization"],
+            "deterministic": true,
+            "timeoutMs": 30000
+          }
+        ]
+      }
+    ]
+  },
+  "acceptance": {
+    "AC-01": ["check:focused-runtime-cost", "check:broad-project", "batch:optimization-journey"],
+    "AC-02": ["check:focused-runtime-cost", "check:broad-project", "batch:optimization-journey"],
+    "AC-03": ["check:focused-runtime-cost", "check:broad-project", "batch:optimization-journey"],
+    "AC-04": ["check:focused-runtime-cost", "check:module-optimized-evaluation", "batch:optimization-journey"],
+    "AC-05": ["check:module-optimized-evaluation", "check:broad-project", "batch:optimization-journey"],
+    "AC-06": ["check:module-optimized-evaluation", "batch:optimization-journey"],
+    "AC-07": ["check:focused-runtime-cost", "check:broad-project", "batch:optimization-journey"],
+    "AC-08": ["check:focused-runtime-cost", "check:broad-project", "batch:optimization-journey"]
+  },
+  "history": {
+    "mode": "deferred",
+    "overrides": [
+      {
+        "taskId": "detailed-uat-handoff",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AC-06", "AC-07"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      },
+      {
+        "taskId": "end-to-end-agent-eval",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AC-06", "AC-07"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      },
+      {
+        "taskId": "eval-user-config",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      },
+      {
+        "taskId": "fast-portable-finalization",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AC-06", "AC-07", "AC-08"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      },
+      {
+        "taskId": "openatdd-1-0",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AC-06", "AC-07", "AC-08"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      },
+      {
+        "taskId": "openatdd-mvp",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AC-06", "AC-07", "AC-08", "AC-09"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      },
+      {
+        "taskId": "optimize-quick-delivery",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      },
+      {
+        "taskId": "strategy-visibility",
+        "acceptanceIds": ["AC-01", "AC-02", "AC-03", "AC-04"],
+        "evidenceFrom": ["check:broad-project", "batch:optimization-journey"]
+      }
+    ]
+  },
+  "handoff": {
+    "estimatedMinutes": 8
+  },
+  "budgets": {
+    "wallTimeMs": 600000,
+    "commandInvocations": 12,
+    "browserRoundTrips": 1,
+    "evidenceWrites": 40
+  }
+}

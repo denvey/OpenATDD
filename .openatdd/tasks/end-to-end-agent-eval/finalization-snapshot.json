@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "taskId": "end-to-end-agent-eval",
+  "createdAt": "2026-07-28T21:20:23.979Z",
+  "acceptanceSha256": "ba2a9ae6723bd7dba833d07b59904477a522fa869aebb3b9a8cda20746c026a5",
+  "solutionSha256": "5e1bb8239e956f1defd2feb9592f2e635399a943178818fb494dbc1e9c8c9fda",
+  "manifestDigest": "300d5ed7271fcca5be2141039ba92bf1605952ddf143e5212a53cf6b444ced2a",
+  "sourceFingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+  "replay": {
+    "commands": [
+      {
+        "id": "broad-project-check",
+        "argv": [
+          "npm",
+          "run",
+          "check"
+        ],
+        "timeoutMs": 180000
+      }
+    ],
+    "acceptanceIds": [
+      "AC-01",
+      "AC-02",
+      "AC-03",
+      "AC-04",
+      "AC-05",
+      "AC-06",
+      "AC-07"
+    ]
+  }
+}

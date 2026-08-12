@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "environment": "local",
+  "scope": "project",
+  "reason": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency.",
+  "profile": ".openatdd/environments/local.yaml",
+  "status": "passed",
+  "checkedAt": "2026-07-29T08:15:58.644Z",
+  "durationMs": 0,
+  "checks": [
+    {
+      "name": "workspace",
+      "status": "passed",
+      "detail": "."
+    },
+    {
+      "name": "project",
+      "status": "passed",
+      "detail": "configured OpenATDD; expected openatdd or openatdd"
+    },
+    {
+      "name": "start_command",
+      "status": "passed",
+      "detail": "npm run check"
+    },
+    {
+      "name": "application_version",
+      "status": "passed",
+      "detail": "expected 1.0.0; observed 1.0.0"
+    },
+    {
+      "name": "services",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    },
+    {
+      "name": "entry_url",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    },
+    {
+      "name": "credential_variables",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    },
+    {
+      "name": "login",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    },
+    {
+      "name": "organization",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    },
+    {
+      "name": "integration",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    },
+    {
+      "name": "fixture",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    },
+    {
+      "name": "known_workarounds",
+      "status": "not_applicable",
+      "detail": "The approved journey is fully observable through deterministic Node.js tests and CLI/package validation with no live service dependency."
+    }
+  ],
+  "warnings": [],
+  "credentialVariables": []
+}

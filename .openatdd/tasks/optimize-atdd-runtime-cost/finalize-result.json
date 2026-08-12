@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "taskId": "optimize-atdd-runtime-cost",
+  "status": "passed",
+  "completedAt": "2026-07-28T23:43:34.770Z",
+  "sourceFingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+  "inventoryCount": 94,
+  "manifestDigest": "5e331626fc57e3e1d52f5f4a239daf49216810c96bb5484df79ca6cf0ca16161",
+  "profileDigest": "8ea547ccdfe9755cbf1a9cb5f4601b0bc0ecbdfbf5a7f7d8bd94e681e1774c00",
+  "verificationEpoch": 4,
+  "metrics": {
+    "mode": "final",
+    "startedAt": "2026-07-28T23:43:29.162Z",
+    "wallTimeMs": 5619,
+    "dryRunRuns": 1,
+    "finalRuns": 1,
+    "commandInvocations": 10,
+    "cliInvocations": 10,
+    "commandDurationMs": 5498,
+    "checkGroupRuns": {
+      "focused": 1,
+      "module": 1,
+      "broad": 1
+    },
+    "uatJourneyRuns": 1,
+    "uatBatchRuns": 1,
+    "browserRoundTrips": 1,
+    "affectedHistoryPasses": 1,
+    "historyRuns": 8,
+    "historyCacheHits": 0,
+    "historyEpochReuse": 0,
+    "skippedCheckGroups": [],
+    "checkGroupSignatureReuse": [],
+    "evidenceWrites": 10,
+    "evidenceWritesByPhase": {
+      "checks": 6,
+      "uat": 4
+    },
+    "phaseDurationsMs": {
+      "preflight": 0,
+      "checks": 5354,
+      "uat": 149,
+      "acceptance-mapping": 0,
+      "history": 5,
+      "handoff-readiness": 99
+    },
+    "linkChecks": 0,
+    "warnings": []
+  },
+  "affectedHistory": [
+    "detailed-uat-handoff",
+    "end-to-end-agent-eval",
+    "eval-user-config",
+    "fast-portable-finalization",
+    "openatdd-1-0",
+    "openatdd-mvp",
+    "optimize-quick-delivery",
+    "strategy-visibility"
+  ]
+}

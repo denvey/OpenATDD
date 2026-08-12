@@ -1,4 +1,5 @@
 import { assert } from "./lib.mjs";
+import { RISK_OVERLAYS } from "./routing.mjs";
 
 export const DECISION_OWNERS = Object.freeze({
   HUMAN: "human",
@@ -21,6 +22,7 @@ export const INVALIDATION_TARGETS = Object.freeze([
 const OWNER_VALUES = new Set(Object.values(DECISION_OWNERS));
 const STATUS_VALUES = new Set(Object.values(DECISION_STATUSES));
 const INVALIDATION_TARGET_SET = new Set(INVALIDATION_TARGETS);
+const RISK_OVERLAY_VALUES = new Set(RISK_OVERLAYS);
 
 function isRecord(value) {
   return value !== null && typeof value === "object" && !Array.isArray(value);
@@ -122,6 +124,25 @@ export function validateDecision(decision) {
     }
   }
 
+  if (decision.owner === DECISION_OWNERS.AUTHORIZATION) {
+    // Legacy persisted decisions predate coversOverlays and remain readable, but
+    // contribute no coverage at the solution gate. New records are required to
+    // supply the field in createDecision below.
+    if (decision.coversOverlays !== undefined) {
+      if (!Array.isArray(decision.coversOverlays) || decision.coversOverlays.length === 0) {
+        errors.push("An authorization decision must name the risk overlays it covers in coversOverlays.");
+      }
+      const overlays = new Set();
+      for (const overlay of Array.isArray(decision.coversOverlays) ? decision.coversOverlays : []) {
+        if (!RISK_OVERLAY_VALUES.has(overlay)) errors.push(`Unknown risk overlay in coversOverlays: ${overlay}.`);
+        if (overlays.has(overlay)) errors.push(`Duplicate risk overlay in coversOverlays: ${overlay}.`);
+        overlays.add(overlay);
+      }
+    }
+  } else if (decision.coversOverlays !== undefined) {
+    errors.push("coversOverlays is only valid on an authorization decision.");
+  }
+
   if (decision.downstreamInvalidation !== undefined) {
     const invalidation = decision.downstreamInvalidation;
     if (!isRecord(invalidation) || typeof invalidation.required !== "boolean" || !Array.isArray(invalidation.targets)) {
@@ -145,6 +166,12 @@ export function validateDecision(decision) {
 
 export function createDecision(input) {
   assert(isRecord(input), "INVALID_DECISION", "Decision input must be an object.");
+  assert(
+    input.owner !== DECISION_OWNERS.AUTHORIZATION
+      || (Array.isArray(input.coversOverlays) && input.coversOverlays.length > 0),
+    "INVALID_DECISION",
+    "An authorization decision must name the risk overlays it covers in coversOverlays.",
+  );
   const resolution = normalizeResolution(input.resolution, input.rationale);
   const status = input.status ?? (resolution ? DECISION_STATUSES.RESOLVED : DECISION_STATUSES.PENDING);
   const decision = {
@@ -160,6 +187,9 @@ export function createDecision(input) {
     resolution,
     invalidationTargets: normalizeTargets(input.invalidationTargets),
   };
+  if (input.coversOverlays !== undefined) {
+    decision.coversOverlays = Array.isArray(input.coversOverlays) ? [...input.coversOverlays] : input.coversOverlays;
+  }
   if (input.createdAt !== undefined) decision.createdAt = input.createdAt;
   if (input.resolvedAt !== undefined) decision.resolvedAt = input.resolvedAt;
 

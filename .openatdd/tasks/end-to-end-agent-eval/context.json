@@ -1,0 +1,502 @@
+{
+  "schemaVersion": 1,
+  "taskId": "end-to-end-agent-eval",
+  "lane": "standard",
+  "createdAt": "2026-07-28T16:31:08.638Z",
+  "implementation": [
+    {
+      "id": "graph:incident:INC-2026-012",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-012-uat-ignore-user-config-model-provider-chatgpt.md",
+      "digest": "59a3dec161a4c3e2bf06ced60fd11bce1bd14860859eec5df1ad89efe73f2501",
+      "relevance": 21,
+      "reasons": [
+        "matched:agent,评测,用户配置,id,uat,codex,适配器,provider,配置"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-012"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-011",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md",
+      "digest": "57953cbd438e7f162ea0db5c4ba51093a22f1ce65ccfd3ce0d3aed62da273384",
+      "relevance": 17,
+      "reasons": [
+        "matched:agent,atdd,openatdd,ai,id,uat,mock,codex"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-011"
+      ]
+    },
+    {
+      "id": "graph:invariant:INV-2026-012",
+      "type": "Invariant",
+      "path": ".openatdd/memory/invariants.md",
+      "digest": "9baa936ff95fc06d914e19c62adad3c30fcf60b9c767da7c6033f9bff5539892",
+      "relevance": 16,
+      "reasons": [
+        "matched:agent,评测,用户配置,id,codex,provider,配置",
+        "matched:agent,ai,id,mock,codex",
+        "matched:command,cli"
+      ],
+      "nodeIds": [
+        "invariant:INV-2026-012",
+        "invariant:INV-2026-011",
+        "invariant:INV-2026-003"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/end-to-end-agent-eval/acceptance.md",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/end-to-end-agent-eval/acceptance.md",
+      "digest": "ba2a9ae6723bd7dba833d07b59904477a522fa869aebb3b9a8cda20746c026a5",
+      "relevance": 12,
+      "reasons": [
+        "implementation-outcomes"
+      ],
+      "nodeIds": [
+        "acceptance:end-to-end-agent-eval:AC-01",
+        "acceptance:end-to-end-agent-eval:AC-02",
+        "acceptance:end-to-end-agent-eval:AC-03",
+        "acceptance:end-to-end-agent-eval:AC-04",
+        "acceptance:end-to-end-agent-eval:AC-05",
+        "acceptance:end-to-end-agent-eval:AC-06",
+        "acceptance:end-to-end-agent-eval:AC-07"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/end-to-end-agent-eval/solution.md",
+      "type": "SolutionContract",
+      "path": ".openatdd/tasks/end-to-end-agent-eval/solution.md",
+      "digest": "5e1bb8239e956f1defd2feb9592f2e635399a943178818fb494dbc1e9c8c9fda",
+      "relevance": 12,
+      "reasons": [
+        "approved-implementation-boundary"
+      ],
+      "nodeIds": [
+        "solution:end-to-end-agent-eval"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-002",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-002-a-copied-skill-cli-could-exit-silently-when-maco.md",
+      "digest": "66dfa059eb8db415cf94e111478bf6c96f2ac5e2f2ee2b475c8a52185b0e5c92",
+      "relevance": 11,
+      "reasons": [
+        "matched:atdd,openatdd,id,skill,cli"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-002"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-003",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-003-cli-check-options-scope-source-fingerprint-and-d.md",
+      "digest": "afc7d3df9ed92d6b3294552fd932477e0eec0050b327457b3006dcd6350b3921",
+      "relevance": 11,
+      "reasons": [
+        "matched:ai,id,uat,command,cli"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-003"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/end-to-end-agent-eval/state.json",
+      "type": "TaskState",
+      "path": ".openatdd/tasks/end-to-end-agent-eval/state.json",
+      "digest": "15c2458cdf2fc1cceb9c04f364a545d57aa62ab3025a810f29eaf6081b1c38f5",
+      "relevance": 10,
+      "reasons": [
+        "current-task-state"
+      ],
+      "nodeIds": [
+        "task:end-to-end-agent-eval"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-009",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-009-resumed-repairs-and-dispatched-fresh-context-age.md",
+      "digest": "ee53929abf29db3b7e15e37e67fd25395206c678b30277a0e049342aa3d9ab8e",
+      "relevance": 8,
+      "reasons": [
+        "matched:agent,atdd,openatdd,ai,id"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-009"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-006",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-006-chinese-conversations-still-receive-english-temp.md",
+      "digest": "76f97b4f5042a6e19404c6e12aad50994fcfc27e7b27f6ac414f9ecf01e1a516",
+      "relevance": 7,
+      "reasons": [
+        "matched:atdd,openatdd,id,uat"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-006"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-010",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-010-the-semantic-graph-does-not-ingest-project-stand.md",
+      "digest": "1563b28f55e6b4586a42d2cbad8cd31030614fac55a5676f5ca4ec3a3602b319",
+      "relevance": 5,
+      "reasons": [
+        "matched:atdd,openatdd,ai,standard,id"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-010"
+      ]
+    },
+    {
+      "id": "graph:environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+      "type": "EnvironmentObservation",
+      "path": ".openatdd/environments/observations.json",
+      "digest": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+      "relevance": 1,
+      "reasons": [
+        "active-project-environment"
+      ],
+      "nodeIds": [
+        "environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A11.653z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A58.459z",
+        "environment:local:start_command:2026-07-23t10%3A33%3A06.724z"
+      ]
+    }
+  ],
+  "verification": [
+    {
+      "id": "source:.openatdd/tasks/end-to-end-agent-eval/acceptance.md",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/end-to-end-agent-eval/acceptance.md",
+      "digest": "ba2a9ae6723bd7dba833d07b59904477a522fa869aebb3b9a8cda20746c026a5",
+      "relevance": 87,
+      "reasons": [
+        "verification-source-of-truth",
+        "matched:agent,评测,id,新评测不破坏现有可重现能力,项目已有,planning-only,场景,mock,command,codex,适配器,报告验证和用户,provider,配置,增加端到端评测模式并运行项目检查,现有,schema,v1,cli,用法和,回归继续通过,三组仍共享用户,或共同使用显式隔离配置,配置模式记录在报告中",
+        "matched:中等,agent,评测,精简,atdd,核心和完整,openatdd,三种难度都执行公平的三组端到端对照,存在简单,中等和复杂三个版本化场景,每个场景包含可独立复制的小型种子项目和面向用户的一句需求,分别对裸,运行同一场景,三组使用相同模型,推理强度,用户配置,超时和重复次数,工作区彼此隔离,报告明确记录三种,profile,及场景难度,场景,配置",
+        "matched:agent,评测,atdd,openatdd,裸基线不再收到,答案线索,评测器需要为三组提供必要的运行与结果采集协议,构建裸,提示与隐藏验收,公共提示不包含,quick,standard,deep,预期技术方案,决策,id,隐藏检查关键词或,特有步骤,裸组只依靠模型默认工程能力,场景",
+        "matched:agent,评测,精简,atdd,ai,profile,核心是有界的可识别,需要测量验收优先核心能力,而不是再注入完整,529,skill,运行精简,只要求,从用户需求推导验收结果,保留技术方案检查点,实现,执行预验收并准备人工,uat,内容独立版本化且报告保存字节数与摘要指纹",
+        "matched:agent,token,profile,报告完整比较质量与成本,同一场景的三个,均完成指定次数的真实模型运行,生成并验证对照报告,报告按场景和,列出功能通过率,错误就绪率,自验收率,交接可用性,总耗时,输入/缓存/非缓存/输出,及组间差异,并明示样本数与模型配置,场景,配置",
+        "matched:agent,评测,报告区分真实成功,自验收和错误就绪声明,可能运行检查,不运行检查,或在最终功能仍错误时宣称已完成,评测器采集,工具记录,最终交付和独立隐藏检查,每次运行至少记录功能通过,是否执行自验收,宣称就绪状态,错误就绪声明和交接可用性,不把模型自述当作功能通过证据,交接可用性",
+        "matched:agent,评测,评测真实实现与预验收而非只输出计划,三个种子项目都包含可观察的用户结果和仅评测器可见的功能检查,在可写工作区中读取,修改并验证代码,然后结束交付,可以正常使用工具和项目命令,隐藏检查只在,结束后运行,并从实际工作区判断功能是否完成,实现,适配器"
+      ],
+      "nodeIds": [
+        "acceptance:end-to-end-agent-eval:AC-01",
+        "acceptance:end-to-end-agent-eval:AC-02",
+        "acceptance:end-to-end-agent-eval:AC-03",
+        "acceptance:end-to-end-agent-eval:AC-04",
+        "acceptance:end-to-end-agent-eval:AC-05",
+        "acceptance:end-to-end-agent-eval:AC-06",
+        "acceptance:end-to-end-agent-eval:AC-07"
+      ]
+    },
+    {
+      "id": "graph:acceptance:openatdd-1-0:AC-01",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/openatdd-1-0/acceptance.md",
+      "digest": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+      "relevance": 22,
+      "reasons": [
+        "matched:agent,atdd,openatdd,quick,standard,deep,uat"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-1-0:AC-01"
+      ]
+    },
+    {
+      "id": "graph:acceptance:strategy-visibility:AC-01",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/strategy-visibility/acceptance.md",
+      "digest": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca",
+      "relevance": 21,
+      "reasons": [
+        "matched:atdd,openatdd,token,实现,现有,cli"
+      ],
+      "nodeIds": [
+        "acceptance:strategy-visibility:AC-01"
+      ]
+    },
+    {
+      "id": "graph:incident:INC-2026-012",
+      "type": "Incident",
+      "path": ".openatdd/memory/incidents/INC-2026-012-uat-ignore-user-config-model-provider-chatgpt.md",
+      "digest": "59a3dec161a4c3e2bf06ced60fd11bce1bd14860859eec5df1ad89efe73f2501",
+      "relevance": 21,
+      "reasons": [
+        "matched:agent,评测,用户配置,id,uat,codex,适配器,provider,配置"
+      ],
+      "nodeIds": [
+        "incident:INC-2026-012"
+      ]
+    },
+    {
+      "id": "graph:acceptance:fast-portable-finalization:AC-08",
+      "type": "AcceptanceContract",
+      "path": ".openatdd/tasks/fast-portable-finalization/acceptance.md",
+      "digest": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+      "relevance": 20,
+      "reasons": [
+        "matched:agent,atdd,openatdd,ai,standard,id,skill,uat,command,schema,v1",
+        "matched:atdd,openatdd,id,skill,command,schema,cli"
+      ],
+      "nodeIds": [
+        "acceptance:fast-portable-finalization:AC-08",
+        "acceptance:fast-portable-finalization:AC-01"
+      ]
+    },
+    {
+      "id": "graph:acceptance:detailed-uat-handoff:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/detailed-uat-handoff/acceptance.md",
+      "digest": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent/fixtures:evals",
+        "path-overlap:evals/agent/profiles:evals",
+        "path-overlap:evals/agent/rubrics:evals",
+        "path-overlap:evals/agent/scenarios:evals",
+        "path-overlap:evals/reports:evals",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:detailed-uat-handoff:AC-01",
+        "acceptance:detailed-uat-handoff:AC-02",
+        "acceptance:detailed-uat-handoff:AC-03",
+        "acceptance:detailed-uat-handoff:AC-04",
+        "acceptance:detailed-uat-handoff:AC-05",
+        "acceptance:detailed-uat-handoff:AC-06",
+        "acceptance:detailed-uat-handoff:AC-07"
+      ]
+    },
+    {
+      "id": "graph:acceptance:eval-user-config:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/eval-user-config/acceptance.md",
+      "digest": "ff1b1181b3eb59b5f3af0594a3e1a0b7580f445ff3958124647c05c59bf4085d",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+        "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd/scripts/codex-agent-adapter.mjs",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests/agent-eval.test.mjs",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:eval-user-config:AC-01",
+        "acceptance:eval-user-config:AC-02",
+        "acceptance:eval-user-config:AC-03"
+      ]
+    },
+    {
+      "id": "graph:acceptance:fast-portable-finalization:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/fast-portable-finalization/acceptance.md",
+      "digest": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent/fixtures:evals",
+        "path-overlap:evals/agent/profiles:evals",
+        "path-overlap:evals/agent/rubrics:evals",
+        "path-overlap:evals/agent/scenarios:evals",
+        "path-overlap:evals/reports:evals",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:fast-portable-finalization:AC-01",
+        "acceptance:fast-portable-finalization:AC-02",
+        "acceptance:fast-portable-finalization:AC-03",
+        "acceptance:fast-portable-finalization:AC-04",
+        "acceptance:fast-portable-finalization:AC-05",
+        "acceptance:fast-portable-finalization:AC-06",
+        "acceptance:fast-portable-finalization:AC-07",
+        "acceptance:fast-portable-finalization:AC-08"
+      ]
+    },
+    {
+      "id": "graph:acceptance:openatdd-1-0:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/openatdd-1-0/acceptance.md",
+      "digest": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent/fixtures:evals",
+        "path-overlap:evals/agent/profiles:evals",
+        "path-overlap:evals/agent/rubrics:evals",
+        "path-overlap:evals/agent/scenarios:evals",
+        "path-overlap:evals/reports:evals",
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-1-0:AC-01",
+        "acceptance:openatdd-1-0:AC-02",
+        "acceptance:openatdd-1-0:AC-03",
+        "acceptance:openatdd-1-0:AC-04",
+        "acceptance:openatdd-1-0:AC-05",
+        "acceptance:openatdd-1-0:AC-06",
+        "acceptance:openatdd-1-0:AC-07",
+        "acceptance:openatdd-1-0:AC-08"
+      ]
+    },
+    {
+      "id": "graph:acceptance:openatdd-mvp:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/openatdd-mvp/acceptance.md",
+      "digest": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent/fixtures:evals",
+        "path-overlap:evals/agent/profiles:evals",
+        "path-overlap:evals/agent/rubrics:evals",
+        "path-overlap:evals/agent/scenarios:evals",
+        "path-overlap:evals/reports:evals",
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd",
+        "path-overlap:tests/agent-eval.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:openatdd-mvp:AC-01",
+        "acceptance:openatdd-mvp:AC-02",
+        "acceptance:openatdd-mvp:AC-03",
+        "acceptance:openatdd-mvp:AC-04",
+        "acceptance:openatdd-mvp:AC-05",
+        "acceptance:openatdd-mvp:AC-06",
+        "acceptance:openatdd-mvp:AC-07",
+        "acceptance:openatdd-mvp:AC-08",
+        "acceptance:openatdd-mvp:AC-09"
+      ]
+    },
+    {
+      "id": "graph:acceptance:optimize-quick-delivery:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/optimize-quick-delivery/acceptance.md",
+      "digest": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:optimize-quick-delivery:AC-01",
+        "acceptance:optimize-quick-delivery:AC-02",
+        "acceptance:optimize-quick-delivery:AC-03",
+        "acceptance:optimize-quick-delivery:AC-04"
+      ]
+    },
+    {
+      "id": "graph:acceptance:strategy-visibility:AC-01",
+      "type": "HistoricalAcceptance",
+      "path": ".openatdd/tasks/strategy-visibility/acceptance.md",
+      "digest": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca",
+      "relevance": 10,
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:evals/agent/fixtures:evals/agent",
+        "path-overlap:evals/agent/profiles:evals/agent",
+        "path-overlap:evals/agent/rubrics:evals/agent",
+        "path-overlap:evals/agent/scenarios:evals/agent",
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+        "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd/scripts/codex-agent-adapter.mjs",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests",
+        "semantic-affects"
+      ],
+      "nodeIds": [
+        "acceptance:strategy-visibility:AC-01",
+        "acceptance:strategy-visibility:AC-02",
+        "acceptance:strategy-visibility:AC-03",
+        "acceptance:strategy-visibility:AC-04"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/end-to-end-agent-eval/state.json",
+      "type": "TaskState",
+      "path": ".openatdd/tasks/end-to-end-agent-eval/state.json",
+      "digest": "15c2458cdf2fc1cceb9c04f364a545d57aa62ab3025a810f29eaf6081b1c38f5",
+      "relevance": 10,
+      "reasons": [
+        "verification-boundary-and-status"
+      ],
+      "nodeIds": [
+        "task:end-to-end-agent-eval"
+      ]
+    },
+    {
+      "id": "source:.openatdd/tasks/end-to-end-agent-eval/solution.md",
+      "type": "SolutionContract",
+      "path": ".openatdd/tasks/end-to-end-agent-eval/solution.md",
+      "digest": "5e1bb8239e956f1defd2feb9592f2e635399a943178818fb494dbc1e9c8c9fda",
+      "relevance": 9,
+      "reasons": [
+        "acceptance-trace-and-impact-paths"
+      ],
+      "nodeIds": [
+        "solution:end-to-end-agent-eval"
+      ]
+    },
+    {
+      "id": "graph:environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+      "type": "EnvironmentObservation",
+      "path": ".openatdd/environments/observations.json",
+      "digest": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+      "relevance": 1,
+      "reasons": [
+        "verification-environment"
+      ],
+      "nodeIds": [
+        "environment:local:application_version:2026-07-23t10%3A26%3A11.618z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A11.653z",
+        "environment:local:start_command:2026-07-23t10%3A26%3A58.459z",
+        "environment:local:start_command:2026-07-23t10%3A33%3A06.724z"
+      ]
+    }
+  ],
+  "sourceDigests": {
+    ".openatdd/environments/observations.json": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+    ".openatdd/memory/incidents/INC-2026-002-a-copied-skill-cli-could-exit-silently-when-maco.md": "66dfa059eb8db415cf94e111478bf6c96f2ac5e2f2ee2b475c8a52185b0e5c92",
+    ".openatdd/memory/incidents/INC-2026-003-cli-check-options-scope-source-fingerprint-and-d.md": "afc7d3df9ed92d6b3294552fd932477e0eec0050b327457b3006dcd6350b3921",
+    ".openatdd/memory/incidents/INC-2026-006-chinese-conversations-still-receive-english-temp.md": "76f97b4f5042a6e19404c6e12aad50994fcfc27e7b27f6ac414f9ecf01e1a516",
+    ".openatdd/memory/incidents/INC-2026-009-resumed-repairs-and-dispatched-fresh-context-age.md": "ee53929abf29db3b7e15e37e67fd25395206c678b30277a0e049342aa3d9ab8e",
+    ".openatdd/memory/incidents/INC-2026-010-the-semantic-graph-does-not-ingest-project-stand.md": "1563b28f55e6b4586a42d2cbad8cd31030614fac55a5676f5ca4ec3a3602b319",
+    ".openatdd/memory/incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md": "57953cbd438e7f162ea0db5c4ba51093a22f1ce65ccfd3ce0d3aed62da273384",
+    ".openatdd/memory/incidents/INC-2026-012-uat-ignore-user-config-model-provider-chatgpt.md": "59a3dec161a4c3e2bf06ced60fd11bce1bd14860859eec5df1ad89efe73f2501",
+    ".openatdd/memory/invariants.md": "9baa936ff95fc06d914e19c62adad3c30fcf60b9c767da7c6033f9bff5539892",
+    ".openatdd/tasks/detailed-uat-handoff/acceptance.md": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
+    ".openatdd/tasks/end-to-end-agent-eval/acceptance.md": "ba2a9ae6723bd7dba833d07b59904477a522fa869aebb3b9a8cda20746c026a5",
+    ".openatdd/tasks/end-to-end-agent-eval/solution.md": "5e1bb8239e956f1defd2feb9592f2e635399a943178818fb494dbc1e9c8c9fda",
+    ".openatdd/tasks/end-to-end-agent-eval/state.json": "15c2458cdf2fc1cceb9c04f364a545d57aa62ab3025a810f29eaf6081b1c38f5",
+    ".openatdd/tasks/eval-user-config/acceptance.md": "ff1b1181b3eb59b5f3af0594a3e1a0b7580f445ff3958124647c05c59bf4085d",
+    ".openatdd/tasks/fast-portable-finalization/acceptance.md": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+    ".openatdd/tasks/openatdd-1-0/acceptance.md": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+    ".openatdd/tasks/openatdd-mvp/acceptance.md": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+    ".openatdd/tasks/optimize-quick-delivery/acceptance.md": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
+    ".openatdd/tasks/strategy-visibility/acceptance.md": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca"
+  },
+  "graphDigest": "dbcc1d61b502e7f3d11ad63e0b81a7292e5e5e2ebbdbd3df2877f594c77c16cf",
+  "warnings": [],
+  "digest": "e50ec63fc1819b408cfa12849bf4a7cc6c7b23a1a7e0afd016ab27526df8fe8f"
+}

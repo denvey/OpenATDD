@@ -23,8 +23,8 @@ import {
   validateAcceptance,
   validateSolution,
 } from "./contracts.mjs";
-import { authorizationOverlays, classifyTask, interactionPolicyForLane } from "./routing.mjs";
-import { profileForDispatch } from "./agent-profiles.mjs";
+import { RISK_OVERLAYS, authorizationOverlays, classifyTask, interactionPolicyForLane } from "./routing.mjs";
+import { profileForDispatch, verificationExecutionProfile } from "./agent-profiles.mjs";
 import {
   blockingDecisions,
   createDecision,
@@ -44,6 +44,7 @@ import {
   ensureEnvironmentInfrastructure,
   loadEnvironmentProfile,
   loadLocalCredentials,
+  loadScanOnlyCredentials,
   observeEnvironment,
   runEnvironmentPreflight,
   scanEnvironmentArtifacts,
@@ -59,8 +60,19 @@ export const PHASES = Object.freeze({
   PRE_UAT: "PRE_UAT",
   REPAIRING: "REPAIRING",
   BLOCKED: "BLOCKED",
+  DELIVERED: "DELIVERED",
+  // Legacy terminal phase retained so existing task state remains readable.
   READY_FOR_UAT: "READY_FOR_UAT",
 });
+
+export const DELIVERY_TERMINAL_PHASES = Object.freeze([
+  PHASES.DELIVERED,
+  PHASES.READY_FOR_UAT,
+]);
+
+export function isDeliveryTerminalPhase(phase) {
+  return DELIVERY_TERMINAL_PHASES.includes(phase);
+}
 
 export const SOLUTION_REVIEW_CHECKS = Object.freeze([
   "simplicity",
@@ -81,12 +93,28 @@ impact_analysis:
   enabled: true
 memory:
   strategy: scoped
+# authorization_overlays extends the built-in set of risk overlays that require
+# a resolved authorization decision; it can only add overlays, never remove one.
+# authorization_overlays: payment, authentication
 `;
 
 const INVARIANTS_TEMPLATE = `# Project invariants
 
 Record durable rules discovered while resolving real defects. Keep this file
 small; use the incident index for details.
+`;
+
+const PROJECT_TRUTH_TEMPLATE = `# Project truth
+
+Keep only current, durable facts in this file and keep each entry short. Delete
+facts that are no longer true; history stays in tasks, decisions, incidents,
+and Git.
+
+## Product rules
+
+## Architecture boundaries
+
+## Technical decisions
 `;
 
 function historyEvent(event, at, details = undefined) {
@@ -234,6 +262,7 @@ export function projectFiles(root) {
     invariants: path.join(openatdd, "memory", "invariants.md"),
     memoryIndex: path.join(openatdd, "memory", "index.json"),
     knowledge: path.join(openatdd, "knowledge"),
+    projectTruth: path.join(openatdd, "knowledge", "project.md"),
     standards: path.join(openatdd, "knowledge", "standards"),
     research: path.join(openatdd, "knowledge", "research"),
     knowledgeGraph: path.join(openatdd, "knowledge", "graph.json"),
@@ -284,6 +313,7 @@ export async function initProject(root) {
   await mkdir(files.research, { recursive: true });
   if (!(await pathExists(files.config))) await atomicWrite(files.config, CONFIG_TEMPLATE);
   if (!(await pathExists(files.invariants))) await atomicWrite(files.invariants, INVARIANTS_TEMPLATE);
+  if (!(await pathExists(files.projectTruth))) await atomicWrite(files.projectTruth, PROJECT_TRUTH_TEMPLATE);
   if (!(await pathExists(files.memoryIndex))) {
     await writeJson(files.memoryIndex, { schemaVersion: 1, incidents: [] });
   }
@@ -430,7 +460,7 @@ function nextDecisionId(state) {
 
 export async function assessTask(root, taskId, assessment, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
-  assertPhase(state, Object.values(PHASES).filter((phase) => phase !== PHASES.READY_FOR_UAT), "Task assessment");
+  assertPhase(state, Object.values(PHASES).filter((phase) => !isDeliveryTerminalPhase(phase)), "Task assessment");
   const routing = classifyTask(assessment);
   const now = isoNow(clock);
   state.deliveryVersion = 3;
@@ -544,6 +574,7 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
   assert(!previous || previous.role === input.role.trim(), "AGENT_DISPATCH_ROLE_MISMATCH", `Agent dispatch ${id} is already bound to role ${previous?.role}.`);
   const recommended = profileForDispatch({
     role: input.role.trim(),
+    deliveryVersion: state.deliveryVersion,
     lane: state.routing?.lane,
     riskSignals: state.routing?.assessment?.riskSignals ?? [],
     repairAttempts: state.repair?.attempts ?? [],
@@ -820,6 +851,33 @@ async function markAffectedDependencies(root, currentState, approvedAt, clock) {
   return dependencies;
 }
 
+/**
+ * Read the project's additional authorization overlays from
+ * `.openatdd/config.yaml`. The flat top-level `authorization_overlays` key can
+ * only extend the built-in requirement with known risk overlays.
+ */
+async function projectAuthorizationOverlays(root) {
+  const files = projectFiles(root);
+  if (!(await pathExists(files.config))) return [];
+  const overlays = [];
+  for (const line of (await readUtf8(files.config)).split(/\r?\n/)) {
+    const match = /^authorization_overlays:\s*(.*)$/.exec(line);
+    if (!match) continue;
+    let value = match[1];
+    const comment = value.search(/(^|\s)#/);
+    if (comment !== -1) value = value.slice(0, comment);
+    for (const overlay of value.split(",").map((item) => item.trim().replace(/^["']|["']$/g, "")).filter(Boolean)) {
+      assert(
+        RISK_OVERLAYS.includes(overlay),
+        "INVALID_AUTHORIZATION_CONFIG",
+        `Unknown risk overlay in authorization_overlays: ${overlay}.`,
+      );
+      overlays.push(overlay);
+    }
+  }
+  return [...new Set(overlays)];
+}
+
 export async function approveSolution(root, taskId, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
   assertPhase(state, [PHASES.SOLUTION_DRAFT, PHASES.CONTRACT_APPROVED], "Solution approval");
@@ -842,16 +900,17 @@ export async function approveSolution(root, taskId, clock = () => new Date()) {
     if (state.routing?.lane === "deep") {
       assert(review.reviewer === "independent", "INDEPENDENT_REVIEW_REQUIRED", "Deep tasks require an independent solution review before approval.");
     }
-    const overlays = authorizationOverlays(state.routing);
+    const overlays = authorizationOverlays(state.routing, await projectAuthorizationOverlays(root));
     if (overlays.length > 0) {
-      const authorized = (state.decisions ?? []).some(
-        (decision) => decision.owner === "authorization" && decision.status === "resolved",
-      );
+      const covered = new Set((state.decisions ?? [])
+        .filter((decision) => decision.owner === "authorization" && decision.status === "resolved")
+        .flatMap((decision) => decision.coversOverlays ?? []));
+      const uncovered = overlays.filter((signal) => !covered.has(signal));
       assert(
-        authorized,
+        uncovered.length === 0,
         "AUTHORIZATION_DECISION_REQUIRED",
-        "A dangerous or externally mutating change requires a recorded and resolved authorization decision before product code is modified.",
-        { errors: overlays.map((signal) => `risk overlay ${signal} requires explicit authorization`) },
+        "A dangerous or externally mutating change requires a resolved authorization decision covering every active risk overlay before product code is modified.",
+        { errors: uncovered.map((signal) => `risk overlay ${signal} requires explicit authorization coverage`) },
       );
     }
   }
@@ -985,11 +1044,11 @@ export async function resumeTask(root, taskId, clock = () => new Date()) {
     PHASES.REPAIRING,
     PHASES.BLOCKED,
     PHASES.PRE_UAT,
-    PHASES.READY_FOR_UAT,
+    ...DELIVERY_TERMINAL_PHASES,
   ]);
   let prepared = null;
   if (state.deliveryVersion >= 3 && contextPhases.has(state.phase)) {
-    const surface = [PHASES.PRE_UAT, PHASES.READY_FOR_UAT].includes(state.phase)
+    const surface = state.phase === PHASES.PRE_UAT || isDeliveryTerminalPhase(state.phase)
       ? "verification"
       : "implementation";
     prepared = await loadContextForState(root, state, files, { surface });
@@ -1080,7 +1139,7 @@ export async function beginPreUat(root, taskId, clock = () => new Date()) {
   return { state, files };
 }
 
-function defaultUatPlan(state, profile) {
+function defaultUatPlan(state, profile, executionInput = {}) {
   const items = state.acceptance.items;
   const groups = items.length <= 2
     ? [items]
@@ -1104,6 +1163,10 @@ function defaultUatPlan(state, profile) {
     schemaVersion: 1,
     environment: profile.environment,
     entryUrl: profile.entry_url === "n/a" ? null : profile.entry_url,
+    execution: verificationExecutionProfile({
+      surface: profile.surface ?? (profile.entry_url === "n/a" ? "cli" : "web"),
+      ...executionInput,
+    }),
     batches,
     estimatedRoundTrips: batches.length * 2,
     failureRecovery: "Narrow and rerun only the failed batch for diagnosis; after repair, rerun the complete journey in a fresh epoch.",
@@ -1115,6 +1178,14 @@ export function validateUatPlan(state, plan) {
   if (plan?.schemaVersion !== 1) errors.push("UAT plan schemaVersion must be 1.");
   if (!Array.isArray(plan?.batches) || plan.batches.length === 0) errors.push("UAT plan requires at least one batch.");
   if ((plan?.batches?.length ?? 0) > 5) errors.push("UAT plan must use no more than five cohesive batches.");
+  if (plan?.execution !== undefined) {
+    if (!["deterministic", "browser-low", "human"].includes(plan.execution?.mode)) errors.push("UAT execution mode must be deterministic, browser-low, or human.");
+    if (plan.execution?.mode === "browser-low") {
+      if (plan.execution.model !== "gpt-5.6-luna" || plan.execution.reasoningEffort !== "low") errors.push("Low-model browser execution must use gpt-5.6-luna with low reasoning.");
+      if (plan.execution.forkTurns !== "none" || plan.execution.reuseSession !== true) errors.push("Low-model browser execution must use a clean context and one reused session.");
+      if (plan.execution.screenshotPolicy !== "checkpoint-or-failure") errors.push("Low-model browser execution must capture screenshots only at checkpoints or failure.");
+    }
+  }
   const ids = new Set();
   const covered = new Map();
   for (const batch of plan?.batches ?? []) {
@@ -1139,7 +1210,7 @@ export async function prepareUatPlan(root, taskId, input = {}, clock = () => new
   await assertContractIntegrity(files, state);
   assert(state.preflight?.status === "passed", "PREFLIGHT_REQUIRED", "Successful environment preflight is required before UAT planning.");
   const { profile } = await loadEnvironmentProfile(root, state.preflight.environment || "local");
-  const plan = input.plan ?? defaultUatPlan(state, profile);
+  const plan = input.plan ?? defaultUatPlan(state, profile, input.execution ?? {});
   const validation = validateUatPlan(state, plan);
   assert(validation.valid, "INVALID_UAT_PLAN", "UAT plan is invalid.", { errors: validation.errors });
   const budget = Number(profile.browser_round_trip_budget || 12);
@@ -1191,7 +1262,7 @@ export async function recordAcceptanceResult(root, taskId, input, clock = () => 
   const { state, files } = await loadTask(root, taskId);
   assertPhase(
     state,
-    [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, PHASES.READY_FOR_UAT],
+    [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, ...DELIVERY_TERMINAL_PHASES],
     "Acceptance recording",
   );
   await assertContractIntegrity(files, state);
@@ -1239,7 +1310,7 @@ export async function recordAcceptanceResult(root, taskId, input, clock = () => 
   state.readyAt = null;
   if (input.status === "failed") setPhase(state, PHASES.REPAIRING, now);
   else if (input.status === "blocked") setPhase(state, PHASES.BLOCKED, now);
-  else if (state.phase === PHASES.READY_FOR_UAT || state.phase === PHASES.BLOCKED) setPhase(state, PHASES.PRE_UAT, now);
+  else if (isDeliveryTerminalPhase(state.phase) || state.phase === PHASES.BLOCKED) setPhase(state, PHASES.PRE_UAT, now);
   appendHistory(state, "ACCEPTANCE_RECORDED", now, { acceptanceId: criterion.id, status: input.status });
   return saveTask(files, state, clock);
 }
@@ -1284,7 +1355,7 @@ export async function recordCheck(root, taskId, input, clock = () => new Date())
   const { state, files } = await loadTask(root, taskId);
   assertPhase(
     state,
-    [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, PHASES.READY_FOR_UAT],
+    [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, ...DELIVERY_TERMINAL_PHASES],
     "Check recording",
   );
   await assertContractIntegrity(files, state);
@@ -1324,7 +1395,7 @@ export async function recordCheck(root, taskId, input, clock = () => new Date())
   state.readyAt = null;
   if (input.status === "failed") setPhase(state, PHASES.REPAIRING, now);
   else if (input.status === "blocked") setPhase(state, PHASES.BLOCKED, now);
-  else if (state.phase === PHASES.READY_FOR_UAT || state.phase === PHASES.BLOCKED) setPhase(state, PHASES.PRE_UAT, now);
+  else if (isDeliveryTerminalPhase(state.phase) || state.phase === PHASES.BLOCKED) setPhase(state, PHASES.PRE_UAT, now);
   appendHistory(state, "CHECK_RECORDED", now, { check: key, status: input.status });
   return saveTask(files, state, clock);
 }
@@ -1446,7 +1517,7 @@ export async function recordIssue(root, taskId, input, clock = () => new Date())
   const { state, files } = await loadTask(root, taskId);
   assertPhase(
     state,
-    [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, PHASES.READY_FOR_UAT],
+    [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, ...DELIVERY_TERMINAL_PHASES],
     "Issue recording",
   );
   await assertContractIntegrity(files, state);
@@ -1550,6 +1621,20 @@ export async function reopenAcceptance(root, taskId, reason, clock = () => new D
   state.reviews.solution = null;
   state.context = { status: "stale", path: state.context?.path ?? null, digest: null, sourceDigests: {} };
   state.affectedDependencies = [];
+  const reopenedAuthorizations = [];
+  for (const decision of state.decisions ?? []) {
+    if (decision.owner !== "authorization" || decision.status !== "resolved") continue;
+    // Reopened acceptance means the authorized user-visible behavior may have
+    // changed; the authorization must be confirmed again before re-approval.
+    decision.status = "pending";
+    decision.resolution = null;
+    delete decision.resolvedAt;
+    delete decision.downstreamInvalidation;
+    reopenedAuthorizations.push(decision.id);
+  }
+  if (reopenedAuthorizations.length > 0) {
+    appendHistory(state, "AUTHORIZATION_REOPENED", now, { decisions: reopenedAuthorizations });
+  }
   setPhase(state, PHASES.ACCEPTANCE_DRAFT, now);
   appendHistory(state, "ACCEPTANCE_REOPENED", now, { reason: reason.trim() });
   return saveTask(files, state, clock);
@@ -1692,7 +1777,7 @@ export async function validateHandoff(state, handoff, files) {
 
 export async function prepareHandoff(root, taskId, input = {}, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
-  assertPhase(state, [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, PHASES.READY_FOR_UAT], "Handoff preparation");
+  assertPhase(state, [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, ...DELIVERY_TERMINAL_PHASES], "Handoff preparation");
   await assertContractIntegrity(files, state);
   const environment = input.environment || state.preflight?.environment || "local";
   const { profile } = await loadEnvironmentProfile(root, environment);
@@ -1710,7 +1795,7 @@ export async function prepareHandoff(root, taskId, input = {}, clock = () => new
     }
   }
   const links = [
-    { label: zh ? "详细 UAT 报告" : "Detailed UAT report", target: "report.md", applicable: true },
+    { label: zh ? "详细交付报告" : "Detailed delivery report", target: "report.md", applicable: true },
     { label: zh ? "已批准的验收卡" : "Approved acceptance card", target: "acceptance.md", applicable: true },
     { label: zh ? "已批准的方案卡" : "Approved solution card", target: "solution.md", applicable: true },
     { label: zh ? "问题与修复日志" : "Issue and repair log", target: "issues.md", applicable: true },
@@ -1752,7 +1837,7 @@ export async function prepareHandoff(root, taskId, input = {}, clock = () => new
       role: profile.role || "n/a",
       prerequisites,
       accountReference: credentialVariables.length > 0 ? credentialVariables.join(", ") : "n/a (no login required)",
-      entryPoint: profile.entry_url && profile.entry_url !== "n/a" ? profile.entry_url : (zh ? "打开下方详细 UAT 报告。" : "Open the Detailed UAT report link below."),
+      entryPoint: profile.entry_url && profile.entry_url !== "n/a" ? profile.entry_url : (zh ? "打开下方详细交付报告。" : "Open the detailed delivery report link below."),
       estimatedMinutes: Number(input.estimatedMinutes ?? Math.max(5, state.acceptance.items.length * 2)),
     },
     steps: state.acceptance.items.map((criterion, index) => ({
@@ -1771,7 +1856,7 @@ export async function prepareHandoff(root, taskId, input = {}, clock = () => new
     links,
   };
   const validation = await validateHandoff(state, handoff, files);
-  assert(validation.valid, "INVALID_HANDOFF", "Detailed UAT handoff is invalid.", { errors: validation.errors });
+  assert(validation.valid, "INVALID_HANDOFF", "Detailed delivery handoff is invalid.", { errors: validation.errors });
   await writeJson(files.handoff, handoff);
   state.handoff = { status: "prepared", preparedAt: handoff.preparedAt, estimatedMinutes: handoff.context.estimatedMinutes };
   appendHistory(state, "HANDOFF_PREPARED", handoff.preparedAt, { steps: handoff.steps.length, links: handoff.links.length });
@@ -1823,7 +1908,7 @@ export async function readinessErrorsForState(root, state, files, options = {}) 
   if (state.deliveryVersion >= 2) {
     if (state.preflight?.status !== "passed") errors.push("Automatic environment preflight has not passed.");
     else if (new Date(state.preflight.checkedAt ?? 0).getTime() < new Date(boundary ?? 0).getTime()) errors.push("Automatic environment preflight is stale for the current verification epoch.");
-    if (state.handoff?.status !== "prepared" || (!options.handoff && !(await pathExists(files.handoff)))) errors.push("Detailed UAT handoff has not been prepared.");
+    if (state.handoff?.status !== "prepared" || (!options.handoff && !(await pathExists(files.handoff)))) errors.push("Detailed delivery handoff has not been prepared.");
     else {
       const validation = await validateHandoff(state, options.handoff ?? await readJson(files.handoff), files);
       errors.push(...validation.errors.map((item) => `Handoff: ${item}`));
@@ -1855,8 +1940,9 @@ export async function readinessErrorsForState(root, state, files, options = {}) 
         }
       }
     }
-    const credentialVariables = state.preflight?.scope === "project" ? "" : profile.credential_variables;
-    const credentials = await loadLocalCredentials(root, credentialVariables);
+    const credentials = state.preflight?.scope === "project"
+      ? await loadScanOnlyCredentials(root, profile.credential_variables)
+      : await loadLocalCredentials(root, profile.credential_variables);
     const leaks = await scanEnvironmentArtifacts(root, credentials.secretValues);
     for (const leak of leaks) errors.push(`Secret-like runtime value leaked into persisted artifact: ${path.relative(files.root, leak.path)}.`);
   }
@@ -1916,7 +2002,11 @@ function resultTable(state, language = "en") {
 function renderChineseTaskReport(state, handoff = null) {
   const checks = Object.values(state.checks);
   const manual = state.acceptance.items.filter((item) => item.classification !== "AUTO");
-  const lines = [`# UAT 前报告：${state.taskId}`, ""];
+  const manualIds = new Set(state.acceptance.items
+    .filter((item) => item.classification === "MANUAL" && item.blocking)
+    .map((item) => item.id));
+  const manualSteps = (handoff?.steps ?? []).filter((step) => manualIds.has(step.acceptanceId));
+  const lines = [`# 交付报告：${state.taskId}`, ""];
   if (handoff) {
     lines.push(
       "## 从这里开始",
@@ -1933,21 +2023,32 @@ function renderChineseTaskReport(state, handoff = null) {
       "",
       ...handoff.context.prerequisites.map((item) => `- ${item}`),
       "",
-      "## 分步人工验收",
-      "",
-      "请按顺序完成。若某一步失败，请返回步骤号、实际结果和相关截图，不要继续猜测。",
-      "",
     );
-    for (const step of handoff.steps) {
+    if (manualSteps.length > 0) {
       lines.push(
-        `### 第 ${step.number} 步 — ${step.acceptanceId}：${step.title}`,
+        "## 建议人工 UAT",
         "",
-        `- 前提：${step.precondition}`,
-        `- 操作：${step.action}`,
-        `- 预期结果：${step.expected}`,
-        `- 结论：${step.checkbox}`,
-        `- 判断方式：${step.judgment}`,
-        `- 已准备证据：${step.evidence.length > 0 ? step.evidence.map((target) => `[${path.basename(target)}](${target})`).join(", ") : "无独立证据文件；请判断上述可观察结果。"}`,
+        "以下结果无法由 AI 完整判断。请按顺序检查；全部符合无需回复，任何一步失败时请返回步骤号、实际结果和相关截图。",
+        "",
+      );
+      for (const step of manualSteps) {
+        lines.push(
+          `### 第 ${step.number} 步 — ${step.acceptanceId}：${step.title}`,
+          "",
+          `- 前提：${step.precondition}`,
+          `- 操作：${step.action}`,
+          `- 预期结果：${step.expected}`,
+          `- 检查记录：${step.checkbox}`,
+          `- 判断方式：${step.judgment}`,
+          `- 已准备证据：${step.evidence.length > 0 ? step.evidence.map((target) => `[${path.basename(target)}](${target})`).join(", ") : "无独立证据文件；请判断上述可观察结果。"}`,
+          "",
+        );
+      }
+    } else {
+      lines.push(
+        "## 自动验证已完成",
+        "",
+        "本次交付没有必须由人重复执行的 UAT 步骤。请按需查看下方实际结果与证据；没有异议无需回复。",
         "",
       );
     }
@@ -1962,7 +2063,7 @@ function renderChineseTaskReport(state, handoff = null) {
     `- 阶段：${state.phase}`,
     `- 验收批准时间：${state.acceptance.approvedAt}`,
     `- 方案批准时间：${state.solution.approvedAt}`,
-    `- 就绪时间：${state.readyAt ?? "尚未就绪"}`,
+    `- 交付时间：${state.readyAt ?? "尚未交付"}`,
     "",
     "### 验收结果",
     "",
@@ -1975,13 +2076,13 @@ function renderChineseTaskReport(state, handoff = null) {
   else for (const check of checks) lines.push(`- ${check.name} [${check.scope}]：**${check.status}** — \`${check.command}\`${check.durationMs === null ? "" : ` — ${check.durationMs} ms`}`);
   lines.push("", "### 修复", "");
   const resolved = state.issues.filter((issue) => issue.status === "resolved");
-  if (resolved.length === 0) lines.push("UAT 前未解决任何缺陷。");
+  if (resolved.length === 0) lines.push("本次交付未解决已记录缺陷。");
   else for (const issue of resolved) lines.push(`- ${issue.id}：${issue.rootCause}（${issue.memoryId}）`);
   lines.push("", "### 受影响的历史验收", "");
   if (state.affectedDependencies.length === 0) lines.push("没有历史任务受到影响。");
   else for (const item of state.affectedDependencies) lines.push(`- ${item.taskId}：${item.acceptanceIds.join(", ")}`);
-  lines.push("", "### 人工判断", "");
-  if (manual.length === 0) lines.push("没有剩余的人工验收项。");
+  lines.push("", "### 人工关注项", "");
+  if (manual.length === 0) lines.push("没有需要人工判断的验收项。");
   else for (const item of manual) lines.push(`- ${item.id} [${item.classification}]：${item.title}`);
   lines.push("", "### 性能观察", "");
   lines.push(`- 环境预检：${state.preflight?.durationMs ?? "未记录"} ms`);
@@ -1996,8 +2097,12 @@ export function renderTaskReport(state, handoff = null) {
   if (language === "zh-CN") return renderChineseTaskReport(state, handoff);
   const checks = Object.values(state.checks);
   const manual = state.acceptance.items.filter((item) => item.classification !== "AUTO");
+  const manualIds = new Set(state.acceptance.items
+    .filter((item) => item.classification === "MANUAL" && item.blocking)
+    .map((item) => item.id));
+  const manualSteps = (handoff?.steps ?? []).filter((step) => manualIds.has(step.acceptanceId));
   const lines = [
-    `# Pre-UAT report: ${state.taskId}`,
+    `# Delivery report: ${state.taskId}`,
     "",
   ];
   if (handoff) {
@@ -2016,21 +2121,32 @@ export function renderTaskReport(state, handoff = null) {
       "",
       ...handoff.context.prerequisites.map((item) => `- ${item}`),
       "",
-      "## Step-by-step human acceptance",
-      "",
-      "Complete the steps in order. If one fails, return its step number, the observed result, and any screenshot; do not continue guessing.",
-      "",
     );
-    for (const step of handoff.steps) {
+    if (manualSteps.length > 0) {
       lines.push(
-        `### Step ${step.number} — ${step.acceptanceId}: ${step.title}`,
+        "## Suggested human UAT",
         "",
-        `- Precondition: ${step.precondition}`,
-        `- Action: ${step.action}`,
-        `- Expected result: ${step.expected}`,
-        `- Decision: ${step.checkbox}`,
-        `- Judgment: ${step.judgment}`,
-        `- Prepared evidence: ${step.evidence.length > 0 ? step.evidence.map((target) => `[${path.basename(target)}](${target})`).join(", ") : "No separate evidence file; judge the stated observable result."}`,
+        "AI cannot fully judge the following outcomes. Check them in order; no reply is needed when all pass. If one fails, return its step number, the observed result, and any screenshot.",
+        "",
+      );
+      for (const step of manualSteps) {
+        lines.push(
+          `### Step ${step.number} — ${step.acceptanceId}: ${step.title}`,
+          "",
+          `- Precondition: ${step.precondition}`,
+          `- Action: ${step.action}`,
+          `- Expected result: ${step.expected}`,
+          `- Check record: ${step.checkbox}`,
+          `- Judgment: ${step.judgment}`,
+          `- Prepared evidence: ${step.evidence.length > 0 ? step.evidence.map((target) => `[${path.basename(target)}](${target})`).join(", ") : "No separate evidence file; judge the stated observable result."}`,
+          "",
+        );
+      }
+    } else {
+      lines.push(
+        "## Automatic verification complete",
+        "",
+        "This delivery has no UAT step that a person must repeat. Inspect the results and evidence below as needed; no reply is required when there is no objection.",
         "",
       );
     }
@@ -2045,7 +2161,7 @@ export function renderTaskReport(state, handoff = null) {
     `- Phase: ${state.phase}`,
     `- Acceptance approved: ${state.acceptance.approvedAt}`,
     `- Solution approved: ${state.solution.approvedAt}`,
-    `- Ready at: ${state.readyAt ?? "not ready"}`,
+    `- Delivered at: ${state.readyAt ?? "not delivered"}`,
     "",
     "### Acceptance results",
     "",
@@ -2060,7 +2176,7 @@ export function renderTaskReport(state, handoff = null) {
   }
   lines.push("", "### Repairs", "");
   const resolved = state.issues.filter((issue) => issue.status === "resolved");
-  if (resolved.length === 0) lines.push("No defects were resolved during pre-UAT.");
+  if (resolved.length === 0) lines.push("No recorded defects were resolved during this delivery.");
   else {
     for (const issue of resolved) lines.push(`- ${issue.id}: ${issue.rootCause} (${issue.memoryId})`);
   }
@@ -2069,8 +2185,8 @@ export function renderTaskReport(state, handoff = null) {
   else {
     for (const item of state.affectedDependencies) lines.push(`- ${item.taskId}: ${item.acceptanceIds.join(", ")}`);
   }
-  lines.push("", "### Human judgment", "");
-  if (manual.length === 0) lines.push("No manual acceptance criteria remain.");
+  lines.push("", "### Human attention", "");
+  if (manual.length === 0) lines.push("No acceptance criteria require human judgment.");
   else {
     for (const item of manual) lines.push(`- ${item.id} [${item.classification}]: ${item.title}`);
   }
@@ -2085,28 +2201,29 @@ export function renderTaskReport(state, handoff = null) {
 export function renderTaskNotification(state, handoff = null) {
   const automatic = state.acceptance.items.filter((item) => item.classification === "AUTO" && item.blocking);
   const manual = state.acceptance.items.filter((item) => item.classification !== "AUTO");
+  const manualUat = state.acceptance.items.filter((item) => item.classification === "MANUAL" && item.blocking);
   const context = handoff?.context;
   const language = context?.language ?? inferHumanLanguage(state.requirement, state.acceptance.items.map((item) => item.title));
   if (language === "zh-CN") {
-    return `# UAT 通知草稿\n\n${state.taskId} 已准备好进行正式人工验收。\n\n- 需求：${state.requirement}\n- 版本：${context?.version ?? "见报告"}\n- 环境 / 角色：${context ? `${context.environment} / ${context.role}` : "见报告"}\n- 入口：${context?.entryPoint ?? "见报告"}\n- 预计时间：${context ? `${context.estimatedMinutes} 分钟` : "见报告"}\n- 自动阻塞项：${automatic.length}/${automatic.length} 已通过\n- [打开详细分步报告](report.md)\n- 剩余人工判断：${manual.length}\n\n第一步：打开报告，完成**第 1 步**并勾选通过或失败。\n已批准旅程、准备好的链接和证据都在任务目录中。\n这是一份草稿；只有在已有授权的渠道中才可发送。\n`;
+    return `# 交付通知草稿\n\n${state.taskId} 已完成 AI 验证并交付。\n\n- 需求：${state.requirement}\n- 版本：${context?.version ?? "见报告"}\n- 环境 / 角色：${context ? `${context.environment} / ${context.role}` : "见报告"}\n- 入口：${context?.entryPoint ?? "见报告"}\n- 自动阻塞项：${automatic.length}/${automatic.length} 已通过\n- [打开交付报告](report.md)\n- 人工关注项：${manual.length}\n- 建议人工 UAT 步骤：${manualUat.length}\n\n${manualUat.length > 0 ? "请按需完成报告中的人工 UAT；全部符合无需回复，发现问题时请返回步骤和实际结果。" : "无需重复自动测试；没有异议无需回复，发现问题时请直接描述实际结果。"}\n这是一份草稿；只有在已有授权的渠道中才可发送。\n`;
   }
-  return `# UAT notification draft\n\n${state.taskId} is ready for formal human acceptance.\n\n- Requirement: ${state.requirement}\n- Version: ${context?.version ?? "see report"}\n- Environment / role: ${context ? `${context.environment} / ${context.role}` : "see report"}\n- Entry point: ${context?.entryPoint ?? "see report"}\n- Estimated effort: ${context ? `${context.estimatedMinutes} minutes` : "see report"}\n- Automatic blockers: ${automatic.length}/${automatic.length} passed\n- [Open the detailed step-by-step report](report.md)\n- Remaining human judgments: ${manual.length}\n\nFirst action: open the report, complete **Step 1**, and mark Pass or Fail.\nThe approved journey, prepared links, and evidence are in the task directory.\nThis is a draft; send it only through an already-authorized channel.\n`;
+  return `# Delivery notification draft\n\n${state.taskId} has completed AI verification and been delivered.\n\n- Requirement: ${state.requirement}\n- Version: ${context?.version ?? "see report"}\n- Environment / role: ${context ? `${context.environment} / ${context.role}` : "see report"}\n- Entry point: ${context?.entryPoint ?? "see report"}\n- Automatic blockers: ${automatic.length}/${automatic.length} passed\n- [Open the delivery report](report.md)\n- Human-attention items: ${manual.length}\n- Suggested human UAT steps: ${manualUat.length}\n\n${manualUat.length > 0 ? "Complete the human UAT as needed; no reply is required when all steps pass. Report the step and observed result when one fails." : "Do not repeat the automatic tests; no reply is required when there is no objection. Describe the observed result if a problem appears."}\nThis is a draft; send it only through an already-authorized channel.\n`;
 }
 
 export async function markReady(root, taskId, clock = () => new Date()) {
   let { state, files } = await loadTask(root, taskId);
-  assertPhase(state, [PHASES.PRE_UAT, PHASES.READY_FOR_UAT], "Readiness");
+  assertPhase(state, [PHASES.PRE_UAT, ...DELIVERY_TERMINAL_PHASES], "Delivery readiness");
   await assertContractIntegrity(files, state);
   if (state.deliveryVersion >= 2 && (state.handoff?.status !== "prepared" || !(await pathExists(files.handoff)))) {
     await prepareHandoff(root, taskId, {}, clock);
     ({ state, files } = await loadTask(root, taskId));
   }
   const errors = await readinessErrorsForState(root, state, files);
-  assert(errors.length === 0, "READINESS_BLOCKED", "Task is not ready for human UAT.", { errors });
+  assert(errors.length === 0, "READINESS_BLOCKED", "Task is not ready for delivery.", { errors });
   const now = isoNow(clock);
-  setPhase(state, PHASES.READY_FOR_UAT, now);
+  setPhase(state, PHASES.DELIVERED, now);
   state.readyAt = now;
-  appendHistory(state, "READY_FOR_UAT", now);
+  appendHistory(state, "DELIVERED", now);
   await saveTask(files, state, clock);
   const handoff = state.deliveryVersion >= 2 ? await readJson(files.handoff) : null;
   await atomicWrite(files.report, renderTaskReport(state, handoff));
@@ -2118,7 +2235,7 @@ export async function writeReport(root, taskId) {
   const { state, files } = await loadTask(root, taskId);
   const handoff = await pathExists(files.handoff) ? await readJson(files.handoff) : null;
   await atomicWrite(files.report, renderTaskReport(state, handoff));
-  if (state.phase === PHASES.READY_FOR_UAT) await atomicWrite(files.notification, renderTaskNotification(state, handoff));
+  if (isDeliveryTerminalPhase(state.phase)) await atomicWrite(files.notification, renderTaskNotification(state, handoff));
   return { state, files };
 }
 
@@ -2137,6 +2254,7 @@ export async function rebuildKnowledgeGraph(root, clock = () => new Date()) {
 export async function searchKnowledgeGraph(root, query, options = {}) {
   await initProject(root);
   const graph = await loadGraph(root);
+  const projectTruth = graph.nodes.find((node) => node.type === "ProjectTruth" && !node.stale);
   return {
     graph: {
       schemaVersion: graph.schemaVersion,
@@ -2146,6 +2264,12 @@ export async function searchKnowledgeGraph(root, query, options = {}) {
       edges: graph.edges.length,
       warnings: graph.warnings,
       loadStatus: graph.loadStatus,
+      projectTruth: projectTruth?.source?.path ? {
+        title: projectTruth.title,
+        path: projectTruth.source.path,
+        sha256: projectTruth.source.sha256,
+        size: projectTruth.source.size,
+      } : null,
     },
     ...queryGraph(graph, query, options),
   };
@@ -2216,6 +2340,37 @@ export async function searchMemory(root, query, limit = 10) {
     .sort((left, right) => right.score - left.score || right.last_verified_at.localeCompare(left.last_verified_at))
     .slice(0, limit);
   return { query, terms, matches, environmentMatches };
+}
+
+/**
+ * Return the memory and graph hits relevant to a requirement so `new` and
+ * `assess` can inline them instead of costing two extra query round trips.
+ * Knowledge lookup failure degrades to empty matches with a warning; it never
+ * blocks routing or delivery.
+ */
+export async function relatedKnowledge(root, query, limit = 5) {
+  const knowledge = {
+    query,
+    memory: { matches: [], environmentMatches: [] },
+    graph: { matches: [], projectTruth: null },
+    warnings: [],
+  };
+  try {
+    const memory = await searchMemory(root, query, limit);
+    knowledge.memory = { matches: memory.matches, environmentMatches: memory.environmentMatches };
+  } catch (error) {
+    knowledge.warnings.push(`Memory lookup unavailable: ${error.message}`);
+  }
+  try {
+    const graph = await searchKnowledgeGraph(root, query, { limit });
+    knowledge.graph = {
+      matches: graph.matches.filter((match) => match.node.type !== "ProjectTruth"),
+      projectTruth: graph.graph.projectTruth,
+    };
+  } catch (error) {
+    knowledge.warnings.push(`Graph lookup unavailable: ${error.message}`);
+  }
+  return knowledge;
 }
 
 export function summarizeState(state) {

@@ -1,0 +1,26 @@
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
+const root = path.resolve(process.argv[2]);
+const run = (...args) => spawnSync(process.execPath, ["src/cli.mjs", ...args], { cwd: root, encoding: "utf8" });
+const exported = run("export", "--status", "paid", "--min-total", "20");
+assert.equal(exported.status, 0, exported.stderr);
+assert.equal(exported.stdout, "id,customer,total,status\no-1,\"Acme, Inc.\",45,paid\n");
+const empty = run("export", "--status", "paid", "--min-total", "50");
+assert.equal(empty.status, 0, empty.stderr);
+assert.equal(empty.stdout, "id,customer,total,status\n");
+const invalid = run("export", "--status", "paid", "--min-total", "-1");
+assert.notEqual(invalid.status, 0);
+assert.match(invalid.stderr, /min-total/i);
+const missing = run("export", "--status", "paid");
+assert.notEqual(missing.status, 0);
+assert.match(missing.stderr, /min-total/i);
+const nonNumeric = run("export", "--status", "paid", "--min-total", "many");
+assert.notEqual(nonNumeric.status, 0);
+assert.match(nonNumeric.stderr, /min-total/i);
+const source = await readFile(path.join(root, "src", "cli.mjs"), "utf8");
+assert.match(source, /filteredOrders/);
+assert.match(source, /streamCsv/);
+process.stdout.write("medium delivery acceptance passed\n");

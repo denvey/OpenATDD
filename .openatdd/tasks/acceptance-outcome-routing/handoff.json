@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "taskId": "acceptance-outcome-routing",
+  "preparedAt": "2026-07-29T08:16:10.239Z",
+  "context": {
+    "language": "zh-CN",
+    "version": "1.0.0",
+    "environment": "local",
+    "role": "n/a",
+    "prerequisites": [
+      "启动或验证命令: npm run check"
+    ],
+    "accountReference": "n/a (no login required)",
+    "entryPoint": "打开 report.md。",
+    "estimatedMinutes": 5
+  },
+  "steps": [
+    {
+      "number": 1,
+      "acceptanceId": "AC-01",
+      "title": "确定性技术改动验证后直接交付",
+      "precondition": "任务的阻塞验收标准均可由命令或测试确定性验证，且没有要求人工判断的验收表面。",
+      "action": "完成正式 finalization。",
+      "expected": "系统进入 `DELIVERED`，报告明确列出已通过证据，不要求人重复执行测试，也不增加第三次批准。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 2,
+      "acceptanceId": "AC-02",
+      "title": "接口与业务契约提供结果供人按需检查",
+      "precondition": "任务包含内部或对外 API、业务契约或 `ASSISTED` 验收表面，AI 已执行可自动完成的验证。",
+      "action": "负责人打开验收报告查看请求、响应、状态码、权限、异常和副作用等结果。",
+      "expected": "负责人不必为了形式重新调用接口，也不必回复“批准”；没有异议即维持 `DELIVERED`，有异议则反馈具体问题。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 3,
+      "acceptanceId": "AC-03",
+      "title": "只有真正需要人执行的场景附带人工 UAT",
+      "precondition": "任务存在阻塞的 `MANUAL` 验收标准，例如主观视觉、真实设备、生产权限或无法自动观察的第三方行为。",
+      "action": "完成正式 finalization。",
+      "expected": "系统仍进入 `DELIVERED`，但报告清楚区分 AI 已验证部分和建议人执行的 UAT 步骤；人执行后没有问题无需回复，发现问题才提出异议。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-focused-delivery-focused-delivery-tests.md",
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 4,
+      "acceptanceId": "AC-04",
+      "title": "人的异议会重开同一个任务",
+      "precondition": "任务已经 `DELIVERED`，用户查看结果或执行人工 UAT 时发现与需求验收卡不符。",
+      "action": "用户描述具体异议，无需填写新卡。",
+      "expected": "系统进入修复流程，记录缺陷、重新验证完整旅程并再次交付；没有异议时不产生额外状态转换。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-focused-delivery-focused-delivery-tests.md",
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    },
+    {
+      "number": 5,
+      "acceptanceId": "AC-05",
+      "title": "现有任务与命令保持兼容",
+      "precondition": "项目已有 `AUTO`、`ASSISTED`、`MANUAL` 契约、历史任务和 finalization manifest。",
+      "action": "升级后继续使用现有 CLI 创建、恢复、验证和 finalize 任务。",
+      "expected": "旧 `READY_FOR_UAT` 数据可读取；现有验证语义不削弱；CLI 输出、README、Skill 指令和测试与异议驱动的交付闭环一致。",
+      "checkbox": "[ ] Pass  [ ] Fail",
+      "evidence": [
+        "evidence/finalize/epoch-3/check-module-delivery-module-delivery-tests.md",
+        "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+        "evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+        "evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+        "evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md"
+      ],
+      "judgment": "确认准备的证据与可观察结果。"
+    }
+  ],
+  "links": [
+    {
+      "label": "详细交付报告",
+      "target": "report.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的验收卡",
+      "target": "acceptance.md",
+      "applicable": true
+    },
+    {
+      "label": "已批准的方案卡",
+      "target": "solution.md",
+      "applicable": true
+    },
+    {
+      "label": "问题与修复日志",
+      "target": "issues.md",
+      "applicable": true
+    },
+    {
+      "label": "local 环境档案",
+      "target": "../../environments/local.yaml",
+      "applicable": true
+    },
+    {
+      "label": "Finalization 清单",
+      "target": "finalization.manifest.json",
+      "applicable": true
+    },
+    {
+      "label": "项目文档",
+      "target": "../../../README.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-01 证据: batch-automatic-delivery-uat-automatic-delivery.md",
+      "target": "evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-02 证据: batch-automatic-delivery-uat-automatic-delivery.md",
+      "target": "evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: check-focused-delivery-focused-delivery-tests.md",
+      "target": "evidence/finalize/epoch-3/check-focused-delivery-focused-delivery-tests.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-03 证据: batch-manual-objection-uat-manual-objection.md",
+      "target": "evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: check-focused-delivery-focused-delivery-tests.md",
+      "target": "evidence/finalize/epoch-3/check-focused-delivery-focused-delivery-tests.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-04 证据: batch-manual-objection-uat-manual-objection.md",
+      "target": "evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: check-module-delivery-module-delivery-tests.md",
+      "target": "evidence/finalize/epoch-3/check-module-delivery-module-delivery-tests.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: check-broad-project-broad-project-check.md",
+      "target": "evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: batch-compatibility-package-uat-delivery-compatibility.md",
+      "target": "evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: batch-compatibility-package-uat-package-dry-run.md",
+      "target": "evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+      "applicable": true
+    },
+    {
+      "label": "AC-05 证据: batch-compatibility-package-uat-skill-validation.md",
+      "target": "evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+      "applicable": true
+    }
+  ]
+}

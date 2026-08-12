@@ -85,3 +85,21 @@ Protection: standards and research enter scoped graph context and shared invaria
 A formal real-Agent claim requires repeated hidden-check evidence from the bundled real-model adapter; mock or partial-pass reports never satisfy it.
 
 Protection: bundled Codex primary and bare adapters run twice and finalization verifies a 100-percent primary real-model report
+
+## INV-2026-012
+
+真实 Agent 评测默认沿用用户 provider；忽略用户配置必须由 --isolated-config 显式选择并记录到报告。
+
+Protection: bundled Codex argv 默认与显式隔离模式断言，并通过真实 adapter provider 探测。
+
+## INV-2026-013
+
+确定性的门禁、状态、证据和 finalization 由宿主执行；实现模型只接收冻结合同，不操作工作流状态机。
+
+Protection: host_gated_full_delivery_rejects_phase_one_product_edits_and_runs_two_clean_contexts
+
+## INV-2026-014
+
+Every hidden acceptance assertion must trace to an explicit visible requirement; dynamic API input types, exact stored/returned values, state-transition side effects, idempotent results, and time boundaries are part of the acceptance contract.
+
+Protection: delivery_complex_public_contract_matches_hidden_observables_and_full_passes_two_runs

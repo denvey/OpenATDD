@@ -27,10 +27,12 @@ import {
 import {
   loadEnvironmentProfile,
   loadLocalCredentials,
+  loadScanOnlyCredentials,
   runEnvironmentPreflight,
 } from "./profiles.mjs";
 import { buildGraph } from "./graph.mjs";
 import {
+  DELIVERY_TERMINAL_PHASES,
   PHASES,
   advanceEpoch,
   assertContractIntegrity,
@@ -246,7 +248,7 @@ async function buildHandoff(root, state, files, manifest, profile, evidenceRefer
   const language = inferHumanLanguage(await readFile(files.solution, "utf8"), state.requirement);
   const zh = language === "zh-CN";
   const links = [
-    { label: zh ? "详细 UAT 报告" : "Detailed UAT report", target: reportName, applicable: true },
+    { label: zh ? "详细交付报告" : "Detailed delivery report", target: reportName, applicable: true },
     { label: zh ? "已批准的验收卡" : "Approved acceptance card", target: "acceptance.md", applicable: true },
     { label: zh ? "已批准的方案卡" : "Approved solution card", target: "solution.md", applicable: true },
     { label: zh ? "问题与修复日志" : "Issue and repair log", target: "issues.md", applicable: true },
@@ -376,13 +378,12 @@ function applyBudgets(metrics, budgets = {}) {
 async function loadContext(root, taskId, input) {
   const inspected = await inspectFinalization(root, taskId, input);
   const { loaded, manifestInfo, validation } = inspected;
-  assert([PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, PHASES.READY_FOR_UAT].includes(loaded.state.phase), "INVALID_PHASE", `Finalization is not allowed in phase ${loaded.state.phase}.`);
+  assert([PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED, ...DELIVERY_TERMINAL_PHASES].includes(loaded.state.phase), "INVALID_PHASE", `Finalization is not allowed in phase ${loaded.state.phase}.`);
   assert(validation.valid, "INVALID_FINALIZATION_MANIFEST", "Finalization manifest is invalid.", { errors: validation.errors });
   const profileInfo = await profileDigest(root, manifestInfo.manifest.environment);
-  const credentialVariables = manifestInfo.manifest.preflight?.scope === "project"
-    ? ""
-    : profileInfo.profile.credential_variables;
-  const credentials = await loadLocalCredentials(root, credentialVariables);
+  const credentials = manifestInfo.manifest.preflight?.scope === "project"
+    ? await loadScanOnlyCredentials(root, profileInfo.profile.credential_variables)
+    : await loadLocalCredentials(root, profileInfo.profile.credential_variables);
   return { ...loaded, manifestInfo, profileInfo, credentials, warnings: validation.warnings };
 }
 
@@ -528,7 +529,7 @@ function evidenceForReferences(referenceEvidence, references) {
 }
 
 function commandSignature(commands = []) {
-  if (commands.length === 0) return null;
+  if (commands.length === 0 || commands.some((command) => command.deterministic !== true)) return null;
   return JSON.stringify(commands.map((command) => ({
     argv: command.argv,
     cwd: command.cwd ?? null,
@@ -539,10 +540,10 @@ function commandSignature(commands = []) {
 }
 
 /**
- * Reuse evidence already produced in this verification epoch when a historical
- * replay would execute the identical commands. The source is frozen for the
- * whole epoch, so a second identical run cannot observe a different outcome; it
- * only multiplies the broad suite by the number of affected historical tasks.
+ * Reuse evidence already produced in this verification epoch only when every
+ * command explicitly declares deterministic execution and the full execution
+ * contract matches. Unmarked commands may observe time, external state, or
+ * side effects and must run independently even when their argv is identical.
  */
 function reusableEpochEvidence(manifest, referenceEvidence, replayCommands) {
   const signature = commandSignature(replayCommands);
@@ -633,7 +634,7 @@ async function projectHistoricalStates(root, state, manifest, referenceEvidence,
       verifiedAt: now,
       epoch: projected.verification.epoch,
     };
-    projected.phase = PHASES.READY_FOR_UAT;
+    projected.phase = PHASES.DELIVERED;
     projected.readyAt = now;
     projected.updatedAt = now;
     dependencyStates.set(dependency.taskId, { state: projected, files: prior.files });
@@ -737,12 +738,11 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
       continue;
     }
     const signature = commandSignature(group.commands);
-    const identical = group.scope === "broad" ? undefined : executedCheckGroups.get(signature);
+    const identical = group.scope === "broad" || !signature ? undefined : executedCheckGroups.get(signature);
     if (identical) {
-      // The source is frozen for this run, so a group whose commands are
-      // argv-identical to an already executed group cannot observe a different
-      // outcome. The broad group is exempt: exactly one broad execution backs
-      // the frozen journey and the history replay snapshot.
+      // Explicitly deterministic commands with an identical execution contract
+      // may reuse evidence. The broad group is exempt: exactly one broad
+      // execution backs the frozen journey and history replay snapshot.
       metrics.checkGroupSignatureReuse.push(group.id);
       const evidence = referenceEvidence.get(identical.reference);
       const verifiedAt = isoNow(clock);
@@ -773,7 +773,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     }
     const evidence = await capturePaths(root, paths, boundary, clock);
     referenceEvidence.set(`check:${group.id}`, evidence);
-    executedCheckGroups.set(signature, { id: group.id, reference: `check:${group.id}` });
+    if (signature) executedCheckGroups.set(signature, { id: group.id, reference: `check:${group.id}` });
     draft.checks[group.id] = {
       id: group.id,
       name: group.name || group.id,
@@ -865,7 +865,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   assert(readiness.length === 0, "READINESS_BLOCKED", "Projected finalization is not ready.", { errors: readiness });
   endMetricsPhase(metrics, "handoff-readiness", phaseStarted);
   const readyAt = isoNow(clock);
-  setPhase(draft, PHASES.READY_FOR_UAT, readyAt);
+  setPhase(draft, PHASES.DELIVERED, readyAt);
   draft.readyAt = readyAt;
   draft.history.push({ event: "FINALIZATION_COMPLETED", at: readyAt, details: { sourceFingerprint: inventory.fingerprint, manifestDigest: manifestInfo.digest } });
   metrics.wallTimeMs = Math.max(0, Date.now() - wallStart);

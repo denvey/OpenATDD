@@ -1,7 +1,7 @@
 {
   "name": "openatdd",
   "version": "1.0.0",
-  "description": "A simple acceptance-first AI delivery framework from natural-language requirement to verified UAT handoff.",
+  "description": "A simple acceptance-first AI delivery framework from natural-language requirement to evidence-backed delivery.",
   "type": "module",
   "bin": {
     "openatdd": "./bin/openatdd.mjs"
@@ -9,6 +9,7 @@
   "files": [
     "bin",
     "skills/openatdd",
+    "skills/openatdd-code-review",
     "evals/agent/rubrics",
     "evals/agent/scenarios",
     "LICENSE",

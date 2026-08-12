@@ -90,9 +90,9 @@ test("retrospective exposes delivery critical path, retries, integration tail, a
   const { state } = await loadTask(root, "timed-retrospect");
   state.createdAt = "2026-07-24T09:00:00.000Z";
   state.readyAt = "2026-07-24T10:40:00.000Z";
-  state.phase = "READY_FOR_UAT";
+  state.phase = "DELIVERED";
   state.timing = {
-    currentPhase: "READY_FOR_UAT",
+    currentPhase: "DELIVERED",
     phaseStartedAt: state.readyAt,
     phases: [
       { phase: "ACCEPTANCE_DRAFT", startedAt: "2026-07-24T09:00:00.000Z", endedAt: "2026-07-24T09:30:00.000Z", durationMs: 1_800_000 },
@@ -115,10 +115,13 @@ test("retrospective exposes delivery critical path, retries, integration tail, a
     openedAt: "2026-07-24T10:25:00.000Z",
     resolvedAt: "2026-07-24T10:30:00.000Z",
   }];
-  state.history.push(
+  state.history = [
+    { event: "TASK_CREATED", at: "2026-07-24T09:00:00.000Z" },
+    { event: "SOLUTION_APPROVED", at: "2026-07-24T09:58:00.000Z" },
+    { event: "IMPLEMENTATION_STARTED", at: "2026-07-24T10:00:00.000Z" },
     { event: "ENVIRONMENT_PREFLIGHT", at: "2026-07-24T10:30:00.000Z", details: { status: "failed" } },
     { event: "ENVIRONMENT_PREFLIGHT", at: "2026-07-24T10:31:00.000Z", details: { status: "passed" } },
-  );
+  ];
 
   const result = buildStrategyRetrospective(state, [], () => new Date("2026-07-24T10:45:00.000Z"));
   const markdown = renderStrategyRetrospective(result);
@@ -132,9 +135,22 @@ test("retrospective exposes delivery critical path, retries, integration tail, a
   assert.equal(result.metrics.agents.criticalPathMs, 1_200_000);
   assert.equal(result.metrics.agents.integrationTailMs, 300_000);
   assert.deepEqual(result.bottlenecks[0], { phase: "ACCEPTANCE_DRAFT", durationMs: 1_800_000 });
+  assert.deepEqual(result.metrics.timing.largestGaps[0], {
+    fromEvent: "TASK_CREATED",
+    toEvent: "SOLUTION_APPROVED",
+    startedAt: "2026-07-24T09:00:00.000Z",
+    durationMs: 3_480_000,
+  });
+  assert.deepEqual(result.metrics.timing.largestGaps.at(-1), {
+    fromEvent: "ENVIRONMENT_PREFLIGHT",
+    toEvent: "ENVIRONMENT_PREFLIGHT",
+    startedAt: "2026-07-24T10:30:00.000Z",
+    durationMs: 60_000,
+  });
   assert.match(markdown, /自主交付 \/ 总墙钟：40m 00s \/ 1h 40m 00s/);
   assert.match(markdown, /预检尝试 \/ 失败：2 \/ 1/);
   assert.match(markdown, /IMPLEMENTING \| 25m 00s/);
+  assert.match(markdown, /最大事件间隔/);
 });
 
 test("evaluation profiles preserve cached tokens and compare capability ablations", async (t) => {

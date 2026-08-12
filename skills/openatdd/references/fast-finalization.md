@@ -18,7 +18,7 @@ focused implementation and repair
 → repair every rehearsal finding
 → freeze the complete source fingerprint
 → finalize
-→ human UAT from report.md
+→ DELIVERED; inspect evidence or listed manual UAT and object only on failure
 ```
 
 This does not add another approval. Quick runs its compact contracts and both
@@ -57,12 +57,12 @@ is:
     {
       "id": "focused",
       "scope": "focused",
-      "commands": [{ "id": "focused-tests", "argv": ["npm", "test", "--", "feature"] }]
+      "commands": [{ "id": "focused-tests", "argv": ["npm", "test", "--", "feature"], "deterministic": true }]
     },
     {
       "id": "module",
       "scope": "module",
-      "commands": [{ "id": "module-tests", "argv": ["npm", "run", "test:module"] }]
+      "commands": [{ "id": "module-tests", "argv": ["npm", "run", "test:module"], "deterministic": true }]
     },
     {
       "id": "broad",
@@ -101,6 +101,9 @@ Rules enforced by the validator:
 - `surface` is `cli`, `api`, `web`, `file`, or `mixed`;
 - `environment` names a non-secret profile in `.openatdd/environments/`;
 - every command has a unique lowercase ID and non-empty `argv` array;
+- optional `deterministic: true` opts a command into identical same-epoch
+  evidence reuse; unmarked commands always execute independently, and the
+  validator warns when non-broad groups share an identical unmarked contract;
 - optional `preflight.commands` use the same safe argv-only command contract;
 - optional `preflight.scope` is `environment` (default) or `project`; project
   scope requires a reason, forbids preflight commands and declared command
@@ -109,8 +112,9 @@ Rules enforced by the validator:
 - working directories stay inside the project and timeouts are positive;
 - check groups are ordered `focused → module → broad`, with exactly one broad
   group;
-- one to five cohesive UAT batches cover every acceptance criterion;
-- `AUTO` criteria use real argv-only UAT commands; `runner: "internal"` is
+- one to five cohesive approved-journey batches under the compatible `uat` key
+  cover every acceptance criterion;
+- `AUTO` criteria use real argv-only journey commands; `runner: "internal"` is
   allowed only for `ASSISTED` or `MANUAL` handoff and records `manual`, never
   `passed`;
 - every acceptance ID maps to an existing check or batch evidence reference;
@@ -192,7 +196,7 @@ Default environment scope remains strict. Project scope still validates the
 workspace, project identity, start command, and application version.
 
 The rehearsal checks the real entry points, non-persisting environment
-preflight, UAT coverage, report rendering, local and applicable HTTP links,
+preflight, approved-journey coverage, report rendering, local and applicable HTTP links,
 credential redaction, and source stability. It writes preview diagnostics but
 does not record a pass, advance the verification epoch, reverify history,
 generate a notification, or enter READY.
@@ -226,11 +230,16 @@ environment profile remain protected by their own digests and normally belong
 to the source inventory.
 
 Formal finalization creates a clean verification epoch in memory, executes the
-groups and batches, verifies captured evidence and secrets, prepares the human
-handoff, reverifies affected history once, and validates the projected READY
-state. Only then does a recoverable multi-file transaction commit historical
-states first and the current READY state last. A failed command or validation
+groups and batches, verifies captured evidence and secrets, prepares the
+delivery handoff, reverifies affected history once, and validates the projected
+`DELIVERED` state. Only then does a recoverable multi-file transaction commit
+historical states first and the current delivered state last. A failed command or validation
 may leave diagnostic logs, but never a partially passed formal state.
+
+Evidence reuse requires every command in the matching execution contract to set
+`deterministic: true`. Use it only for idempotent commands that cannot observe
+time, randomness, external services, mutable state, or side effects. Identical
+argv without that declaration is executed again.
 
 Running the same command again with the same completed fingerprint is an
 idempotent cache hit. A deliverable, manifest, or profile change makes the
@@ -258,6 +267,6 @@ actually covers every listed historical criterion.
 ## Manual fallback
 
 If no valid manifest exists, use the granular sequence documented in
-`SKILL.md`: preflight, pre-UAT planning, checks, batches, acceptance records,
-handoff, and ready. Use granular commands for diagnosis, but do not repeat them
+`SKILL.md`: preflight, delivery-verification planning, checks, batches,
+acceptance records, handoff, and ready. Use granular commands for diagnosis, but do not repeat them
 after a successful formal finalization for the same fingerprint.

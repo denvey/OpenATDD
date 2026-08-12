@@ -2,9 +2,9 @@
   "schemaVersion": 3,
   "taskId": "detailed-uat-handoff",
   "requirement": "At final delivery, prepare detailed step-by-step human acceptance instructions and all relevant links so reviewers can validate quickly.",
-  "phase": "READY_FOR_UAT",
+  "phase": "DELIVERED",
   "createdAt": "2026-07-23T06:58:50.560Z",
-  "updatedAt": "2026-07-25T22:47:59.677Z",
+  "updatedAt": "2026-07-29T16:57:46.272Z",
   "acceptance": {
     "approvedAt": "2026-07-23T09:50:59.642Z",
     "sha256": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
@@ -136,182 +136,182 @@
       }
     ]
   },
-  "verificationNotBefore": "2026-07-25T22:36:22.285Z",
+  "verificationNotBefore": "2026-07-29T16:34:07.500Z",
   "results": {
     "AC-01": {
       "acceptanceId": "AC-01",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Reverified once for final fingerprint 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a: verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     },
     "AC-02": {
       "acceptanceId": "AC-02",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Reverified once for final fingerprint 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a: verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     },
     "AC-03": {
       "acceptanceId": "AC-03",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Reverified once for final fingerprint 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a: verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     },
     "AC-04": {
       "acceptanceId": "AC-04",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Reverified once for final fingerprint 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a: verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     },
     "AC-05": {
       "acceptanceId": "AC-05",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Reverified once for final fingerprint 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a: verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     },
     "AC-06": {
       "acceptanceId": "AC-06",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Reverified once for final fingerprint 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a: verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     },
     "AC-07": {
       "acceptanceId": "AC-07",
       "classification": "AUTO",
       "blocking": true,
       "status": "passed",
-      "summary": "Reverified once for final fingerprint 4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a: verified this automatic criterion.",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     }
   },
   "checks": {
@@ -321,30 +321,30 @@
       "command": "node --test tests/delivery-v2.test.mjs",
       "status": "passed",
       "scope": "focused",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": 176.340583,
       "summary": "",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "evaluation-corpus": {
       "id": "evaluation-corpus",
@@ -352,30 +352,30 @@
       "command": "npm run eval",
       "status": "passed",
       "scope": "module",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": 253.679458,
       "summary": "",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "full-package-checks": {
       "id": "full-package-checks",
@@ -383,30 +383,30 @@
       "command": "npm run check",
       "status": "passed",
       "scope": "broad",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": 285.937958,
       "summary": "",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "skill-and-package-validation": {
       "id": "skill-and-package-validation",
@@ -414,30 +414,30 @@
       "command": "quick_validate.py skills/openatdd && npm pack --dry-run",
       "status": "passed",
       "scope": "broad",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": null,
       "summary": "",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "source-freeze-boundary": {
       "id": "source-freeze-boundary",
@@ -445,30 +445,30 @@
       "command": "verify repaired source fingerprint",
       "status": "passed",
       "scope": "focused",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": null,
       "summary": "",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "report-link-source-boundary": {
       "id": "report-link-source-boundary",
@@ -476,30 +476,30 @@
       "command": "verify final report-link source fingerprint",
       "status": "passed",
       "scope": "focused",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": null,
       "summary": "",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "finalize-fast-portable-finalization": {
       "id": "finalize-fast-portable-finalization",
@@ -507,30 +507,30 @@
       "command": "manifest history replay",
       "status": "passed",
       "scope": "broad",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": null,
       "summary": "Batched once after final source freeze.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "finalize-openatdd-1-0": {
       "id": "finalize-openatdd-1-0",
@@ -538,30 +538,30 @@
       "command": "manifest history replay",
       "status": "passed",
       "scope": "broad",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": null,
       "summary": "Batched once after final source freeze.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "finalize-strategy-visibility": {
       "id": "finalize-strategy-visibility",
@@ -569,30 +569,30 @@
       "command": "manifest history replay",
       "status": "passed",
       "scope": "broad",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": null,
       "summary": "Batched once after final source freeze.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9,
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
       "previousStatus": "passed",
-      "affectedAt": "2026-07-25T22:36:22.285Z",
-      "affectedBy": "optimize-quick-delivery"
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
     },
     "finalize-optimize-quick-delivery": {
       "id": "finalize-optimize-quick-delivery",
@@ -600,27 +600,213 @@
       "command": "manifest history replay",
       "status": "passed",
       "scope": "broad",
-      "sourceFingerprint": "4b5ffa5b43868e4e4607d6853e225a78eaefaa92fe9520fe9becbe3e2a4e211a",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
       "durationMs": null,
       "summary": "Batched once after final source freeze.",
       "evidence": [
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
-          "sha256": "c23b9f78ee4f5badef5e6c68c5d648814d5071669e84228ff4a470ef85f4e884",
-          "size": 9255,
-          "modifiedAt": "2026-07-25T22:47:56.642Z",
-          "capturedAt": "2026-07-25T22:47:56.643Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
         },
         {
-          "path": ".openatdd/tasks/optimize-quick-delivery/evidence/finalize/epoch-2/batch-quick-finalization-uat-quick-finalization.md",
-          "sha256": "0b6340af1c360075fb31edfac86476c365ec0852581a61680f4866ae4bf7e4e7",
-          "size": 4684,
-          "modifiedAt": "2026-07-25T22:47:59.675Z",
-          "capturedAt": "2026-07-25T22:47:59.675Z"
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
         }
       ],
-      "verifiedAt": "2026-07-25T22:47:59.677Z",
-      "epoch": 9
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-eval-user-config": {
+      "id": "finalize-eval-user-config",
+      "name": "finalization reverification for eval-user-config",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-end-to-end-agent-eval": {
+      "id": "finalize-end-to-end-agent-eval",
+      "name": "finalization reverification for end-to-end-agent-eval",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-optimize-atdd-runtime-cost": {
+      "id": "finalize-optimize-atdd-runtime-cost",
+      "name": "finalization reverification for optimize-atdd-runtime-cost",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-openatdd-code-review-skill": {
+      "id": "finalize-openatdd-code-review-skill",
+      "name": "finalization reverification for openatdd-code-review-skill",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-acceptance-outcome-routing": {
+      "id": "finalize-acceptance-outcome-routing",
+      "name": "finalization reverification for acceptance-outcome-routing",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-lightweight-project-truth": {
+      "id": "finalize-lightweight-project-truth",
+      "name": "finalization reverification for lightweight-project-truth",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.272Z",
+      "epoch": 16
     }
   },
   "issues": [
@@ -744,7 +930,7 @@
       "notBefore": "2026-07-23T09:56:39.809Z"
     }
   ],
-  "readyAt": "2026-07-25T22:47:59.677Z",
+  "readyAt": "2026-07-29T16:57:46.272Z",
   "history": [
     {
       "event": "TASK_CREATED",
@@ -1522,14 +1708,344 @@
           "AC-07"
         ]
       }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T02:46:58.651Z",
+      "details": {
+        "byTask": "eval-user-config",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "tests/agent-eval.test.mjs",
+            "tests"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:tests/agent-eval.test.mjs:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T02:53:58.998Z",
+      "details": {
+        "byTask": "eval-user-config",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "tests/agent-eval.test.mjs",
+            "tests"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:tests/agent-eval.test.mjs:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T16:31:08.549Z",
+      "details": {
+        "byTask": "end-to-end-agent-eval",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "evals/agent/profiles",
+            "evals"
+          ],
+          [
+            "evals/agent/scenarios",
+            "evals"
+          ],
+          [
+            "evals/agent/fixtures",
+            "evals"
+          ],
+          [
+            "evals/agent/rubrics",
+            "evals"
+          ],
+          [
+            "evals/reports",
+            "evals"
+          ],
+          [
+            "tests/agent-eval.test.mjs",
+            "tests"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:evals/agent/fixtures:evals",
+          "path-overlap:evals/agent/profiles:evals",
+          "path-overlap:evals/agent/rubrics:evals",
+          "path-overlap:evals/agent/scenarios:evals",
+          "path-overlap:evals/reports:evals",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:tests/agent-eval.test.mjs:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T21:57:28.757Z",
+      "details": {
+        "byTask": "optimize-atdd-runtime-cost",
+        "overlaps": [
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ],
+          [
+            "skills/openatdd/references",
+            "skills/openatdd/references/verification-routing.md"
+          ],
+          [
+            "skills/openatdd/references",
+            "skills/openatdd/references/environment-profiles.md"
+          ],
+          [
+            "skills/openatdd/scripts/workflow.mjs",
+            "skills/openatdd/scripts/workflow.mjs"
+          ],
+          [
+            "evals/agent/profiles",
+            "evals"
+          ],
+          [
+            "evals/reports",
+            "evals"
+          ],
+          [
+            "tests/agent-eval.test.mjs",
+            "tests"
+          ],
+          [
+            "tests/intelligence.test.mjs",
+            "tests"
+          ],
+          [
+            "tests/delivery-v2.test.mjs",
+            "tests"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:evals/agent/profiles:evals",
+          "path-overlap:evals/reports:evals",
+          "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+          "path-overlap:skills/openatdd/references:skills/openatdd/references/environment-profiles.md",
+          "path-overlap:skills/openatdd/references:skills/openatdd/references/verification-routing.md",
+          "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd/scripts/workflow.mjs",
+          "path-overlap:tests/agent-eval.test.mjs:tests",
+          "path-overlap:tests/delivery-v2.test.mjs:tests",
+          "path-overlap:tests/intelligence.test.mjs:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T00:36:48.448Z",
+      "details": {
+        "byTask": "openatdd-code-review-skill",
+        "overlaps": [
+          [
+            "tests/code-review-skill.test.mjs",
+            "tests"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:tests/code-review-skill.test.mjs:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T07:57:47.134Z",
+      "details": {
+        "byTask": "acceptance-outcome-routing",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/workflow.mjs",
+            "skills/openatdd/scripts/workflow.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ],
+          [
+            "tests/workflow.test.mjs",
+            "tests"
+          ],
+          [
+            "tests/finalization.test.mjs",
+            "tests"
+          ],
+          [
+            "tests/strategy.test.mjs",
+            "tests"
+          ],
+          [
+            "tests/evals.test.mjs",
+            "tests"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd/scripts/workflow.mjs",
+          "path-overlap:tests/evals.test.mjs:tests",
+          "path-overlap:tests/finalization.test.mjs:tests",
+          "path-overlap:tests/strategy.test.mjs:tests",
+          "path-overlap:tests/workflow.test.mjs:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T16:34:07.500Z",
+      "details": {
+        "byTask": "lightweight-project-truth",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/workflow.mjs",
+            "skills/openatdd/scripts/workflow.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "tests/workflow.test.mjs",
+            "tests"
+          ],
+          [
+            "tests/knowledge.test.mjs",
+            "tests"
+          ],
+          [
+            "README.md",
+            "README.md"
+          ],
+          [
+            "skills/openatdd/SKILL.md",
+            "skills/openatdd/SKILL.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md",
+          "path-overlap:skills/openatdd/SKILL.md:skills/openatdd/SKILL.md",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:skills/openatdd/scripts/workflow.mjs:skills/openatdd/scripts/workflow.mjs",
+          "path-overlap:tests/knowledge.test.mjs:tests",
+          "path-overlap:tests/workflow.test.mjs:tests"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ]
+      }
     }
   ],
   "deliveryVersion": 2,
   "verification": {
-    "epoch": 9,
-    "startedAt": "2026-07-25T22:36:22.285Z",
+    "epoch": 16,
+    "startedAt": "2026-07-29T16:34:07.500Z",
     "clean": true,
-    "reason": "affected by optimize-quick-delivery"
+    "reason": "affected by lightweight-project-truth"
   },
   "checkSequence": [
     {
@@ -1782,7 +2298,7 @@
   },
   "timing": {
     "currentPhase": "PRE_UAT",
-    "phaseStartedAt": "2026-07-25T22:36:22.285Z",
+    "phaseStartedAt": "2026-07-29T16:34:07.500Z",
     "phases": [
       {
         "phase": "IMPLEMENTING",
@@ -1849,6 +2365,48 @@
         "startedAt": "2026-07-24T03:35:33.733Z",
         "endedAt": "2026-07-25T22:36:22.285Z",
         "durationMs": 154848552
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-25T22:36:22.285Z",
+        "endedAt": "2026-07-28T02:46:58.651Z",
+        "durationMs": 187836366
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T02:46:58.651Z",
+        "endedAt": "2026-07-28T02:53:58.998Z",
+        "durationMs": 420347
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T02:53:58.998Z",
+        "endedAt": "2026-07-28T16:31:08.549Z",
+        "durationMs": 49029551
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T16:31:08.549Z",
+        "endedAt": "2026-07-28T21:57:28.757Z",
+        "durationMs": 19580208
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T21:57:28.757Z",
+        "endedAt": "2026-07-29T00:36:48.448Z",
+        "durationMs": 9559691
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-29T00:36:48.448Z",
+        "endedAt": "2026-07-29T07:57:47.134Z",
+        "durationMs": 26458686
+      },
+      {
+        "phase": "DELIVERED",
+        "startedAt": "2026-07-29T07:57:47.134Z",
+        "endedAt": "2026-07-29T16:34:07.500Z",
+        "durationMs": 30980366
       }
     ]
   },

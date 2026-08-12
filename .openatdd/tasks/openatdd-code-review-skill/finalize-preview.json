@@ -1,0 +1,744 @@
+{
+  "schemaVersion": 1,
+  "taskId": "openatdd-code-review-skill",
+  "status": "passed",
+  "createdAt": "2026-07-29T00:49:09.669Z",
+  "candidateFingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+  "inventoryCount": 97,
+  "candidateFiles": [
+    {
+      "path": ".env.openatdd.example",
+      "mode": 420,
+      "size": 68,
+      "sha256": "fabbd4880ea50db4164da10ffe2ea5c9b92357c2da3af0a76f90b221a72965db",
+      "type": "file"
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "mode": 420,
+      "size": 335,
+      "sha256": "f13414b523ef1169ccd95060488da466f7ac51b48e2c15158e0f34b0bc1f9156",
+      "type": "file"
+    },
+    {
+      "path": ".gitignore",
+      "mode": 420,
+      "size": 370,
+      "sha256": "576fe8d45932ce6577424d97035525ead577fd2e945d3900bdddad88c4d74f8b",
+      "type": "file"
+    },
+    {
+      "path": ".openatdd/config.yaml",
+      "mode": 420,
+      "size": 162,
+      "sha256": "02327cebc6622f4a210b8a6a814e6f0d53e2480c8103021a0a9c4b7244706dc8",
+      "type": "file"
+    },
+    {
+      "path": ".openatdd/environments/local.yaml",
+      "mode": 420,
+      "size": 413,
+      "sha256": "8ea547ccdfe9755cbf1a9cb5f4601b0bc0ecbdfbf5a7f7d8bd94e681e1774c00",
+      "type": "file"
+    },
+    {
+      "path": ".openatdd/finalization.json",
+      "mode": 420,
+      "size": 5799,
+      "sha256": "8fdae4bf6482a10076d88c75729c0f96ed5176395c35a894899e0277fa869029",
+      "type": "file"
+    },
+    {
+      "path": "LICENSE",
+      "mode": 420,
+      "size": 1078,
+      "sha256": "452eb7f86aa352f2fe40010289aff1bd7a73896af5095e9c0860ade943342333",
+      "type": "file"
+    },
+    {
+      "path": "README.md",
+      "mode": 420,
+      "size": 24542,
+      "sha256": "add5c798fc8f7001df73f751c0fa528022f48cdc834831985b839792c988bf60",
+      "type": "file"
+    },
+    {
+      "path": "bin/openatdd.mjs",
+      "mode": 493,
+      "size": 118,
+      "sha256": "01af1b2fcc5b51a6b322e736b1e23a6a390f85d5e26e0c0eae0032c425db6c71",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-complex/package.json",
+      "mode": 420,
+      "size": 151,
+      "sha256": "5691b2da5e539d4f5d50deadb0576244f8d71bf71c6067f91817d82eed39f4a9",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-complex/src/accounts.mjs",
+      "mode": 420,
+      "size": 106,
+      "sha256": "3c7a79b7016c926ce0f5c14a80946105134e171164e4d5cfa133481163f6461f",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-complex/src/audit.mjs",
+      "mode": 420,
+      "size": 226,
+      "sha256": "b09012d66429aa878cf9cfe99c846015b7154481a205dbaa06e63e70f1ed894d",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-complex/src/auth.mjs",
+      "mode": 420,
+      "size": 150,
+      "sha256": "90e7fb553e4b1506035f5e98cfeaf4867fae2546eaabe15569044969b94d987b",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-complex/src/store.mjs",
+      "mode": 420,
+      "size": 791,
+      "sha256": "cbe6540488b7c8c77009857fb1c2144039f6a6f329bf5b34436aa7dbd82a611d",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-complex/test/accounts.test.mjs",
+      "mode": 420,
+      "size": 367,
+      "sha256": "40c3e5df70f95257e23e9565faccc15d59a0021ff35093f9130cfbd100362163",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-medium/package.json",
+      "mode": 420,
+      "size": 146,
+      "sha256": "fcee26963d5d57371178f855b920d9cacffafc7baf232bc62585f50b2961de81",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-medium/src/cli.mjs",
+      "mode": 420,
+      "size": 268,
+      "sha256": "8ab2bc45ec0819cc41e695c92b48542690c29cff6329c88d6367bfb677fb4212",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-medium/src/csv.mjs",
+      "mode": 420,
+      "size": 350,
+      "sha256": "2dc32a63b25590747246f660df37eec3ca32f957dd2fda64a4e9fb644af67eb2",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-medium/src/orders.mjs",
+      "mode": 420,
+      "size": 389,
+      "sha256": "3ace40f34fb6c9f094819f7c7d71bea208429a2e020d3db079a0f8557755f2b9",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-medium/test/modules.test.mjs",
+      "mode": 420,
+      "size": 502,
+      "sha256": "6a76d4f68a504d64f4069a9721ae569623412444ca523a7244107dd814a7758f",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-simple/package.json",
+      "mode": 420,
+      "size": 142,
+      "sha256": "7c2c6f7dfd730eb3db87a24f3a7a7c2edefd1a685072f062f86ff68ab149c775",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-simple/src/cli.mjs",
+      "mode": 420,
+      "size": 400,
+      "sha256": "476f3d4dbc647791a3ffa8b88a33a58a875e713b0ed493240ea8de507451df15",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-simple/src/contacts.mjs",
+      "mode": 420,
+      "size": 246,
+      "sha256": "99c7a0415448c48e23ac6c74784ea13126d068fc82b542a73a5de112f422141d",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/fixtures/delivery-simple/test/contacts.test.mjs",
+      "mode": 420,
+      "size": 254,
+      "sha256": "0bc26d615256637b2d61d20260cafe17e492e7b69d47440da9084032d6fd5af2",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/hidden/delivery-complex.mjs",
+      "mode": 420,
+      "size": 2924,
+      "sha256": "1d08ae5d330fbdcf5440bda93f41e2a7538646ad42516eeb4dd596ca1cf1bea2",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/hidden/delivery-medium.mjs",
+      "mode": 420,
+      "size": 1364,
+      "sha256": "5894610fb20698320f4ac0422f41c3c31a95e85dd376c76fd20432cb1d70c40f",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/hidden/delivery-simple.mjs",
+      "mode": 420,
+      "size": 897,
+      "sha256": "4cc82b8c802be5675a18dcd55fc94e7c10d7335177ac251e7b47150bda7ceee5",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/profiles/full-openatdd-runtime.v2.md",
+      "mode": 420,
+      "size": 1948,
+      "sha256": "2d16265ca2b9c62edc16af3f7944f9af38da53099cd7fc72b61c3df950a59a91",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/profiles/thin-atdd.v1.md",
+      "mode": 420,
+      "size": 1285,
+      "sha256": "91cf0c99e986380ea7fe8ff5c1f36e0248a9e148cbaec5631ebebd8851a7e2e6",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/profiles/thin-atdd.v2.md",
+      "mode": 420,
+      "size": 938,
+      "sha256": "d65814e8064dd360d4da5c200a2a1deef8a7718639b250699ccaa8337ceb257c",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/rubrics/delivery.v1.json",
+      "mode": 420,
+      "size": 163,
+      "sha256": "b4f549def7f6ab46ff4a444ce857cda7b83b421fb6f54417f4b7cc0ff2f757ff",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/rubrics/v1.json",
+      "mode": 420,
+      "size": 492,
+      "sha256": "70253e1ad33118d9782cae610d9963fc8351bacf582ec1ce1d11c922e7687284",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/delivery-complex.v2.json",
+      "mode": 420,
+      "size": 1984,
+      "sha256": "a531c598aba54431841f5277f644c64736e628163fd6dac62c9cbce6f8fc6ebf",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/delivery-medium.v2.json",
+      "mode": 420,
+      "size": 1024,
+      "sha256": "b8604a4ac6ad26ba402e854fc0aa0b55425bff958a7913dfcc67b5e005bf8875",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/delivery-simple.v2.json",
+      "mode": 420,
+      "size": 864,
+      "sha256": "17c68816adc75eff83cc92744bf858a7fba37260bb8bdfcee490c728d443b515",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/graph-impact.v1.json",
+      "mode": 420,
+      "size": 2603,
+      "sha256": "7ecbd5f2796df8b7b1b09ea8999c06dcdd2e17083ebfce4c25347aa370af3d30",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/high-risk-escalation.v1.json",
+      "mode": 420,
+      "size": 2962,
+      "sha256": "4c3923bf31555ba618e1b1ba11046fc55997b453109799767ea60e5210bae1b2",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/quick-no-research.v1.json",
+      "mode": 420,
+      "size": 2318,
+      "sha256": "03f47b7fc5fcf6d1fb7dba6e67eb8df3c284dc3b4ce8777472eee8814f656e21",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/recovery.v1.json",
+      "mode": 420,
+      "size": 2638,
+      "sha256": "82da00f5eae4483bb8857116b277f35fcb502784fff17c3eec68205646d2e25e",
+      "type": "file"
+    },
+    {
+      "path": "evals/agent/scenarios/simplicity.v1.json",
+      "mode": 420,
+      "size": 3772,
+      "sha256": "9e295563245edbe9287a3e3273ef1a5e741f62e5bfae3e6540c3347017b7b2a6",
+      "type": "file"
+    },
+    {
+      "path": "evals/baselines/v0.1.0.json",
+      "mode": 420,
+      "size": 216,
+      "sha256": "8f03e41ef78e1cfceb8a2f17f9f74dcb54a5d7053cb197d57ef61c1b05b2ad26",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/basic-gates.json",
+      "mode": 420,
+      "size": 375,
+      "sha256": "4bd004ae8b621c0b7569993779a50ad100d1c73e0c6f651954f600bf416e9e20",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/fast-finalization.json",
+      "mode": 420,
+      "size": 392,
+      "sha256": "d75bb2fe5323d30eafaa13bc1b04c064fd27f93dc74abd11ab02425571730728",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/manual-handoff.json",
+      "mode": 420,
+      "size": 398,
+      "sha256": "0c6e856e50836765cce2afa1ffd5a6df0743aa5878f506ac965c9bcb98e5bd4e",
+      "type": "file"
+    },
+    {
+      "path": "evals/dev/project-context-handoff.json",
+      "mode": 420,
+      "size": 503,
+      "sha256": "9e5f800cf5cfa1e994f1595324c492ef024dcd8da845c6f196e4235b76923a53",
+      "type": "file"
+    },
+    {
+      "path": "evals/holdout/browser-round-trip-budget.json",
+      "mode": 420,
+      "size": 510,
+      "sha256": "543a50d34adb3fcd6bc3e0c8a5b45d9974241b8c3fc41bdc2bbdab74067ea3dd",
+      "type": "file"
+    },
+    {
+      "path": "evals/holdout/finalization-repetition-budget.json",
+      "mode": 420,
+      "size": 485,
+      "sha256": "84e5ec59a7f520e64398a8175bcd0e0650250f08656b950329e2583879efc293",
+      "type": "file"
+    },
+    {
+      "path": "evals/holdout/high-risk-payment.json",
+      "mode": 420,
+      "size": 482,
+      "sha256": "f73cba7ef474e41388cffb57563aa7e59e270204fa5c31d77304a1be887cd6ff",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/contract-drift.json",
+      "mode": 420,
+      "size": 328,
+      "sha256": "867027dd755319bd6b24c36b0d43ded58cdcf6977a049ffcb0966ef30649be9f",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/epoch-secret-safety.json",
+      "mode": 420,
+      "size": 496,
+      "sha256": "06ddbcb1687308d9eaef55415b55df0b8ee004f353e8e8ee9c148e593aaee54e",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/finalization-idempotence.json",
+      "mode": 420,
+      "size": 437,
+      "sha256": "f75dc2edf5c44b59856ffd3c958ec9f02bb9fb61fc1b352182968efc5947830d",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/fresh-evidence.json",
+      "mode": 420,
+      "size": 367,
+      "sha256": "d40b288af490cdbba2acc6607652b17a383888c994006d43078da39203bca284",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/portable-cli-realpath.json",
+      "mode": 420,
+      "size": 401,
+      "sha256": "99b6bc3542751aacac96344be8c4cf72397984f1231c882859d05670fd474203",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/repair-invalidates-chain.json",
+      "mode": 420,
+      "size": 517,
+      "sha256": "0e5f4b6ca1efc0e6b62dc9f0b21248a4ea33df909acfdd460f92bbb50c9c8106",
+      "type": "file"
+    },
+    {
+      "path": "evals/regression/shared-impact.json",
+      "mode": 420,
+      "size": 421,
+      "sha256": "f26bac3a6f89ba7b7a97277719b63e3739fcdc4224e25a80f6b54cef9a00ed6d",
+      "type": "file"
+    },
+    {
+      "path": "evals/rubrics/hard-gates.json",
+      "mode": 420,
+      "size": 340,
+      "sha256": "2742cceab78d4181fa9cbf5468881a647b405fcbe74a330182e9a987d9409b90",
+      "type": "file"
+    },
+    {
+      "path": "package.json",
+      "mode": 420,
+      "size": 1920,
+      "sha256": "08865dff8e51a41125d888425782cdd71a97ec85803c32ce2ec2f1e3a811408b",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd-code-review/SKILL.md",
+      "mode": 420,
+      "size": 3988,
+      "sha256": "41a9f439286710298d778138fc5b24713ac6d1b7a36b5d6f2ced8597f6b183b2",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd-code-review/agents/openai.yaml",
+      "mode": 420,
+      "size": 314,
+      "sha256": "33c3a3d5993a686d37d564d885fe8cb69b410187dca197ac1e2b2371b525f418",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/SKILL.md",
+      "mode": 420,
+      "size": 10077,
+      "sha256": "ff05b50c8e94354dd9d258a624a8fa74f9037dcb466a8267919e0f87b957d7ad",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/agents/openai.yaml",
+      "mode": 420,
+      "size": 736,
+      "sha256": "1d6056357ae513a184eb9b56754924b2f8692a1eacbe566bac1971ad9c95e46c",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/acceptance-patterns.md",
+      "mode": 420,
+      "size": 2057,
+      "sha256": "e649c8ecabe76a27dbf6ccc4ec0e354fd6abd81579878e021f6c9ebba396cb84",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/agent-evaluation.md",
+      "mode": 420,
+      "size": 2426,
+      "sha256": "5857fef39fc5bfdb581041a0dde26a82c13dc6a3e857a5db5d5a7bbd2911000c",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/browser-verification.md",
+      "mode": 420,
+      "size": 1798,
+      "sha256": "71a4cc5930ef1ad76ddb57d7d9ebded606c5383b809cb183a94f9d17bf3f2ce8",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/environment-profiles.md",
+      "mode": 420,
+      "size": 3150,
+      "sha256": "b07598f234ba281b7e76d337c76fe99f12c3232ed761dbf583bb90c1ac6f04ba",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/fast-finalization.md",
+      "mode": 420,
+      "size": 10565,
+      "sha256": "4f054c09b6de53fd0593f380e9304705e891ec6045a4d0070c17991b39f2910b",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/governance.md",
+      "mode": 420,
+      "size": 4658,
+      "sha256": "6cebc2ec60b05c26afcb7c566d468bda6a4f980f5450e683a8a1e5f9bdaaa334",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/references/verification-routing.md",
+      "mode": 420,
+      "size": 3888,
+      "sha256": "b6b34d96bb834cf5f68b04ac64690554f03ee37a2fed5c67e875e0acc4d757d6",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/agent-eval.mjs",
+      "mode": 420,
+      "size": 68655,
+      "sha256": "f65f0db36a9b5cf077fb9a98eda3eefbbb22ed8e70608496b2361eddb10d59ab",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/agent-profiles.mjs",
+      "mode": 420,
+      "size": 2568,
+      "sha256": "fae1d331557a9811d78cb4932b4def5c7b9d998598e82883c676f30e2cc82bab",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/codex-agent-adapter.mjs",
+      "mode": 420,
+      "size": 26560,
+      "sha256": "735724638ec116cb05b27981a2e57dd91b4eb350b9b57a45188dc294181ee761",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/context.mjs",
+      "mode": 420,
+      "size": 15567,
+      "sha256": "9d4e7e64e779d707c4d82b42b996a86f1893c23c6133f06c2b17194b93ba1636",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/contracts.mjs",
+      "mode": 420,
+      "size": 12410,
+      "sha256": "1875911fcf396655b39e25e76b9851fbe68c257a22c7d0520c9481774244d478",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/decisions.mjs",
+      "mode": 420,
+      "size": 11179,
+      "sha256": "50f999d1588aeb90a7d28844dea737707db4aff914b8e14c3e694bc5530a657f",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/finalization.mjs",
+      "mode": 420,
+      "size": 45912,
+      "sha256": "39ef3cb8ef3883eb587c4c1b5cd833f22a647dba7ef215af4a6774a9e644445d",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/graph.mjs",
+      "mode": 420,
+      "size": 35140,
+      "sha256": "eee92a959656ac942333a550c22edc175da22809fcb03685e7e3873870acb15d",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/lib.mjs",
+      "mode": 420,
+      "size": 10926,
+      "sha256": "48156c6bb6a4f79c39c30c8ec577090cf561200454b4a5b0e3821f385481beb1",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/manifest.mjs",
+      "mode": 420,
+      "size": 17997,
+      "sha256": "88fdfb90675df3784e48162058d412ddf817b436bf2a6be1af005c0f0d2d36a2",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/openatdd.mjs",
+      "mode": 493,
+      "size": 39762,
+      "sha256": "306e92685c2267f6c433f5afe5bee053732014690c1a3db9fa100d0b08e65b90",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/profiles.mjs",
+      "mode": 420,
+      "size": 20805,
+      "sha256": "807a6e01f9301540d825c5dbcf5ed4e183ce06614db8af3c108fa78a501587ab",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/render-report.mjs",
+      "mode": 493,
+      "size": 667,
+      "sha256": "83c9cb004108ddd3ee0e01fde6fc2b5649e9521847fb21c155fa80dcdded0e11",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/routing.mjs",
+      "mode": 420,
+      "size": 10651,
+      "sha256": "380132a6385bd53de975875d52119578a74e3955f93201c1a19989f1070fdbe4",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/state.mjs",
+      "mode": 420,
+      "size": 145,
+      "sha256": "f6b42b220ab3a0407cc26d1795f30f42cad1aab0580c21067c8c787592deeb03",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/strategy.mjs",
+      "mode": 420,
+      "size": 36749,
+      "sha256": "9c9bed684e9973ea5bf47de3a2a0778c6a51529e724fd5153553937e3bf88eb6",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/validate-contract.mjs",
+      "mode": 493,
+      "size": 787,
+      "sha256": "411cc7dd38c92dddc75d819b10fd6592d2eee6fb6507b7c618c1ed14a0b8b290",
+      "type": "file"
+    },
+    {
+      "path": "skills/openatdd/scripts/workflow.mjs",
+      "mode": 420,
+      "size": 110728,
+      "sha256": "dc4c6a030e37dbca9aef4e1de0811d8ef2fdc293e3c8ba8affb91d57b69fb2da",
+      "type": "file"
+    },
+    {
+      "path": "tests/agent-eval.test.mjs",
+      "mode": 420,
+      "size": 24449,
+      "sha256": "4ae0a9a22c2be1e918f0ad66bbae8250364a800ce8f676403410477de663d7c4",
+      "type": "file"
+    },
+    {
+      "path": "tests/code-review-skill.test.mjs",
+      "mode": 420,
+      "size": 3222,
+      "sha256": "ba00d2ecfd7e3596f37ba57f6788fed82152b21259e196cd9c61661f57e51129",
+      "type": "file"
+    },
+    {
+      "path": "tests/delivery-v2.test.mjs",
+      "mode": 420,
+      "size": 15519,
+      "sha256": "75791e8395f0ff0a7fe88908e5fb663ae3137bff800e6f0065d662fe191e43bc",
+      "type": "file"
+    },
+    {
+      "path": "tests/evals.test.mjs",
+      "mode": 420,
+      "size": 16395,
+      "sha256": "e1afec3334588fef4ec47db698ad262af72c3612bed2528ddcaaf9c88f6e2f6b",
+      "type": "file"
+    },
+    {
+      "path": "tests/finalization.test.mjs",
+      "mode": 420,
+      "size": 38814,
+      "sha256": "9cf9b135c14b6ca5187b79c8f1e3edb9a1287bb4786691ecdb0e66f4aacc3573",
+      "type": "file"
+    },
+    {
+      "path": "tests/helpers.mjs",
+      "mode": 420,
+      "size": 4856,
+      "sha256": "37ef6e00faa061db773e9cb87002e1839337041d3cfa6ccb1a4a7fafe537c7b7",
+      "type": "file"
+    },
+    {
+      "path": "tests/intelligence-integration.test.mjs",
+      "mode": 420,
+      "size": 21194,
+      "sha256": "1f9d8625ea2291c760e4bed350f7a35499cac8356457750f6fa781f5911fb7bc",
+      "type": "file"
+    },
+    {
+      "path": "tests/intelligence.test.mjs",
+      "mode": 420,
+      "size": 12719,
+      "sha256": "292eb218d0b2315968e6441fb0e17ec6ce56aa86aad974b5a311ba6040dfc8d6",
+      "type": "file"
+    },
+    {
+      "path": "tests/knowledge.test.mjs",
+      "mode": 420,
+      "size": 13435,
+      "sha256": "5f7acf5ae626ff73b4135e53c372f6fc24b068b9037a0b37e75f8906e4e61d36",
+      "type": "file"
+    },
+    {
+      "path": "tests/strategy.test.mjs",
+      "mode": 420,
+      "size": 10544,
+      "sha256": "56e58cd9cf11ad53d4357599c6861fa5bfc79df75d42f24450404441eb529984",
+      "type": "file"
+    },
+    {
+      "path": "tests/workflow.test.mjs",
+      "mode": 420,
+      "size": 20761,
+      "sha256": "2863b4a7ed07ed28cd9018682ef2f805d7fdc79584b12c8847873628664fd1ee",
+      "type": "file"
+    }
+  ],
+  "manifestPath": ".openatdd/tasks/openatdd-code-review-skill/finalization.manifest.json",
+  "manifestDigest": "6d42f7d5f8c78a9cf1c340ad12b8ca93fb18ebae3799ea230282db2f97ed5aca",
+  "profileDigest": "8ea547ccdfe9755cbf1a9cb5f4601b0bc0ecbdfbf5a7f7d8bd94e681e1774c00",
+  "commandResults": [
+    {
+      "id": "skill-load-smoke",
+      "argv": [
+        "node",
+        "--input-type=module",
+        "--eval",
+        "import assert from 'node:assert/strict';import{readFile}from'node:fs/promises';const skill=await readFile('skills/openatdd-code-review/SKILL.md','utf8');assert.match(skill,/name: openatdd-code-review/);console.log('code review skill loads');"
+      ],
+      "durationMs": 24,
+      "exitCode": 0,
+      "evidencePath": ".openatdd/tasks/openatdd-code-review-skill/preview/skill-load-smoke.md",
+      "stdout": "code review skill loads\n"
+    }
+  ],
+  "metrics": {
+    "mode": "dry-run",
+    "startedAt": "2026-07-29T00:49:09.632Z",
+    "wallTimeMs": 61,
+    "dryRunRuns": 1,
+    "finalRuns": 0,
+    "commandInvocations": 1,
+    "cliInvocations": 1,
+    "commandDurationMs": 24,
+    "checkGroupRuns": {
+      "focused": 0,
+      "module": 0,
+      "broad": 0
+    },
+    "uatJourneyRuns": 0,
+    "uatBatchRuns": 0,
+    "browserRoundTrips": 0,
+    "affectedHistoryPasses": 0,
+    "historyRuns": 0,
+    "historyCacheHits": 0,
+    "historyEpochReuse": 0,
+    "skippedCheckGroups": [],
+    "checkGroupSignatureReuse": [],
+    "evidenceWrites": 1,
+    "evidenceWritesByPhase": {
+      "entry-points": 1
+    },
+    "phaseDurationsMs": {
+      "preflight": 0,
+      "entry-points": 25,
+      "handoff-preview": 2,
+      "source-stability": 9
+    },
+    "linkChecks": 0,
+    "warnings": []
+  },
+  "errors": []
+}

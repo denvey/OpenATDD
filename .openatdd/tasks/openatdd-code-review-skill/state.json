@@ -1,0 +1,995 @@
+{
+  "schemaVersion": 3,
+  "deliveryVersion": 3,
+  "taskId": "openatdd-code-review-skill",
+  "requirement": "基于 OpenATDD 的验收卡、方案卡和项目规范创建一个轻量只读 Code Review Skill，稳定输出有证据、可操作、按严重级别排序的审查 finding，并与后续修复工作流衔接。",
+  "phase": "DELIVERED",
+  "createdAt": "2026-07-29T00:24:59.787Z",
+  "updatedAt": "2026-07-29T16:58:15.091Z",
+  "acceptance": {
+    "approvedAt": "2026-07-29T00:29:08.761Z",
+    "sha256": "8baad4a497019a4e330d02724a8f29c4560f61182240278919358e91e81acde0",
+    "items": [
+      {
+        "id": "AC-01",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "审查优先对照已批准的 OpenATDD 合同",
+        "given": "目标改动关联一个已有验收卡和方案卡的 OpenATDD task。",
+        "when": "使用新 Skill 审查指定 diff。",
+        "then": "审查明确区分“是否符合验收/方案”和“代码本身是否正确”，能够指出漏做、错误实现和未要求的范围扩张；仓库规范优先于通用偏好。",
+        "evidence": "Skill 契约测试与包含合同偏差的前向评测样例。"
+      },
+      {
+        "id": "AC-02",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "无 OpenATDD task 时仍可安全回退",
+        "given": "目标改动没有可定位的 OpenATDD task。",
+        "when": "使用 PR/issue/用户描述和仓库规范执行 Review。",
+        "then": "AI 不伪造需求；能找到规格就继续，规格缺失时只审查可证明的正确性与风险，并明确“需求符合度未验证”。",
+        "evidence": "无 task、有 PR 规格和完全无规格三种契约测试。"
+      },
+      {
+        "id": "AC-03",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Findings 有统一严重级别和证据门槛",
+        "given": "diff 中包含可复现或可由调用路径证明的问题，同时包含只属于格式偏好的噪声。",
+        "when": "执行 Review 并生成结果。",
+        "then": "每条 finding 包含 P0～P3、标题、紧凑 `file:line`、触发条件、实际影响、代码/测试证据和最小修复或验证方向；按严重性排序，不报告 formatter/linter 可处理的问题，不把猜测写成确定缺陷。",
+        "evidence": "输出结构测试、误报抑制样例和行号校验。"
+      },
+      {
+        "id": "AC-04",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Review 全程只读且结果诚实",
+        "given": "用户只要求 Code Review。",
+        "when": "Skill 检查 diff、调用路径和相关测试。",
+        "then": "不修改文件、提交、PR、评论或 OpenATDD 状态；只运行非变异检查。没有 actionable finding 时明确报告“未发现阻塞问题”，并列出测试缺口或未验证边界，而不是制造意见。",
+        "evidence": "只读约束测试、工作区哈希对比与无 finding 样例。"
+      },
+      {
+        "id": "AC-05",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "修复请求与 OpenATDD 问题流衔接",
+        "given": "Review 已产生有效 finding，用户随后明确要求修复。",
+        "when": "继续处理该 finding。",
+        "then": "已有相关 task 时进入其 issue/repair 流；否则按复杂度创建新的 Bug 修复任务；保留根因、回归保护和验收证据，不在 Review 阶段偷跑实现。",
+        "evidence": "Skill 路由文本、OpenATDD 回归测试和模拟 Review→Fix 旅程。"
+      },
+      {
+        "id": "AC-06",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "Skill 轻量、可安装且不重复 OpenATDD 内核",
+        "given": "仓库通过软链和 npm 包向 Codex 提供 Skills。",
+        "when": "构建并验证 `openatdd-code-review` Skill。",
+        "then": "核心 `SKILL.md` 不超过 4,096 字节；只引用现有 OpenATDD 工件和 CLI，不复制完整运行内核；包含匹配的 `agents/openai.yaml`，进入 npm 包并通过全局软链可从其他项目触发。",
+        "evidence": "字节数、Skill Creator 校验、包清单、软链解析和仓库外触发检查。"
+      }
+    ]
+  },
+  "solution": {
+    "approvedAt": "2026-07-29T00:36:48.448Z",
+    "sha256": "b00b9d31269b4db8d54b58632b6064acd26c8fe37f2338dfe9580f3fecacc228",
+    "impactPaths": [
+      "skills/openatdd-code-review/SKILL.md",
+      "skills/openatdd-code-review/agents/openai.yaml",
+      "tests/code-review-skill.test.mjs",
+      "package.json",
+      "README.md",
+      "`/Users/denvey/.codex/skills/openatdd-code-review`（软链）"
+    ],
+    "trace": [
+      {
+        "acceptanceId": "AC-01",
+        "implementation": "OpenATDD 合同优先的 Spec 轴与独立 Correctness 轴",
+        "verification": "合同偏差 fixture、Skill 契约测试与前向样例"
+      },
+      {
+        "acceptanceId": "AC-02",
+        "implementation": "PR/issue/用户描述回退与无规格诚实降级",
+        "verification": "三种规格来源测试和无规格样例"
+      },
+      {
+        "acceptanceId": "AC-03",
+        "implementation": "P0～P3 findings-first 证据格式与噪声抑制",
+        "verification": "输出规则断言、行号/证据 fixture"
+      },
+      {
+        "acceptanceId": "AC-04",
+        "implementation": "只读命令白名单语义和 no-findings/residual-risk 输出",
+        "verification": "工作区哈希前后对比、无 finding 样例"
+      },
+      {
+        "acceptanceId": "AC-05",
+        "implementation": "显式授权后转入现有 issue/repair 或新 `$openatdd` task",
+        "verification": "Review→Fix 路由契约测试"
+      },
+      {
+        "acceptanceId": "AC-06",
+        "implementation": "4 KB Skill、UI metadata、npm 分发、README 与全局软链",
+        "verification": "quick_validate、字节数、npm pack、readlink、仓库外发现检查"
+      }
+    ]
+  },
+  "routing": {
+    "status": "assessed",
+    "assessedAt": "2026-07-29T00:24:59.790Z",
+    "schemaVersion": 1,
+    "lane": "standard",
+    "reasons": [
+      "cross-module-scope",
+      "medium-uncertainty"
+    ],
+    "assessment": {
+      "scope": "cross-module",
+      "projectPattern": "established",
+      "reversibility": "reversible",
+      "uncertainty": "medium",
+      "riskSignals": []
+    },
+    "riskOverlays": [],
+    "investigation": {
+      "externalResearch": false
+    },
+    "agents": {
+      "policy": "optional",
+      "roles": [
+        "independent-review"
+      ]
+    },
+    "interaction": {
+      "approvals": "human",
+      "contract": "full"
+    }
+  },
+  "decisions": [],
+  "reviews": {
+    "solution": {
+      "status": "passed",
+      "reviewer": "main",
+      "summary": "通过简洁性审查：独立 4 KB Review Skill 只复用 OpenATDD 合同与修复入口，不复制交付状态机；六条验收均有实现与验证映射，不新增 CLI、服务或默认多 Agent。",
+      "findings": [],
+      "checks": [
+        "simplicity",
+        "project-fit",
+        "summary-detail-consistency",
+        "hidden-material-choices",
+        "acceptance-trace",
+        "unnecessary-infrastructure"
+      ],
+      "agentId": null,
+      "contextDigest": null,
+      "reviewedAt": "2026-07-29T00:31:15.947Z",
+      "solutionSha256": "b00b9d31269b4db8d54b58632b6064acd26c8fe37f2338dfe9580f3fecacc228"
+    }
+  },
+  "agents": {
+    "dispatches": []
+  },
+  "context": {
+    "status": "prepared",
+    "path": ".openatdd/tasks/openatdd-code-review-skill/context.json",
+    "digest": "6a021698fa80323cce9cfeda6d5a468be1d6e03850875b774068a7e2d32f44c2",
+    "sourceDigests": {
+      ".openatdd/environments/observations.json": "3cff7d47e274ac1fa0ca62b411c5adbe0df10f5a440eb7e2ec52bf5c91e1e152",
+      ".openatdd/memory/incidents/INC-2026-002-a-copied-skill-cli-could-exit-silently-when-maco.md": "66dfa059eb8db415cf94e111478bf6c96f2ac5e2f2ee2b475c8a52185b0e5c92",
+      ".openatdd/memory/incidents/INC-2026-003-cli-check-options-scope-source-fingerprint-and-d.md": "afc7d3df9ed92d6b3294552fd932477e0eec0050b327457b3006dcd6350b3921",
+      ".openatdd/memory/incidents/INC-2026-004-acceptance-summary-renders-project-level-evidenc.md": "35893ff36582f3fcec9228dddd0c712b514f3dff755eb4b836017e1cbc807482",
+      ".openatdd/memory/incidents/INC-2026-008-the-solution-summary-order-and-review-gate-do-no.md": "278bcf1ca3f2f4380e8ea0f0ed50ba784f89d3df94d148f80869a9aa1f775e05",
+      ".openatdd/memory/incidents/INC-2026-010-the-semantic-graph-does-not-ingest-project-stand.md": "1563b28f55e6b4586a42d2cbad8cd31030614fac55a5676f5ca4ec3a3602b319",
+      ".openatdd/memory/incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md": "57953cbd438e7f162ea0db5c4ba51093a22f1ce65ccfd3ce0d3aed62da273384",
+      ".openatdd/memory/incidents/INC-2026-013-simple-full-openatdd-finalization-38-1-557-774-t.md": "fc3a6b399bea2e22ce9081574e7250fa5a41721f4df7d779e729ec46d2cf72ec",
+      ".openatdd/memory/invariants.md": "fd28bad14854728d25eb0028951bb49b86ed34867af9a058984dff4aa8ff0605",
+      ".openatdd/tasks/detailed-uat-handoff/acceptance.md": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
+      ".openatdd/tasks/end-to-end-agent-eval/acceptance.md": "ba2a9ae6723bd7dba833d07b59904477a522fa869aebb3b9a8cda20746c026a5",
+      ".openatdd/tasks/fast-portable-finalization/acceptance.md": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+      ".openatdd/tasks/openatdd-1-0/acceptance.md": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+      ".openatdd/tasks/openatdd-code-review-skill/acceptance.md": "8baad4a497019a4e330d02724a8f29c4560f61182240278919358e91e81acde0",
+      ".openatdd/tasks/openatdd-code-review-skill/solution.md": "b00b9d31269b4db8d54b58632b6064acd26c8fe37f2338dfe9580f3fecacc228",
+      ".openatdd/tasks/openatdd-code-review-skill/state.json": "e080a69a1c4c3a56b9676612181a0e1051dfed6ad1e04f48d1095714a4d223b1",
+      ".openatdd/tasks/openatdd-mvp/acceptance.md": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+      ".openatdd/tasks/optimize-atdd-runtime-cost/acceptance.md": "9bb62cfe6d2ae866c0f7345c44b286e22cf87374ce059aed032418a7318a7234",
+      ".openatdd/tasks/optimize-quick-delivery/acceptance.md": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
+      ".openatdd/tasks/strategy-visibility/acceptance.md": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca"
+    }
+  },
+  "repair": {
+    "attempts": [],
+    "lastProgressFingerprint": null,
+    "lastHypothesis": null,
+    "consecutiveNoProgress": 0
+  },
+  "verificationNotBefore": "2026-07-29T16:34:07.500Z",
+  "verification": {
+    "epoch": 4,
+    "startedAt": "2026-07-29T16:34:07.500Z",
+    "clean": true,
+    "reason": "affected by lightweight-project-truth"
+  },
+  "results": {
+    "AC-01": {
+      "acceptanceId": "AC-01",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4
+    },
+    "AC-02": {
+      "acceptanceId": "AC-02",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4
+    },
+    "AC-03": {
+      "acceptanceId": "AC-03",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4
+    },
+    "AC-04": {
+      "acceptanceId": "AC-04",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4
+    },
+    "AC-05": {
+      "acceptanceId": "AC-05",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4
+    },
+    "AC-06": {
+      "acceptanceId": "AC-06",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4
+    }
+  },
+  "checks": {
+    "focused-review-skill": {
+      "id": "focused-review-skill",
+      "name": "OpenATDD Code Review contract tests",
+      "command": "node --test tests/code-review-skill.test.mjs",
+      "status": "passed",
+      "scope": "focused",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": 62,
+      "summary": "Final focused group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "module-review-distribution": {
+      "id": "module-review-distribution",
+      "name": "Skill structure, package, symlink, and forward evidence",
+      "command": "uv run --with pyyaml python /Users/denvey/.codex/skills/.system/skill-creator/scripts/quick_validate.py skills/openatdd-code-review && npm pack --dry-run --json && node --input-type=module --eval import assert from 'node:assert/strict';import{createHash}from'node:crypto';import{readFile,realpath}from'node:fs/promises';import{homedir}from'node:os';import path from'node:path';const source=await realpath('skills/openatdd-code-review');const installed=await realpath(path.join(homedir(),'.codex','skills','openatdd-code-review'));assert.equal(installed,source);const skill=await readFile(path.join(source,'SKILL.md'));assert(skill.length<=4096);const digest=createHash('sha256').update(skill).digest('hex');const evidence=await readFile('.openatdd/tasks/openatdd-code-review-skill/evidence/forward-review.md','utf8');assert.match(evidence,new RegExp(digest));assert.match(evidence,/P1.*Export truncates caller-provided collections/s);assert.match(evidence,/No blocking findings\\./);assert.match(evidence,/no specification/i);console.log(JSON.stringify({installed,digest,bytes:skill.length,forwardCases:2}));",
+      "status": "passed",
+      "scope": "module",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": 569,
+      "summary": "Final module group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "broad-project": {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "command": "npm run check",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": 3888,
+      "summary": "Final broad group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-acceptance-outcome-routing": {
+      "id": "finalize-acceptance-outcome-routing",
+      "name": "finalization reverification for acceptance-outcome-routing",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-lightweight-project-truth": {
+      "id": "finalize-lightweight-project-truth",
+      "name": "finalization reverification for lightweight-project-truth",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z",
+      "epoch": 4
+    }
+  },
+  "checkSequence": [
+    {
+      "id": "focused-review-skill",
+      "scope": "focused",
+      "status": "passed",
+      "sourceFingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "verifiedAt": "2026-07-29T00:49:09.743Z",
+      "epoch": 2
+    },
+    {
+      "id": "module-review-distribution",
+      "scope": "module",
+      "status": "passed",
+      "sourceFingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "verifiedAt": "2026-07-29T00:49:10.314Z",
+      "epoch": 2
+    },
+    {
+      "id": "broad-project",
+      "scope": "broad",
+      "status": "passed",
+      "sourceFingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "verifiedAt": "2026-07-29T00:49:14.202Z",
+      "epoch": 2
+    }
+  ],
+  "issues": [],
+  "affectedDependencies": [
+    {
+      "taskId": "detailed-uat-handoff",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07"
+      ],
+      "overlaps": [
+        [
+          "tests/code-review-skill.test.mjs",
+          "tests"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:tests/code-review-skill.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    },
+    {
+      "taskId": "end-to-end-agent-eval",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07"
+      ],
+      "overlaps": [
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    },
+    {
+      "taskId": "fast-portable-finalization",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08"
+      ],
+      "overlaps": [
+        [
+          "tests/code-review-skill.test.mjs",
+          "tests"
+        ],
+        [
+          "package.json",
+          "package.json"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:package.json:package.json",
+        "path-overlap:tests/code-review-skill.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    },
+    {
+      "taskId": "openatdd-1-0",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08"
+      ],
+      "overlaps": [
+        [
+          "tests/code-review-skill.test.mjs",
+          "tests"
+        ],
+        [
+          "package.json",
+          "package.json"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:package.json:package.json",
+        "path-overlap:tests/code-review-skill.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    },
+    {
+      "taskId": "openatdd-mvp",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08",
+        "AC-09"
+      ],
+      "overlaps": [
+        [
+          "tests/code-review-skill.test.mjs",
+          "tests"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:tests/code-review-skill.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    },
+    {
+      "taskId": "optimize-atdd-runtime-cost",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08"
+      ],
+      "overlaps": [
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    },
+    {
+      "taskId": "optimize-quick-delivery",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04"
+      ],
+      "overlaps": [
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    },
+    {
+      "taskId": "strategy-visibility",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04"
+      ],
+      "overlaps": [
+        [
+          "tests/code-review-skill.test.mjs",
+          "tests"
+        ],
+        [
+          "README.md",
+          "README.md"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:README.md:README.md",
+        "path-overlap:tests/code-review-skill.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-29T00:36:48.448Z"
+    }
+  ],
+  "preflight": {
+    "schemaVersion": 1,
+    "environment": "local",
+    "scope": "project",
+    "reason": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts.",
+    "profile": ".openatdd/environments/local.yaml",
+    "status": "affected",
+    "checkedAt": "2026-07-29T00:49:09.680Z",
+    "durationMs": 0,
+    "checks": [
+      {
+        "name": "workspace",
+        "status": "passed",
+        "detail": "."
+      },
+      {
+        "name": "project",
+        "status": "passed",
+        "detail": "configured OpenATDD; expected openatdd or openatdd"
+      },
+      {
+        "name": "start_command",
+        "status": "passed",
+        "detail": "npm run check"
+      },
+      {
+        "name": "application_version",
+        "status": "passed",
+        "detail": "expected 1.0.0; observed 1.0.0"
+      },
+      {
+        "name": "services",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      },
+      {
+        "name": "entry_url",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      },
+      {
+        "name": "credential_variables",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      },
+      {
+        "name": "login",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      },
+      {
+        "name": "organization",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      },
+      {
+        "name": "integration",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      },
+      {
+        "name": "fixture",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      },
+      {
+        "name": "known_workarounds",
+        "status": "not_applicable",
+        "detail": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+      }
+    ],
+    "warnings": [],
+    "credentialVariables": []
+  },
+  "uat": {
+    "planStatus": "planned",
+    "plannedAt": "2026-07-29T00:49:14.202Z",
+    "batches": {
+      "review-skill-journey": {
+        "id": "review-skill-journey",
+        "status": "affected",
+        "summary": "Validate the bounded read-only Review Skill, two forward cases, package, and global discovery passed.",
+        "evidence": [],
+        "verifiedAt": null,
+        "epoch": 2,
+        "previousStatus": "passed"
+      }
+    },
+    "warnings": [],
+    "estimatedRoundTrips": 1
+  },
+  "handoff": {
+    "status": "not_prepared",
+    "preparedAt": null
+  },
+  "finalization": {
+    "status": "complete",
+    "version": 1,
+    "completedAt": "2026-07-29T00:49:14.617Z",
+    "sourceFingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+    "manifestDigest": "6d42f7d5f8c78a9cf1c340ad12b8ca93fb18ebae3799ea230282db2f97ed5aca",
+    "metrics": {
+      "mode": "final",
+      "startedAt": "2026-07-29T00:49:09.680Z",
+      "wallTimeMs": 4947,
+      "dryRunRuns": 1,
+      "finalRuns": 1,
+      "commandInvocations": 9,
+      "cliInvocations": 9,
+      "commandDurationMs": 4821,
+      "checkGroupRuns": {
+        "focused": 1,
+        "module": 1,
+        "broad": 1
+      },
+      "uatJourneyRuns": 1,
+      "uatBatchRuns": 1,
+      "browserRoundTrips": 1,
+      "affectedHistoryPasses": 1,
+      "historyRuns": 8,
+      "historyCacheHits": 0,
+      "historyEpochReuse": 0,
+      "skippedCheckGroups": [],
+      "checkGroupSignatureReuse": [],
+      "evidenceWrites": 9,
+      "evidenceWritesByPhase": {
+        "checks": 5,
+        "uat": 4
+      },
+      "phaseDurationsMs": {
+        "preflight": 0,
+        "checks": 4522,
+        "uat": 304,
+        "acceptance-mapping": 0,
+        "history": 6,
+        "handoff-readiness": 105
+      },
+      "linkChecks": 0,
+      "warnings": []
+    }
+  },
+  "timing": {
+    "currentPhase": "PRE_UAT",
+    "phaseStartedAt": "2026-07-29T16:34:07.500Z",
+    "phases": [
+      {
+        "phase": "ACCEPTANCE_DRAFT",
+        "startedAt": "2026-07-29T00:24:59.787Z",
+        "endedAt": "2026-07-29T00:29:08.761Z",
+        "durationMs": 248974
+      },
+      {
+        "phase": "ACCEPTANCE_APPROVED",
+        "startedAt": "2026-07-29T00:29:08.761Z",
+        "endedAt": "2026-07-29T00:29:20.198Z",
+        "durationMs": 11437
+      },
+      {
+        "phase": "SOLUTION_DRAFT",
+        "startedAt": "2026-07-29T00:29:20.198Z",
+        "endedAt": "2026-07-29T00:36:48.448Z",
+        "durationMs": 448250
+      },
+      {
+        "phase": "CONTRACT_APPROVED",
+        "startedAt": "2026-07-29T00:36:48.448Z",
+        "endedAt": "2026-07-29T00:36:48.528Z",
+        "durationMs": 80
+      },
+      {
+        "phase": "IMPLEMENTING",
+        "startedAt": "2026-07-29T00:36:48.528Z",
+        "endedAt": "2026-07-29T00:49:09.680Z",
+        "durationMs": 741152
+      },
+      {
+        "phase": "PRE_UAT",
+        "startedAt": "2026-07-29T00:49:09.680Z",
+        "endedAt": "2026-07-29T00:49:14.617Z",
+        "durationMs": 4937
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-29T00:49:14.617Z",
+        "endedAt": "2026-07-29T07:57:47.134Z",
+        "durationMs": 25712517
+      },
+      {
+        "phase": "DELIVERED",
+        "startedAt": "2026-07-29T07:57:47.134Z",
+        "endedAt": "2026-07-29T16:34:07.500Z",
+        "durationMs": 30980366
+      }
+    ]
+  },
+  "readyAt": "2026-07-29T16:58:15.091Z",
+  "history": [
+    {
+      "event": "TASK_CREATED",
+      "at": "2026-07-29T00:24:59.787Z",
+      "details": {
+        "requirement": "基于 OpenATDD 的验收卡、方案卡和项目规范创建一个轻量只读 Code Review Skill，稳定输出有证据、可操作、按严重级别排序的审查 finding，并与后续修复工作流衔接。"
+      }
+    },
+    {
+      "event": "TASK_ASSESSED",
+      "at": "2026-07-29T00:24:59.790Z",
+      "details": {
+        "lane": "standard",
+        "reasons": [
+          "cross-module-scope",
+          "medium-uncertainty"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_APPROVED",
+      "at": "2026-07-29T00:29:08.761Z",
+      "details": {
+        "sha256": "8baad4a497019a4e330d02724a8f29c4560f61182240278919358e91e81acde0"
+      }
+    },
+    {
+      "event": "SOLUTION_DRAFTED",
+      "at": "2026-07-29T00:29:20.198Z"
+    },
+    {
+      "event": "SOLUTION_REVIEWED",
+      "at": "2026-07-29T00:31:15.947Z",
+      "details": {
+        "status": "passed",
+        "reviewer": "main"
+      }
+    },
+    {
+      "event": "SOLUTION_APPROVED",
+      "at": "2026-07-29T00:36:48.448Z",
+      "details": {
+        "sha256": "b00b9d31269b4db8d54b58632b6064acd26c8fe37f2338dfe9580f3fecacc228"
+      }
+    },
+    {
+      "event": "IMPLEMENTATION_STARTED",
+      "at": "2026-07-29T00:36:48.528Z"
+    },
+    {
+      "event": "SCOPED_CONTEXT_PREPARED",
+      "at": "2026-07-29T00:36:48.556Z",
+      "details": {
+        "lane": "standard",
+        "persisted": true,
+        "implementationReferences": 12,
+        "verificationReferences": 17
+      }
+    },
+    {
+      "event": "FINALIZATION_COMPLETED",
+      "at": "2026-07-29T00:49:14.617Z",
+      "details": {
+        "sourceFingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+        "manifestDigest": "6d42f7d5f8c78a9cf1c340ad12b8ca93fb18ebae3799ea230282db2f97ed5aca"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T07:57:47.134Z",
+      "details": {
+        "byTask": "acceptance-outcome-routing",
+        "overlaps": [
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T16:34:07.500Z",
+      "details": {
+        "byTask": "lightweight-project-truth",
+        "overlaps": [
+          [
+            "README.md",
+            "README.md"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:README.md:README.md"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06"
+        ]
+      }
+    }
+  ],
+  "sourceFingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f"
+}

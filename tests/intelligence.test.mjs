@@ -7,7 +7,7 @@ import {
   validateAssessment,
   validateRouting,
 } from "../skills/openatdd/scripts/routing.mjs";
-import { profileForDispatch } from "../skills/openatdd/scripts/agent-profiles.mjs";
+import { profileForDispatch, verificationExecutionProfile } from "../skills/openatdd/scripts/agent-profiles.mjs";
 import {
   blockingDecisions,
   createDecision,
@@ -55,13 +55,16 @@ test("routing classifies a local established low-risk task as quick", () => {
 
 test("Quick guidance keeps known-target work compact without weakening validation", async () => {
   const skill = await readFile(new URL("../skills/openatdd/SKILL.md", import.meta.url), "utf8");
+  const governance = await readFile(new URL("../skills/openatdd/references/governance.md", import.meta.url), "utf8");
+  const finalization = await readFile(new URL("../skills/openatdd/references/fast-finalization.md", import.meta.url), "utf8");
+  const runtime = `${skill}\n${governance}\n${finalization}`;
   assert.match(skill, /default work budget is one location step/);
-  assert.match(skill, /optimization budget, not a correctness cap/);
+  assert.match(skill, /optimization budget,\s*not a correctness cap/);
   assert.match(skill, /known-failing repository-wide check/);
-  assert.match(skill, /openatdd validate-finalization/);
+  assert.match(runtime, /openatdd validate-finalization/);
   assert.match(skill, /memory .*--limit 5/);
-  assert.match(skill, /openatdd finalize <task-id> --fast/);
-  assert.match(skill, /resolved\n   `authorization` decision before any product code changes/);
+  assert.match(skill, /openatdd finalize TASK --fast/);
+  assert.match(runtime, /resolved\s+`authorization` decision before any product code changes/);
 });
 
 test("routing classifies ordinary cross-module work as standard", () => {
@@ -159,6 +162,36 @@ test("every allowed Agent task label resolves to the single Luna low read-only s
     () => profileForDispatch({ role: "clean-context-execution" }),
     (error) => error.code === "UNKNOWN_AGENT_ROLE",
   );
+  assert.deepEqual(profileForDispatch({ role: "clean-context-execution", deliveryVersion: 2 }), {
+    role: "clean-context-execution",
+    profile: "clean-context-execution",
+    model: "gpt-5.6-terra",
+    reasoningEffort: "medium",
+    forkTurns: "none",
+    sandbox: "workspace-write",
+    escalation: null,
+  });
+});
+
+test("verification execution uses zero-model commands first and a bounded low browser model only for dynamic Web", () => {
+  assert.deepEqual(verificationExecutionProfile({ surface: "web", deterministicAvailable: true }), {
+    mode: "deterministic",
+    model: null,
+    reasoningEffort: null,
+    reason: "A stable command-backed browser journey is available, so execution uses no model.",
+  });
+  const dynamic = verificationExecutionProfile({ surface: "web" });
+  assert.equal(dynamic.mode, "browser-low");
+  assert.equal(dynamic.model, "gpt-5.6-luna");
+  assert.equal(dynamic.reasoningEffort, "low");
+  assert.equal(dynamic.forkTurns, "none");
+  assert.equal(dynamic.sandbox, "read-only");
+  assert.deepEqual(dynamic.capabilities, ["browser"]);
+  assert.equal(dynamic.reuseSession, true);
+  assert.equal(dynamic.screenshotPolicy, "checkpoint-or-failure");
+  assert.equal(dynamic.escalation, "main-on-failure-or-uncertainty");
+  assert.equal(verificationExecutionProfile({ surface: "web", subjectiveVisual: true }).mode, "human");
+  assert.equal(verificationExecutionProfile({ surface: "cli" }).mode, "deterministic");
 });
 
 test("irreversible assessment adds a safety overlay without changing a local task's depth", () => {
@@ -202,7 +235,18 @@ test("decision creation validates two or three grounded options", () => {
 test("agent decisions default to non-blocking while human and authorization decisions block", () => {
   const human = createDecision(decisionInput());
   const agent = createDecision(decisionInput({ id: "DEC-002", owner: "agent" }));
-  const authorization = createDecision(decisionInput({ id: "DEC-003", owner: "authorization" }));
+  const authorization = createDecision(decisionInput({ id: "DEC-003", owner: "authorization", coversOverlays: ["deletion"] }));
+  const legacyAuthorization = structuredClone(authorization);
+  delete legacyAuthorization.coversOverlays;
+
+  // An authorization decision must state which risk overlays it covers.
+  assert.throws(
+    () => createDecision(decisionInput({ id: "DEC-004", owner: "authorization" })),
+    (error) => error.code === "INVALID_DECISION",
+  );
+  // Persisted decisions from before coversOverlays remain readable so users can
+  // add a new scoped authorization; they do not themselves cover any overlay.
+  assert.equal(validateDecision(legacyAuthorization).valid, true);
 
   assert.deepEqual(pendingDecisions([human, agent, authorization]).map((item) => item.id), ["DEC-001", "DEC-002", "DEC-003"]);
   assert.deepEqual(pendingDecisions([human, agent, authorization], { owner: "agent" }).map((item) => item.id), ["DEC-002"]);

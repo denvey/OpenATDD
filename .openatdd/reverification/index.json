@@ -1012,6 +1012,1948 @@
         }
       ],
       "verifiedAt": "2026-07-25T22:47:59.680Z"
+    },
+    {
+      "key": "4a3586a472606a940d6768c9dca13a8241ba83ce8be7bf220ae4e10d3344256b",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "d6fab74c3c555d531dfe052a23b0dbe962568dc0265dd2532cef1132ac5f0c49",
+      "fingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/check-broad-project-broad-project-check.md",
+          "sha256": "4f04575460870f40915c71edd78ef9184cab1a384d259ebc215ff4fc02e7f15c",
+          "size": 11803,
+          "modifiedAt": "2026-07-28T02:58:11.320Z",
+          "capturedAt": "2026-07-28T02:58:11.321Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-agent-eval-tests.md",
+          "sha256": "4f49db2a7e0d7b84d475627d243a1bcf1d2923eb4a06349bdff98a1ed33ad317",
+          "size": 1436,
+          "modifiedAt": "2026-07-28T02:58:15.456Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-cli-help.md",
+          "sha256": "e036a75bd2073d75cb59881bd4f6fadded68b73eb6f24d9265b6daac28426518",
+          "size": 653,
+          "modifiedAt": "2026-07-28T02:58:16.601Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T02:58:16.616Z"
+    },
+    {
+      "key": "098baddfd6f775ebea760e694b1a88d3997c058b764d88203fdc9a6014747df6",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "6b749864e51513162e937e18521db9cb1edf75a4e89bbdf773c2278700b9837e",
+      "fingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/check-broad-project-broad-project-check.md",
+          "sha256": "4f04575460870f40915c71edd78ef9184cab1a384d259ebc215ff4fc02e7f15c",
+          "size": 11803,
+          "modifiedAt": "2026-07-28T02:58:11.320Z",
+          "capturedAt": "2026-07-28T02:58:11.321Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-agent-eval-tests.md",
+          "sha256": "4f49db2a7e0d7b84d475627d243a1bcf1d2923eb4a06349bdff98a1ed33ad317",
+          "size": 1436,
+          "modifiedAt": "2026-07-28T02:58:15.456Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-cli-help.md",
+          "sha256": "e036a75bd2073d75cb59881bd4f6fadded68b73eb6f24d9265b6daac28426518",
+          "size": 653,
+          "modifiedAt": "2026-07-28T02:58:16.601Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T02:58:16.621Z"
+    },
+    {
+      "key": "bd6fd8a5d7aa826c275626b05ff76bd44aa104c298e291e7dd0b432cd53c2799",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "673524a2813d0e6550f6e52c3bc4967a9cfa80477a8a550e78c44bca28a0432d",
+      "fingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/check-broad-project-broad-project-check.md",
+          "sha256": "4f04575460870f40915c71edd78ef9184cab1a384d259ebc215ff4fc02e7f15c",
+          "size": 11803,
+          "modifiedAt": "2026-07-28T02:58:11.320Z",
+          "capturedAt": "2026-07-28T02:58:11.321Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-agent-eval-tests.md",
+          "sha256": "4f49db2a7e0d7b84d475627d243a1bcf1d2923eb4a06349bdff98a1ed33ad317",
+          "size": 1436,
+          "modifiedAt": "2026-07-28T02:58:15.456Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-cli-help.md",
+          "sha256": "e036a75bd2073d75cb59881bd4f6fadded68b73eb6f24d9265b6daac28426518",
+          "size": 653,
+          "modifiedAt": "2026-07-28T02:58:16.601Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T02:58:16.628Z"
+    },
+    {
+      "key": "e6b82e57fe14c3e71e86ddb7decc6ce5246f5271dd2ecb788b6359d1574cb8de",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "39733e3913234f44fc2ea11a555435328dc73efd94c92ab0f9ed8261a13b1a1d",
+      "fingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/check-broad-project-broad-project-check.md",
+          "sha256": "4f04575460870f40915c71edd78ef9184cab1a384d259ebc215ff4fc02e7f15c",
+          "size": 11803,
+          "modifiedAt": "2026-07-28T02:58:11.320Z",
+          "capturedAt": "2026-07-28T02:58:11.321Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-agent-eval-tests.md",
+          "sha256": "4f49db2a7e0d7b84d475627d243a1bcf1d2923eb4a06349bdff98a1ed33ad317",
+          "size": 1436,
+          "modifiedAt": "2026-07-28T02:58:15.456Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-cli-help.md",
+          "sha256": "e036a75bd2073d75cb59881bd4f6fadded68b73eb6f24d9265b6daac28426518",
+          "size": 653,
+          "modifiedAt": "2026-07-28T02:58:16.601Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T02:58:16.634Z"
+    },
+    {
+      "key": "e7a8256ed32599716c997807895e4f3a54ab1faa089de15b1d576a179757f5a7",
+      "taskId": "optimize-quick-delivery",
+      "contractDigest": "3da1f00005e4cb9b0800f9988efdda9a9d6d28740ee63e82f2d318ef7649675f",
+      "replayDigest": "9dbfd376604ef7e24480797f968eb19e85fcda13045b3e488a1aa4a7162f234a",
+      "fingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/check-broad-project-broad-project-check.md",
+          "sha256": "4f04575460870f40915c71edd78ef9184cab1a384d259ebc215ff4fc02e7f15c",
+          "size": 11803,
+          "modifiedAt": "2026-07-28T02:58:11.320Z",
+          "capturedAt": "2026-07-28T02:58:11.321Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-agent-eval-tests.md",
+          "sha256": "4f49db2a7e0d7b84d475627d243a1bcf1d2923eb4a06349bdff98a1ed33ad317",
+          "size": 1436,
+          "modifiedAt": "2026-07-28T02:58:15.456Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-cli-help.md",
+          "sha256": "e036a75bd2073d75cb59881bd4f6fadded68b73eb6f24d9265b6daac28426518",
+          "size": 653,
+          "modifiedAt": "2026-07-28T02:58:16.601Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T02:58:16.637Z"
+    },
+    {
+      "key": "7713b2899ebdb826c2e4cf488a384da67459fd59d965d83838bd7f94acab6ce1",
+      "taskId": "strategy-visibility",
+      "contractDigest": "420e928f44f3d64070501baba5e41db48216414df52ae9792719d97ecb7d3d43",
+      "replayDigest": "1fc0ea1f722d9cc1e0a30c5e3521cdcadefdfe97a94ed3c580e318f965637e69",
+      "fingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/check-broad-project-broad-project-check.md",
+          "sha256": "4f04575460870f40915c71edd78ef9184cab1a384d259ebc215ff4fc02e7f15c",
+          "size": 11803,
+          "modifiedAt": "2026-07-28T02:58:11.320Z",
+          "capturedAt": "2026-07-28T02:58:11.321Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-agent-eval-tests.md",
+          "sha256": "4f49db2a7e0d7b84d475627d243a1bcf1d2923eb4a06349bdff98a1ed33ad317",
+          "size": 1436,
+          "modifiedAt": "2026-07-28T02:58:15.456Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        },
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/finalize/epoch-6/batch-user-config-journey-uat-cli-help.md",
+          "sha256": "e036a75bd2073d75cb59881bd4f6fadded68b73eb6f24d9265b6daac28426518",
+          "size": 653,
+          "modifiedAt": "2026-07-28T02:58:16.601Z",
+          "capturedAt": "2026-07-28T02:58:16.601Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T02:58:16.639Z"
+    },
+    {
+      "key": "2ef0986addf18971227f3ed7591e137be6147f877b571ddc6dab274a8cdc82eb",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "61ebbf6a91265afdd2a06bed9b3e11c7a7903ac757da43127db6e23d4d6ff530",
+      "fingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "ff750f80570f1e391b9cfe730dba23f7548c69e3b7d9209a9ce283680f915b96",
+          "size": 12226,
+          "modifiedAt": "2026-07-28T21:20:23.762Z",
+          "capturedAt": "2026-07-28T21:20:23.763Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-simple-report.md",
+          "sha256": "e6c10a1ca951b7f9bceff56c58bfe3bc48284cd7c070e96e6c26bffb3a111018",
+          "size": 521,
+          "modifiedAt": "2026-07-28T21:20:23.795Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-medium-report.md",
+          "sha256": "f75b889f5dbf138339a731b3f946d06cf5df7c1edd2bb851a4cd0eeadd0a3cf6",
+          "size": 519,
+          "modifiedAt": "2026-07-28T21:20:23.828Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-complex-report.md",
+          "sha256": "8b09e3f8792a3dedaca452fccbb9ba6f792ea5bbd0abae6b41da60701b8eaffa",
+          "size": 526,
+          "modifiedAt": "2026-07-28T21:20:23.859Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-summary-contract.md",
+          "sha256": "93c45ffcc99847190c7ca886c3c435614132811745ed6cf72fc0b06ff2af1373",
+          "size": 1687,
+          "modifiedAt": "2026-07-28T21:20:23.889Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T21:20:23.891Z"
+    },
+    {
+      "key": "72838a2727f34adecd9015a4f0ed8c69f327e41c07bd046553ee0e08f048eaf4",
+      "taskId": "eval-user-config",
+      "contractDigest": "28c73ff139b4be34abff1862bd8ebbcc236ea16f9fe64d0f3769d61c95514317",
+      "replayDigest": "a127d93d39d666e9db894118a4481978156c54ec5425fa305bdab10d595c270e",
+      "fingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "ff750f80570f1e391b9cfe730dba23f7548c69e3b7d9209a9ce283680f915b96",
+          "size": 12226,
+          "modifiedAt": "2026-07-28T21:20:23.762Z",
+          "capturedAt": "2026-07-28T21:20:23.763Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-simple-report.md",
+          "sha256": "e6c10a1ca951b7f9bceff56c58bfe3bc48284cd7c070e96e6c26bffb3a111018",
+          "size": 521,
+          "modifiedAt": "2026-07-28T21:20:23.795Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-medium-report.md",
+          "sha256": "f75b889f5dbf138339a731b3f946d06cf5df7c1edd2bb851a4cd0eeadd0a3cf6",
+          "size": 519,
+          "modifiedAt": "2026-07-28T21:20:23.828Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-complex-report.md",
+          "sha256": "8b09e3f8792a3dedaca452fccbb9ba6f792ea5bbd0abae6b41da60701b8eaffa",
+          "size": 526,
+          "modifiedAt": "2026-07-28T21:20:23.859Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-summary-contract.md",
+          "sha256": "93c45ffcc99847190c7ca886c3c435614132811745ed6cf72fc0b06ff2af1373",
+          "size": 1687,
+          "modifiedAt": "2026-07-28T21:20:23.889Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T21:20:23.892Z"
+    },
+    {
+      "key": "2932c5423a8c167d7cd3b4a2747d947822dd9743a8232ef67e48978544e15259",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "d34d37c43ead449ae80b395e3d566dc701f6c7da6836671aec741163ebd89e9d",
+      "fingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "ff750f80570f1e391b9cfe730dba23f7548c69e3b7d9209a9ce283680f915b96",
+          "size": 12226,
+          "modifiedAt": "2026-07-28T21:20:23.762Z",
+          "capturedAt": "2026-07-28T21:20:23.763Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-simple-report.md",
+          "sha256": "e6c10a1ca951b7f9bceff56c58bfe3bc48284cd7c070e96e6c26bffb3a111018",
+          "size": 521,
+          "modifiedAt": "2026-07-28T21:20:23.795Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-medium-report.md",
+          "sha256": "f75b889f5dbf138339a731b3f946d06cf5df7c1edd2bb851a4cd0eeadd0a3cf6",
+          "size": 519,
+          "modifiedAt": "2026-07-28T21:20:23.828Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-complex-report.md",
+          "sha256": "8b09e3f8792a3dedaca452fccbb9ba6f792ea5bbd0abae6b41da60701b8eaffa",
+          "size": 526,
+          "modifiedAt": "2026-07-28T21:20:23.859Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-summary-contract.md",
+          "sha256": "93c45ffcc99847190c7ca886c3c435614132811745ed6cf72fc0b06ff2af1373",
+          "size": 1687,
+          "modifiedAt": "2026-07-28T21:20:23.889Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T21:20:23.892Z"
+    },
+    {
+      "key": "2a5dba32811e9c0251601ef4dcf3b33b211d71225db528bbea2bc10a3f499421",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "3a17246ec111fa8dcc6eb0d26d55564f3653b75e16787b6d1987f308c834b707",
+      "fingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "ff750f80570f1e391b9cfe730dba23f7548c69e3b7d9209a9ce283680f915b96",
+          "size": 12226,
+          "modifiedAt": "2026-07-28T21:20:23.762Z",
+          "capturedAt": "2026-07-28T21:20:23.763Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-simple-report.md",
+          "sha256": "e6c10a1ca951b7f9bceff56c58bfe3bc48284cd7c070e96e6c26bffb3a111018",
+          "size": 521,
+          "modifiedAt": "2026-07-28T21:20:23.795Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-medium-report.md",
+          "sha256": "f75b889f5dbf138339a731b3f946d06cf5df7c1edd2bb851a4cd0eeadd0a3cf6",
+          "size": 519,
+          "modifiedAt": "2026-07-28T21:20:23.828Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-complex-report.md",
+          "sha256": "8b09e3f8792a3dedaca452fccbb9ba6f792ea5bbd0abae6b41da60701b8eaffa",
+          "size": 526,
+          "modifiedAt": "2026-07-28T21:20:23.859Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-summary-contract.md",
+          "sha256": "93c45ffcc99847190c7ca886c3c435614132811745ed6cf72fc0b06ff2af1373",
+          "size": 1687,
+          "modifiedAt": "2026-07-28T21:20:23.889Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T21:20:23.893Z"
+    },
+    {
+      "key": "d1e3cbe7a5c942d93c7b3704d567b1b91b602bb29704f7d278baa721d5c35be8",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "0311761c748ac9c5e6f57f988a5a6de87be40f69605721636beec9e42094fdb3",
+      "fingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "ff750f80570f1e391b9cfe730dba23f7548c69e3b7d9209a9ce283680f915b96",
+          "size": 12226,
+          "modifiedAt": "2026-07-28T21:20:23.762Z",
+          "capturedAt": "2026-07-28T21:20:23.763Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-simple-report.md",
+          "sha256": "e6c10a1ca951b7f9bceff56c58bfe3bc48284cd7c070e96e6c26bffb3a111018",
+          "size": 521,
+          "modifiedAt": "2026-07-28T21:20:23.795Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-medium-report.md",
+          "sha256": "f75b889f5dbf138339a731b3f946d06cf5df7c1edd2bb851a4cd0eeadd0a3cf6",
+          "size": 519,
+          "modifiedAt": "2026-07-28T21:20:23.828Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-complex-report.md",
+          "sha256": "8b09e3f8792a3dedaca452fccbb9ba6f792ea5bbd0abae6b41da60701b8eaffa",
+          "size": 526,
+          "modifiedAt": "2026-07-28T21:20:23.859Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-summary-contract.md",
+          "sha256": "93c45ffcc99847190c7ca886c3c435614132811745ed6cf72fc0b06ff2af1373",
+          "size": 1687,
+          "modifiedAt": "2026-07-28T21:20:23.889Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T21:20:23.894Z"
+    },
+    {
+      "key": "296b1fd0935d3b1f59d3a4526ef622499f7e6826fc987557cae44df3788bdae5",
+      "taskId": "optimize-quick-delivery",
+      "contractDigest": "3da1f00005e4cb9b0800f9988efdda9a9d6d28740ee63e82f2d318ef7649675f",
+      "replayDigest": "af776499b30f06b66098c6bf8094994f7a3d674a9d485324ebd31495b935e4fe",
+      "fingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "ff750f80570f1e391b9cfe730dba23f7548c69e3b7d9209a9ce283680f915b96",
+          "size": 12226,
+          "modifiedAt": "2026-07-28T21:20:23.762Z",
+          "capturedAt": "2026-07-28T21:20:23.763Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-simple-report.md",
+          "sha256": "e6c10a1ca951b7f9bceff56c58bfe3bc48284cd7c070e96e6c26bffb3a111018",
+          "size": 521,
+          "modifiedAt": "2026-07-28T21:20:23.795Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-medium-report.md",
+          "sha256": "f75b889f5dbf138339a731b3f946d06cf5df7c1edd2bb851a4cd0eeadd0a3cf6",
+          "size": 519,
+          "modifiedAt": "2026-07-28T21:20:23.828Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-complex-report.md",
+          "sha256": "8b09e3f8792a3dedaca452fccbb9ba6f792ea5bbd0abae6b41da60701b8eaffa",
+          "size": 526,
+          "modifiedAt": "2026-07-28T21:20:23.859Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-summary-contract.md",
+          "sha256": "93c45ffcc99847190c7ca886c3c435614132811745ed6cf72fc0b06ff2af1373",
+          "size": 1687,
+          "modifiedAt": "2026-07-28T21:20:23.889Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T21:20:23.894Z"
+    },
+    {
+      "key": "516182fed166ccb07dd79b3348e9116161bbc552c3fd84a2c6dd94330c39c909",
+      "taskId": "strategy-visibility",
+      "contractDigest": "420e928f44f3d64070501baba5e41db48216414df52ae9792719d97ecb7d3d43",
+      "replayDigest": "1e09733b15508adb652c0913e3f7876c5bb0429024ebe30c218388113ca7bc44",
+      "fingerprint": "48b91f99e71681151a35ae0a5175a80d2480491af053f8d64bf5ae388dfdafb5",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "ff750f80570f1e391b9cfe730dba23f7548c69e3b7d9209a9ce283680f915b96",
+          "size": 12226,
+          "modifiedAt": "2026-07-28T21:20:23.762Z",
+          "capturedAt": "2026-07-28T21:20:23.763Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-simple-report.md",
+          "sha256": "e6c10a1ca951b7f9bceff56c58bfe3bc48284cd7c070e96e6c26bffb3a111018",
+          "size": 521,
+          "modifiedAt": "2026-07-28T21:20:23.795Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-medium-report.md",
+          "sha256": "f75b889f5dbf138339a731b3f946d06cf5df7c1edd2bb851a4cd0eeadd0a3cf6",
+          "size": 519,
+          "modifiedAt": "2026-07-28T21:20:23.828Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-complex-report.md",
+          "sha256": "8b09e3f8792a3dedaca452fccbb9ba6f792ea5bbd0abae6b41da60701b8eaffa",
+          "size": 526,
+          "modifiedAt": "2026-07-28T21:20:23.859Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        },
+        {
+          "path": ".openatdd/tasks/end-to-end-agent-eval/evidence/finalize/epoch-2/batch-delivery-evaluation-journey-uat-summary-contract.md",
+          "sha256": "93c45ffcc99847190c7ca886c3c435614132811745ed6cf72fc0b06ff2af1373",
+          "size": 1687,
+          "modifiedAt": "2026-07-28T21:20:23.889Z",
+          "capturedAt": "2026-07-28T21:20:23.889Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T21:20:23.895Z"
+    },
+    {
+      "key": "214eec5b84acc7cf70275a7bef1bdd40af507509fa9875d789a2a90aa0bff9ea",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "3d6c041934dc955248d72a9b78b338479c1b5f27bf78ba88e1e75d29abb1b6ea",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.667Z"
+    },
+    {
+      "key": "ec783c96da4b018b0ec2ec28bae2b1d4bca69c8eece5ce4da0ed43a9be440142",
+      "taskId": "end-to-end-agent-eval",
+      "contractDigest": "f763b7939cd4700943a104e44ad9cc0e5f7f6b352fe9b28d9c88b0734c87d9f6",
+      "replayDigest": "32aedda49799588c18484d654ffb3cad2c7282cb4d06d829bc44239f2ea87d32",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.668Z"
+    },
+    {
+      "key": "ee36640860fbbfe4ca7f412034ccfce4df3f543378debd68bd1355970904a334",
+      "taskId": "eval-user-config",
+      "contractDigest": "28c73ff139b4be34abff1862bd8ebbcc236ea16f9fe64d0f3769d61c95514317",
+      "replayDigest": "8addd90305ad55ea391924b065a39c39409f631fb8fe1c6febe7d99316197be5",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.668Z"
+    },
+    {
+      "key": "fe92c028ffb22f84958d96f22e12b0f7a7f5596125f7a1d4d5def356aaafba68",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "5f6c65c1ceb7cbba6572fdebc227e5e92c142bd2d095d28926dba2b9c0ca3b3b",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.669Z"
+    },
+    {
+      "key": "f82c2fb0d49c6ed246f8ad117fcd726bb751e6ba63a92ef76aeb9c2e0816f686",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "c7e6ad95d504e7e25b55a62c624f7ad84cf7421227fc64a02e5d2fae068e12e9",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.669Z"
+    },
+    {
+      "key": "379d11da9a205aa9c2165dfbfa245ec25699d049667747670fbee701e1c2f436",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "442fdcebd6ef30307efae08358635e9fdfe8e2952b2b7076cc44b6368d7a2ca9",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.670Z"
+    },
+    {
+      "key": "fd358d4fa946fa87b5cef199e0f02cd90bf7cd3ea21170a5ccc631a4ebbfdb71",
+      "taskId": "optimize-quick-delivery",
+      "contractDigest": "3da1f00005e4cb9b0800f9988efdda9a9d6d28740ee63e82f2d318ef7649675f",
+      "replayDigest": "c226aa9328a497e934736c69ccff0f1c4cbdef4087145c8539f6494ac8901ece",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.671Z"
+    },
+    {
+      "key": "cb426d79a2a72bccad106575f4db24a658db351fd65a1581595fe473c2d5ac2b",
+      "taskId": "strategy-visibility",
+      "contractDigest": "420e928f44f3d64070501baba5e41db48216414df52ae9792719d97ecb7d3d43",
+      "replayDigest": "648178422d7ff4c8abfd174a736239c3190a49b273ea6952174f2021f4b4f35b",
+      "fingerprint": "d064307761b055ff8deaf989ad50aa8286ae8b5e91ee2b39b780dd783259d9e7",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/check-broad-project-broad-project-check.md",
+          "sha256": "f5a4dc3e0a3d7e5a61ba9c69c79193cc8e864cf091417b1f528e07c2ddca22d2",
+          "size": 12778,
+          "modifiedAt": "2026-07-28T23:43:34.516Z",
+          "capturedAt": "2026-07-28T23:43:34.517Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-simple-optimized-report.md",
+          "sha256": "517f93dc4c46a3d98df1bd65a02fbe62b6ccf7c656acb7b9c4480249528ee291",
+          "size": 541,
+          "modifiedAt": "2026-07-28T23:43:34.553Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-medium-optimized-report.md",
+          "sha256": "0715981ab41cea5e48fd36e23d0cafbc1b691399fa3ee868ecf13b9279478a42",
+          "size": 539,
+          "modifiedAt": "2026-07-28T23:43:34.590Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-complex-optimized-report.md",
+          "sha256": "4d44300539bf269153c8b7310a6fa93c9f91fe9e0ae10d0e6242b10c96208da2",
+          "size": 546,
+          "modifiedAt": "2026-07-28T23:43:34.629Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        },
+        {
+          "path": ".openatdd/tasks/optimize-atdd-runtime-cost/evidence/finalize/epoch-4/batch-optimization-journey-uat-optimization-thresholds.md",
+          "sha256": "9b08b4f4e66f80dcd3624b136800cb8caeb451e0cc0ce7efeac9ce91b741c7c5",
+          "size": 614,
+          "modifiedAt": "2026-07-28T23:43:34.665Z",
+          "capturedAt": "2026-07-28T23:43:34.665Z"
+        }
+      ],
+      "verifiedAt": "2026-07-28T23:43:34.671Z"
+    },
+    {
+      "key": "b1452319fcd53258924e3892c9a720ef4c6fee4b34e61818928cd34a184409d3",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "eac6ee368a43af10a8b6d00d6ce467b79fc353c0b779ac03f575cafbc2e84548",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.508Z"
+    },
+    {
+      "key": "1844528c15e2880cdd0248fdad7da4acb4a206794fc424c66f42d7cb70eee9cf",
+      "taskId": "end-to-end-agent-eval",
+      "contractDigest": "f763b7939cd4700943a104e44ad9cc0e5f7f6b352fe9b28d9c88b0734c87d9f6",
+      "replayDigest": "861d0da2f421e9d22d83defa07ce902116aea5144492d235f63a6b9cc492c6ca",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.508Z"
+    },
+    {
+      "key": "b94fbc51bfd297ab5c11f3b04fed5449d4345e9eb9c51ec89d111804333be68d",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "0de7100cd8e5ea715bde852a1da39a242650f6f4216e82ea66c35043512588c0",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.509Z"
+    },
+    {
+      "key": "5503a77551ac64598e91427ff25755dceed838215cc8cbe4bf71bb677e719a61",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "9edcedc327e0709c9fd84493bd350bdd3a715b25960e03e53a6f9eb0f87ca318",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.510Z"
+    },
+    {
+      "key": "21ad750d0fd5e9e261be3d5e59cef31a3189965860ea0641855730f4cf501c37",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "0826c7f1a63e4ff611024de0df4c3f3dd10376d9d6ac94c2b9038cdb45fef801",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.510Z"
+    },
+    {
+      "key": "fd5ae7c2e06d7716e9adb32a3963006e31ceac6d7498fed2c343f9a3edf10438",
+      "taskId": "optimize-atdd-runtime-cost",
+      "contractDigest": "dff29ae7409a7b99845bae1fd630b59c91253c61cccf0d6280a67e25115a0d1b",
+      "replayDigest": "cf3f42fd38bc3b78628ffff4c6f98168c87b1c4a08f2c85b0360f756227a1bd5",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.511Z"
+    },
+    {
+      "key": "5a9932187fc3b17e36c83620e7b8e1cef43716d4749cf04d758b0722f056be42",
+      "taskId": "optimize-quick-delivery",
+      "contractDigest": "3da1f00005e4cb9b0800f9988efdda9a9d6d28740ee63e82f2d318ef7649675f",
+      "replayDigest": "ac60b0b25354a6d1a7b6378853fc82f5361371725c798a1c52f486ea0e67822e",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.511Z"
+    },
+    {
+      "key": "5071e775547d77cfe437ea6b4a780c516d3bc80e6b41217b32314afbfe94e5f5",
+      "taskId": "strategy-visibility",
+      "contractDigest": "420e928f44f3d64070501baba5e41db48216414df52ae9792719d97ecb7d3d43",
+      "replayDigest": "418c49a998d7f42b870aa1b09385acc9235835af1beda308242cfb0836a715fc",
+      "fingerprint": "60766b751384ba3cf2fdfd3b592f001023be02691c3a559f945e08d32376898f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "465688531f7fa637a34d21ac8eea720d94d44455977c390c4a2fb03485bcae12",
+          "size": 13176,
+          "modifiedAt": "2026-07-29T00:49:14.202Z",
+          "capturedAt": "2026-07-29T00:49:14.202Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-review-skill-tests.md",
+          "sha256": "66d1cb641162bd0f84552e0be809bb0a2ee5505385fab953ccdf318fe7f7bb46",
+          "size": 795,
+          "modifiedAt": "2026-07-29T00:49:14.259Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-skill-creator-validation.md",
+          "sha256": "198ca1c52f2e20a7460745507b1c7857887b264db8c7ceb329ae68ef5962bb12",
+          "size": 406,
+          "modifiedAt": "2026-07-29T00:49:14.319Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-package-dry-run.md",
+          "sha256": "19a2866d1f36cec4da51e2e46ee4867d22a049fa9abed1db78fe37f2a4c11f64",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T00:49:14.481Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        },
+        {
+          "path": ".openatdd/tasks/openatdd-code-review-skill/evidence/finalize/epoch-2/batch-review-skill-journey-uat-installed-forward-evidence.md",
+          "sha256": "a48f997879de65e65f5f6088d8ef1e4fa10f7eec2bc7c7e62e258ad6c8e2c865",
+          "size": 1398,
+          "modifiedAt": "2026-07-29T00:49:14.506Z",
+          "capturedAt": "2026-07-29T00:49:14.506Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T00:49:14.512Z"
+    },
+    {
+      "key": "a1b670fbc4a204eb480556c473871d9c2bc91cf654c8ff8e9c29bcb48a447606",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "ef3153b1096892c158d8be0e6178091aa06f79ec7169ec9f0f7b1f98610aea2a",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.233Z"
+    },
+    {
+      "key": "137a8ffdc7513b585a6c5a467081e31f5fc5e2a5a27e7627ea82a4a009e6faab",
+      "taskId": "end-to-end-agent-eval",
+      "contractDigest": "f763b7939cd4700943a104e44ad9cc0e5f7f6b352fe9b28d9c88b0734c87d9f6",
+      "replayDigest": "818e0c37b9f896809269fffa83d6088cd647d942fc094986ef173e61fddb8b30",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.234Z"
+    },
+    {
+      "key": "89a1e2bc531a06bff6b09a3b6c7d4dc5bbdf72a4c408407d7cc72c8015586f14",
+      "taskId": "eval-user-config",
+      "contractDigest": "28c73ff139b4be34abff1862bd8ebbcc236ea16f9fe64d0f3769d61c95514317",
+      "replayDigest": "2b9a0fedb6f14705bac0e94907c0ca5ba8164aac5ebf2121d5660cb616ff0050",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.235Z"
+    },
+    {
+      "key": "06e0e99121afec5181525bcb912e1be039d4d6362849e57be4a83059641da48e",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "9e016708c9a75b7c5c0344ea4594c15f4c0d96fb2c18dfb4f6c98a98518e9763",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.235Z"
+    },
+    {
+      "key": "f8c0402f19a80216b39e93bf6bc9c094961ed5f41e2a5502e9defe37f7defbdc",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "a8610539bf528f8e6655d590521e87130e3d20e3cda4e82c6e5f944818bfb42d",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.236Z"
+    },
+    {
+      "key": "cb16fa5c42bb3c8eaba4212e0ca32006735b6a5ce1d5ad91b1a414321140fe33",
+      "taskId": "openatdd-code-review-skill",
+      "contractDigest": "da25d0aa4bd9e750a119e1fd852ecf47afe41175cc8121fb4099541c7659b059",
+      "replayDigest": "5e1a697d6021490d284c0d15a97b79fbf284251646a090df7607f0c49ade232c",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.236Z"
+    },
+    {
+      "key": "531088318712aee097ba306d4dc342b3040266bebbd50b54e1ad9ec9a9bba845",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "4324454c31f5c4c58993e9a79f8fd2741ef430f34fecff135e0bf364a06cc421",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.237Z"
+    },
+    {
+      "key": "dda0cac3617332bdd97df3258e6f0a235287eb81b4b822504ba49061184eaeb5",
+      "taskId": "optimize-atdd-runtime-cost",
+      "contractDigest": "dff29ae7409a7b99845bae1fd630b59c91253c61cccf0d6280a67e25115a0d1b",
+      "replayDigest": "b06de80ad1041294085ea867312a549fa428d8045d684dc54ebecf0f5236cbd6",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.238Z"
+    },
+    {
+      "key": "8f7ef5d930aaeed02b4975b31b90ac7abe31bc7ae8bde94f9976090e075329d8",
+      "taskId": "optimize-quick-delivery",
+      "contractDigest": "3da1f00005e4cb9b0800f9988efdda9a9d6d28740ee63e82f2d318ef7649675f",
+      "replayDigest": "8b5ca2d701504b5b2649845548dc6105d4dcf63923dd958690dd8f4b10ff4a07",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.238Z"
+    },
+    {
+      "key": "78e706fba97af92b6c850409fb398d9bf04cf8c77718ba8dee06919aeae83a5e",
+      "taskId": "strategy-visibility",
+      "contractDigest": "420e928f44f3d64070501baba5e41db48216414df52ae9792719d97ecb7d3d43",
+      "replayDigest": "448f5d439b050c8db66cb6683d74843b71ed6d1539ad8f60167700d153ee8aed",
+      "fingerprint": "c640407e0d271462e473baaa046464888d215e0b38f70f0fda7e31f5f51ec27f",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/check-broad-project-broad-project-check.md",
+          "sha256": "da756406095db5617c588c76820b28a763314b7d144704798dd81596e795fa2c",
+          "size": 13426,
+          "modifiedAt": "2026-07-29T08:16:08.651Z",
+          "capturedAt": "2026-07-29T08:16:08.651Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-automatic-delivery-uat-automatic-delivery.md",
+          "sha256": "1c4e760552c248ebe8c23d8a7eada3a9235849aed61c5077ed701303cf44cc27",
+          "size": 873,
+          "modifiedAt": "2026-07-29T08:16:08.952Z",
+          "capturedAt": "2026-07-29T08:16:08.952Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-manual-objection-uat-manual-objection.md",
+          "sha256": "4d66d3b80f30dfe1010b52691aa77deecc099d0649e79f774781c724b7c0f74c",
+          "size": 681,
+          "modifiedAt": "2026-07-29T08:16:09.129Z",
+          "capturedAt": "2026-07-29T08:16:09.130Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-delivery-compatibility.md",
+          "sha256": "11df4634509673efdbef732959e5d2f5e4b3413fc70d3b364b07ed3621808ebf",
+          "size": 676,
+          "modifiedAt": "2026-07-29T08:16:09.190Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-package-dry-run.md",
+          "sha256": "85ed7d6f6915aa2427622b062e5c81b9eb2250972584154f38eea604d8b3339a",
+          "size": 5691,
+          "modifiedAt": "2026-07-29T08:16:09.476Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        },
+        {
+          "path": ".openatdd/tasks/acceptance-outcome-routing/evidence/finalize/epoch-3/batch-compatibility-package-uat-skill-validation.md",
+          "sha256": "71b06b08a78bca91248db22858d5d2e8c5b308fe3fdaf359457ee3068ad78e73",
+          "size": 624,
+          "modifiedAt": "2026-07-29T08:16:10.231Z",
+          "capturedAt": "2026-07-29T08:16:10.231Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T08:16:10.238Z"
+    },
+    {
+      "key": "529f9fbf33b6cf5073f549329a96966c8780c511b3a8469b36ef544db1b1a8c0",
+      "taskId": "acceptance-outcome-routing",
+      "contractDigest": "a064ad18be81e65bba4612147b1f073f865059699b4353da08b4015208e8ec1d",
+      "replayDigest": "669c6a7d8da0ecb82de214685f618826785bfae0b305f1178477d75ccce7cd9b",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-acceptance-outcome-routing/broad-project-check.md",
+          "sha256": "55e9187e1a932354baf65e2a711988940b54104c4e3943d8c53d550a6c14b8c0",
+          "size": 13643,
+          "modifiedAt": "2026-07-29T16:57:46.270Z",
+          "capturedAt": "2026-07-29T16:57:46.270Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.271Z"
+    },
+    {
+      "key": "4524fdf209e50817ffb455f0cef91c7c040366ae29f6fa8496d99bbbf5f6e95c",
+      "taskId": "detailed-uat-handoff",
+      "contractDigest": "8e4ce6a11a659d001d7088c217a6ec60bf7077b49f8decb24920a824ce90654e",
+      "replayDigest": "f767a3428a887e22c8027a42407f452e75e583e0d1c28179f429703ac5d9ce09",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:46.272Z"
+    },
+    {
+      "key": "10fc6a64543b5a96dd02505b97e896ba478868dd3fc9c52d6c68a98d2aaa62e6",
+      "taskId": "end-to-end-agent-eval",
+      "contractDigest": "f763b7939cd4700943a104e44ad9cc0e5f7f6b352fe9b28d9c88b0734c87d9f6",
+      "replayDigest": "f0459a233abe4396d31c4690fa23699f25f1ec4e53d08320a83570791b6bdee3",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-end-to-end-agent-eval/broad-project-check.md",
+          "sha256": "badaf59d691385aea778880f72ce405ef37051c2b18be09da642d95f33ddeea5",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:57:52.099Z",
+          "capturedAt": "2026-07-29T16:57:52.099Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:52.100Z"
+    },
+    {
+      "key": "b037052f2d9f758057130f269217a4476d332125793acd598ee6e247f69c0652",
+      "taskId": "eval-user-config",
+      "contractDigest": "28c73ff139b4be34abff1862bd8ebbcc236ea16f9fe64d0f3769d61c95514317",
+      "replayDigest": "2852ae71d0984853658cbaa56b9902983894de086b69ab61b2157431bcd21c9f",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z"
+    },
+    {
+      "key": "367e1e5a663a4cac7cf1999b1ae717b432d1308553f53bc0c20df8f339219022",
+      "taskId": "fast-portable-finalization",
+      "contractDigest": "02caf1642c599a3bc4e184ffe35d274d21b48a70034e970c9e437f95fed23e88",
+      "replayDigest": "6a1c35d920b5fbe4e27e928e50999c1f3506bdeaa8c3b70dda86a5f97e8d5b13",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-fast-portable-finalization/broad-project-check.md",
+          "sha256": "221ca56ab274aa828f8d28ad248f539597c3b144b8b44f31c1b85d8c9607cd6b",
+          "size": 13630,
+          "modifiedAt": "2026-07-29T16:58:03.325Z",
+          "capturedAt": "2026-07-29T16:58:03.325Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:03.326Z"
+    },
+    {
+      "key": "4553faa1b05fe2b6130a6ff3825ef35fa7cd6dba88c188178bbf34e9447cdb96",
+      "taskId": "openatdd-1-0",
+      "contractDigest": "31fe4d41d4db9b668d239340e16e4fbc1045abc72df7e7d54d4f30fdf16b1ee9",
+      "replayDigest": "6a1c35d920b5fbe4e27e928e50999c1f3506bdeaa8c3b70dda86a5f97e8d5b13",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-1-0/broad-project-check.md",
+          "sha256": "3d39e2f937232b54ed17b6a24c60c5fe21cc98d6e444f4131a013b0644679930",
+          "size": 13644,
+          "modifiedAt": "2026-07-29T16:58:09.415Z",
+          "capturedAt": "2026-07-29T16:58:09.416Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:09.416Z"
+    },
+    {
+      "key": "a003f0ac98ce96ea997725532d3d1e9cb78d2e8ac94db60bfe1d37fd171279f7",
+      "taskId": "openatdd-code-review-skill",
+      "contractDigest": "da25d0aa4bd9e750a119e1fd852ecf47afe41175cc8121fb4099541c7659b059",
+      "replayDigest": "54d8bb5dba31cbbafe0fe84bb68ac8a1260315917f83d947bbf5be37702ebf61",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-openatdd-code-review-skill/broad-project-check.md",
+          "sha256": "955978fa7ce088bf5f46703ba12be4af166c5b7ae2548fb3c6ce17ef9dd49039",
+          "size": 13639,
+          "modifiedAt": "2026-07-29T16:58:15.090Z",
+          "capturedAt": "2026-07-29T16:58:15.091Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.091Z"
+    },
+    {
+      "key": "77631b9791dde71cae7fe248de972659fb90dc0a57f29ec093c91f86a6ffbf41",
+      "taskId": "openatdd-mvp",
+      "contractDigest": "8c5c17bcfae3351b0f33b10fe009734167d91c8811b5411f079d1362db8cf98c",
+      "replayDigest": "388531eedacdf17c63944e514fff96825f8a298c29bb07c2ad3fbce728b2d2ca",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/check-broad-project-broad-project-check.md",
+          "sha256": "862afcc5acac8842d301ccf445eb96f5b287ef995e978d5e6c954f8ebffb9530",
+          "size": 13664,
+          "modifiedAt": "2026-07-29T16:57:39.894Z",
+          "capturedAt": "2026-07-29T16:57:39.894Z"
+        },
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/epoch-2/batch-project-truth-journey-uat-project-truth-journey.md",
+          "sha256": "946ef64951e00b46ce3ad78e1bf7d0e91cff2abfc1f4fa2bf8ca1f447cf180ce",
+          "size": 2556,
+          "modifiedAt": "2026-07-29T16:57:40.709Z",
+          "capturedAt": "2026-07-29T16:57:40.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:15.092Z"
+    },
+    {
+      "key": "2a46bd3a544824a3d37b44afb8ece63711224da96935f7ec1888ee7c4cd30d2b",
+      "taskId": "optimize-atdd-runtime-cost",
+      "contractDigest": "dff29ae7409a7b99845bae1fd630b59c91253c61cccf0d6280a67e25115a0d1b",
+      "replayDigest": "6a1c35d920b5fbe4e27e928e50999c1f3506bdeaa8c3b70dda86a5f97e8d5b13",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-atdd-runtime-cost/broad-project-check.md",
+          "sha256": "84acdc7e0fcf12fb8ec92736e3106ac2e59bbdb1df859c507167be3cf62b2765",
+          "size": 13655,
+          "modifiedAt": "2026-07-29T16:58:20.673Z",
+          "capturedAt": "2026-07-29T16:58:20.673Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:20.674Z"
+    },
+    {
+      "key": "7fc2bd5de2b986b3b3ffd5a7e830002fd0d2505fd50e42e80d1929ed00e7ce7f",
+      "taskId": "optimize-quick-delivery",
+      "contractDigest": "3da1f00005e4cb9b0800f9988efdda9a9d6d28740ee63e82f2d318ef7649675f",
+      "replayDigest": "378db52f4e03ab854e3e86a455d85e2ce5e21891f43ffc53b53ca9770e660b54",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-optimize-quick-delivery/broad-project-check.md",
+          "sha256": "b2c7cc4f125f1ddaa84e2ff542e3867c4151121e5ad685dd3805aad12e109069",
+          "size": 13637,
+          "modifiedAt": "2026-07-29T16:58:26.494Z",
+          "capturedAt": "2026-07-29T16:58:26.495Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:26.495Z"
+    },
+    {
+      "key": "cc28d6b8ec0e987b26a975b7c6bbfa2d412e6cfb3a6e47533775dfcc1b7ad7ff",
+      "taskId": "strategy-visibility",
+      "contractDigest": "420e928f44f3d64070501baba5e41db48216414df52ae9792719d97ecb7d3d43",
+      "replayDigest": "378db52f4e03ab854e3e86a455d85e2ce5e21891f43ffc53b53ca9770e660b54",
+      "fingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-strategy-visibility/broad-project-check.md",
+          "sha256": "cc05306ae37f48574aae6e69e8cfabbdbfaa1aaed556a76b1523cb780792b06f",
+          "size": 13643,
+          "modifiedAt": "2026-07-29T16:58:32.272Z",
+          "capturedAt": "2026-07-29T16:58:32.272Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:58:32.273Z"
     }
   ]
 }

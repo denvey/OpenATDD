@@ -203,6 +203,21 @@ export async function loadLocalCredentials(root, variableNames) {
   return { values, secretValues: Object.values(values), files };
 }
 
+/**
+ * Load whatever declared local values actually exist, for redaction and leak
+ * scanning only. Unlike loadLocalCredentials nothing is required: project-scoped
+ * verification does not use credentials, but any values that do exist locally
+ * must still be redacted from and scanned out of every persisted artifact.
+ */
+export async function loadScanOnlyCredentials(root, variableNames) {
+  const files = environmentFiles(root);
+  const names = csv(variableNames);
+  if (names.length === 0 || !(await pathExists(files.dotenv))) return { values: {}, secretValues: [], files };
+  const parsed = parseRestrictedDotenv(await readFile(files.dotenv, "utf8"));
+  const values = Object.fromEntries(names.filter((name) => parsed[name]).map((name) => [name, parsed[name]]));
+  return { values, secretValues: Object.values(values), files };
+}
+
 async function refreshExample(files, variableNames) {
   const names = csv(variableNames);
   const body = ["# Local UAT variables. Copy to .env.openatdd.local and fill values.", ...names.map((name) => `${name}=`), ""].join("\n");
@@ -297,7 +312,7 @@ export async function runEnvironmentPreflight(root, environment = "local", input
   if (projectOnly) assert(projectReason, "PREFLIGHT_REASON_REQUIRED", "Project-scoped preflight requires a reason.");
   if (input.persist !== false) await refreshExample(files, profile.credential_variables);
   const credentials = projectOnly
-    ? { values: {}, secretValues: [], files }
+    ? await loadScanOnlyCredentials(root, profile.credential_variables)
     : await loadLocalCredentials(root, profile.credential_variables);
   const checks = [];
   const configuredWorkspace = path.resolve(files.root, profile.workspace || ".");

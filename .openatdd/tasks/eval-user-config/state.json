@@ -1,0 +1,1113 @@
+{
+  "schemaVersion": 3,
+  "deliveryVersion": 3,
+  "taskId": "eval-user-config",
+  "requirement": "Allow bundled Codex agent evaluations to opt into the current user config so configured providers and quotas are preserved.",
+  "phase": "DELIVERED",
+  "createdAt": "2026-07-28T02:44:44.409Z",
+  "updatedAt": "2026-07-29T16:57:57.709Z",
+  "acceptance": {
+    "approvedAt": "2026-07-28T02:53:58.943Z",
+    "sha256": "ff1b1181b3eb59b5f3af0594a3e1a0b7580f445ff3958124647c05c59bf4085d",
+    "items": [
+      {
+        "id": "AC-01",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "默认保留用户 provider",
+        "given": "用户级配置声明了自定义 provider，且评测使用 bundled Codex adapter。",
+        "when": "用户不传配置模式选项。",
+        "then": "最终 `codex exec` 不包含 `--ignore-user-config`，由 Codex 标准配置加载机制选择 provider 与认证来源。",
+        "evidence": "`tests/agent-eval.test.mjs` 的 argv 与配置模式断言。"
+      },
+      {
+        "id": "AC-02",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "隔离配置必须显式选择",
+        "given": "用户需要排除全部用户配置以进行可复现评测。",
+        "when": "用户传入 `--isolated-config`。",
+        "then": "主组、裸基线和消融组的 `codex exec` 都包含 `--ignore-user-config`，报告记录 `configMode: isolated`。",
+        "evidence": "适配器默认行为回归测试。"
+      },
+      {
+        "id": "AC-03",
+        "classification": "AUTO",
+        "blocking": true,
+        "title": "对照组共享同一配置模式且报告可审计",
+        "given": "评测包含主组、裸 Agent 基线或能力消融组。",
+        "when": "用户选择默认或隔离配置模式。",
+        "then": "所有 bundled Codex adapter 共享该选择，CLI 帮助展示 `--isolated-config`，报告 adapter 元数据记录 `user` 或 `isolated`，且不记录配置内容。",
+        "evidence": "CLI 帮助检查、adapter 单元测试和聚焦 Agent eval 测试。"
+      }
+    ]
+  },
+  "solution": {
+    "approvedAt": "2026-07-28T02:53:58.998Z",
+    "sha256": "9a6b994d0c3cc6fe84bb190e9caecdddadce6c431c3d0045ab64d73dba86565a",
+    "impactPaths": [
+      "skills/openatdd/scripts/codex-agent-adapter.mjs",
+      "skills/openatdd/scripts/agent-eval.mjs",
+      "skills/openatdd/scripts/openatdd.mjs",
+      "tests/agent-eval.test.mjs"
+    ],
+    "trace": [
+      {
+        "acceptanceId": "AC-01",
+        "implementation": "默认不添加 `--ignore-user-config`",
+        "verification": "用户模式 argv 单元测试"
+      },
+      {
+        "acceptanceId": "AC-02",
+        "implementation": "`--isolated-config` 贯穿 CLI 与 bundled adapter",
+        "verification": "隔离模式回归测试"
+      },
+      {
+        "acceptanceId": "AC-03",
+        "implementation": "共用 `codexOptions`，报告记录 `configMode`",
+        "verification": "adapter 元数据与 CLI 帮助检查"
+      }
+    ]
+  },
+  "routing": {
+    "status": "assessed",
+    "assessedAt": "2026-07-28T02:44:44.726Z",
+    "schemaVersion": 1,
+    "lane": "quick",
+    "reasons": [
+      "local-scope",
+      "established-project-pattern",
+      "low-uncertainty"
+    ],
+    "assessment": {
+      "scope": "local",
+      "projectPattern": "established",
+      "reversibility": "reversible",
+      "uncertainty": "low",
+      "riskSignals": []
+    },
+    "riskOverlays": [],
+    "investigation": {
+      "externalResearch": false
+    },
+    "agents": {
+      "policy": "none",
+      "roles": []
+    },
+    "interaction": {
+      "approvals": "autonomous",
+      "contract": "compact"
+    }
+  },
+  "decisions": [],
+  "reviews": {
+    "solution": {
+      "status": "passed",
+      "reviewer": "main",
+      "summary": "默认保留 Codex 用户 provider；完全隔离改为显式选项，并保持各评测组模式一致且报告可审计。",
+      "findings": [],
+      "checks": [
+        "simplicity",
+        "project-fit",
+        "summary-detail-consistency",
+        "hidden-material-choices",
+        "acceptance-trace",
+        "unnecessary-infrastructure"
+      ],
+      "agentId": null,
+      "contextDigest": null,
+      "reviewedAt": "2026-07-28T02:53:58.997Z",
+      "solutionSha256": "9a6b994d0c3cc6fe84bb190e9caecdddadce6c431c3d0045ab64d73dba86565a"
+    }
+  },
+  "agents": {
+    "dispatches": []
+  },
+  "context": {
+    "status": "prepared",
+    "path": null,
+    "digest": "0942bd3598ca7b47b1c145e279c8a80edbd726a4f6578f7010d2194149e6e9bf",
+    "sourceDigests": {
+      ".openatdd/memory/incidents/INC-2026-003-cli-check-options-scope-source-fingerprint-and-d.md": "afc7d3df9ed92d6b3294552fd932477e0eec0050b327457b3006dcd6350b3921",
+      ".openatdd/memory/incidents/INC-2026-008-the-solution-summary-order-and-review-gate-do-no.md": "278bcf1ca3f2f4380e8ea0f0ed50ba784f89d3df94d148f80869a9aa1f775e05",
+      ".openatdd/memory/incidents/INC-2026-009-resumed-repairs-and-dispatched-fresh-context-age.md": "ee53929abf29db3b7e15e37e67fd25395206c678b30277a0e049342aa3d9ab8e",
+      ".openatdd/memory/incidents/INC-2026-011-the-release-finalization-claims-agent-evaluation.md": "57953cbd438e7f162ea0db5c4ba51093a22f1ce65ccfd3ce0d3aed62da273384",
+      ".openatdd/memory/invariants.md": "03ee365830bf5d10ec82cc8f0985d583fd2bc94f67c2ce1ceafa01eeb959f8af",
+      ".openatdd/tasks/detailed-uat-handoff/acceptance.md": "699bcac445c33d07283d337a419bdc70c915f4567bcded47391cc63f618074d5",
+      ".openatdd/tasks/eval-user-config/acceptance.md": "ff1b1181b3eb59b5f3af0594a3e1a0b7580f445ff3958124647c05c59bf4085d",
+      ".openatdd/tasks/eval-user-config/solution.md": "9a6b994d0c3cc6fe84bb190e9caecdddadce6c431c3d0045ab64d73dba86565a",
+      ".openatdd/tasks/eval-user-config/state.json": "9dd0df1782b4964a8ed95ee8e88928721cb850c41eb8a3cfe6bb367667bedb58",
+      ".openatdd/tasks/fast-portable-finalization/acceptance.md": "e082a4c1e3459ad4fa0831533e2dac317dd94b1baf4ff17118bb150d90aaa4e7",
+      ".openatdd/tasks/openatdd-1-0/acceptance.md": "9ac6008e4f95022672c5787e9bc812e7d7489cbe58fd5d14fcb526613f0d9390",
+      ".openatdd/tasks/openatdd-mvp/acceptance.md": "78962e620021131089577ff9f45204ee118d80927c9dfefdfa57fa63deeec6d4",
+      ".openatdd/tasks/optimize-quick-delivery/acceptance.md": "abb37bba0b5fbdd49dfc2b1f5fafb6ece2790e58788f5fe8146c2c5b93aa9929",
+      ".openatdd/tasks/strategy-visibility/acceptance.md": "707a6526765e029dbab465909fa303cd16a45e7d4159503af06d1d0a77cfb4ca"
+    }
+  },
+  "repair": {
+    "attempts": [],
+    "lastProgressFingerprint": null,
+    "lastHypothesis": null,
+    "consecutiveNoProgress": 0
+  },
+  "verificationNotBefore": "2026-07-29T16:34:07.500Z",
+  "verification": {
+    "epoch": 10,
+    "startedAt": "2026-07-29T16:34:07.500Z",
+    "clean": true,
+    "reason": "affected by lightweight-project-truth"
+  },
+  "results": {
+    "AC-01": {
+      "acceptanceId": "AC-01",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10
+    },
+    "AC-02": {
+      "acceptanceId": "AC-02",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10
+    },
+    "AC-03": {
+      "acceptanceId": "AC-03",
+      "classification": "AUTO",
+      "blocking": true,
+      "status": "passed",
+      "summary": "Reverified once for final fingerprint dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47: verified this automatic criterion.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10
+    }
+  },
+  "checks": {
+    "focused-agent-eval": {
+      "id": "focused-agent-eval",
+      "name": "Bundled Codex adapter configuration regressions",
+      "command": "node --test tests/agent-eval.test.mjs",
+      "status": "passed",
+      "scope": "focused",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": 1741,
+      "summary": "Final focused group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "broad-project": {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "command": "npm run check",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": 27087,
+      "summary": "Final broad group passed.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-end-to-end-agent-eval": {
+      "id": "finalize-end-to-end-agent-eval",
+      "name": "finalization reverification for end-to-end-agent-eval",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-optimize-atdd-runtime-cost": {
+      "id": "finalize-optimize-atdd-runtime-cost",
+      "name": "finalization reverification for optimize-atdd-runtime-cost",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-acceptance-outcome-routing": {
+      "id": "finalize-acceptance-outcome-routing",
+      "name": "finalization reverification for acceptance-outcome-routing",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10,
+      "previousStatus": "passed",
+      "affectedAt": "2026-07-29T16:34:07.500Z",
+      "affectedBy": "lightweight-project-truth"
+    },
+    "finalize-lightweight-project-truth": {
+      "id": "finalize-lightweight-project-truth",
+      "name": "finalization reverification for lightweight-project-truth",
+      "command": "manifest history replay",
+      "status": "passed",
+      "scope": "broad",
+      "sourceFingerprint": "dfdfdab18a947661e115c4f7256e67b7876a8db1e37741e9e1e08badb4f2ec47",
+      "durationMs": null,
+      "summary": "Batched once after final source freeze.",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/lightweight-project-truth/evidence/finalize/history-eval-user-config/broad-project-check.md",
+          "sha256": "ed305ad184358de9f51768e5996b940b5be362b2056e5f4deae18350be078114",
+          "size": 13650,
+          "modifiedAt": "2026-07-29T16:57:57.709Z",
+          "capturedAt": "2026-07-29T16:57:57.709Z"
+        }
+      ],
+      "verifiedAt": "2026-07-29T16:57:57.709Z",
+      "epoch": 10
+    }
+  },
+  "checkSequence": [
+    {
+      "id": "focused-agent-eval",
+      "scope": "focused",
+      "status": "passed",
+      "sourceFingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "verifiedAt": "2026-07-28T02:57:44.232Z",
+      "epoch": 6
+    },
+    {
+      "id": "broad-project",
+      "scope": "broad",
+      "status": "passed",
+      "sourceFingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+      "verifiedAt": "2026-07-28T02:58:11.322Z",
+      "epoch": 6
+    }
+  ],
+  "issues": [
+    {
+      "id": "ISSUE-001",
+      "acceptanceId": "AC-02",
+      "status": "resolved",
+      "symptom": "UAT 发现默认 --ignore-user-config 会丢失自定义 model_provider，却继续复用 ChatGPT 登录缓存，导致评测消耗错误账户额度。",
+      "evidence": [
+        {
+          "path": ".openatdd/tasks/eval-user-config/evidence/repair/issue-001-provider-default.md",
+          "sha256": "147868430c675bf33c250dd30520c05b9774e2700a9c2e61ecae04ad2988263d",
+          "size": 643,
+          "modifiedAt": "2026-07-28T02:56:29.118Z",
+          "capturedAt": "2026-07-28T02:56:45.202Z"
+        }
+      ],
+      "openedAt": "2026-07-28T02:52:00.528Z",
+      "rootCause": "适配器默认传入 --ignore-user-config，导致 model_provider 与自定义 provider 定义被丢弃，但 ChatGPT 登录缓存仍可用，于是子进程静默切换到错误额度来源。",
+      "regression": [
+        "bundled Codex argv 默认与显式隔离模式断言，并通过真实 adapter provider 探测。"
+      ],
+      "invariant": "真实 Agent 评测默认沿用用户 provider；忽略用户配置必须由 --isolated-config 显式选择并记录到报告。",
+      "paths": [
+        "skills/openatdd/scripts/codex-agent-adapter.mjs",
+        "skills/openatdd/scripts/agent-eval.mjs",
+        "skills/openatdd/scripts/openatdd.mjs",
+        "tests/agent-eval.test.mjs"
+      ],
+      "resolvedAt": "2026-07-28T02:56:45.188Z",
+      "memoryId": "INC-2026-012"
+    }
+  ],
+  "affectedDependencies": [
+    {
+      "taskId": "detailed-uat-handoff",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "tests/agent-eval.test.mjs",
+          "tests"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-28T02:53:58.998Z"
+    },
+    {
+      "taskId": "fast-portable-finalization",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "tests/agent-eval.test.mjs",
+          "tests"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-28T02:53:58.998Z"
+    },
+    {
+      "taskId": "openatdd-1-0",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/agent-eval.mjs",
+          "skills/openatdd/scripts/agent-eval.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "tests/agent-eval.test.mjs",
+          "tests"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-28T02:53:58.998Z"
+    },
+    {
+      "taskId": "openatdd-mvp",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04",
+        "AC-05",
+        "AC-06",
+        "AC-07",
+        "AC-08",
+        "AC-09"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/codex-agent-adapter.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/agent-eval.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd"
+        ],
+        [
+          "tests/agent-eval.test.mjs",
+          "tests"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd",
+        "path-overlap:tests/agent-eval.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-28T02:53:58.998Z"
+    },
+    {
+      "taskId": "optimize-quick-delivery",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs"
+      ],
+      "notBefore": "2026-07-28T02:53:58.998Z"
+    },
+    {
+      "taskId": "strategy-visibility",
+      "acceptanceIds": [
+        "AC-01",
+        "AC-02",
+        "AC-03",
+        "AC-04"
+      ],
+      "overlaps": [
+        [
+          "skills/openatdd/scripts/codex-agent-adapter.mjs",
+          "skills/openatdd/scripts/codex-agent-adapter.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/agent-eval.mjs",
+          "skills/openatdd/scripts/agent-eval.mjs"
+        ],
+        [
+          "skills/openatdd/scripts/openatdd.mjs",
+          "skills/openatdd/scripts/openatdd.mjs"
+        ],
+        [
+          "tests/agent-eval.test.mjs",
+          "tests"
+        ]
+      ],
+      "reasons": [
+        "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+        "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd/scripts/codex-agent-adapter.mjs",
+        "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+        "path-overlap:tests/agent-eval.test.mjs:tests"
+      ],
+      "notBefore": "2026-07-28T02:53:58.998Z"
+    }
+  ],
+  "preflight": {
+    "schemaVersion": 1,
+    "environment": "local",
+    "scope": "project",
+    "reason": "The approved journey uses only the deterministic local CLI and Node test harness.",
+    "profile": ".openatdd/environments/local.yaml",
+    "status": "affected",
+    "checkedAt": "2026-07-28T02:57:42.490Z",
+    "durationMs": 2,
+    "checks": [
+      {
+        "name": "workspace",
+        "status": "passed",
+        "detail": "."
+      },
+      {
+        "name": "project",
+        "status": "passed",
+        "detail": "configured OpenATDD; expected openatdd or openatdd"
+      },
+      {
+        "name": "start_command",
+        "status": "passed",
+        "detail": "npm run check"
+      },
+      {
+        "name": "application_version",
+        "status": "passed",
+        "detail": "expected 1.0.0; observed 1.0.0"
+      },
+      {
+        "name": "services",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      },
+      {
+        "name": "entry_url",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      },
+      {
+        "name": "credential_variables",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      },
+      {
+        "name": "login",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      },
+      {
+        "name": "organization",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      },
+      {
+        "name": "integration",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      },
+      {
+        "name": "fixture",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      },
+      {
+        "name": "known_workarounds",
+        "status": "not_applicable",
+        "detail": "The approved journey uses only the deterministic local CLI and Node test harness."
+      }
+    ],
+    "warnings": [],
+    "credentialVariables": []
+  },
+  "uat": {
+    "planStatus": "planned",
+    "plannedAt": "2026-07-28T02:58:11.322Z",
+    "batches": {
+      "user-config-journey": {
+        "id": "user-config-journey",
+        "status": "affected",
+        "summary": "User provider remains default and isolation stays explicit and auditable passed.",
+        "evidence": [],
+        "verifiedAt": null,
+        "epoch": 6,
+        "previousStatus": "passed"
+      }
+    },
+    "warnings": [],
+    "estimatedRoundTrips": 1
+  },
+  "handoff": {
+    "status": "not_prepared",
+    "preparedAt": null
+  },
+  "finalization": {
+    "status": "complete",
+    "version": 1,
+    "completedAt": "2026-07-28T02:58:16.998Z",
+    "sourceFingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+    "manifestDigest": "04b514e75d8a3cf9cf6c26712731c7985cd23ae944a8a19e9b2a693f7c3bce29",
+    "metrics": {
+      "mode": "final",
+      "startedAt": "2026-07-28T02:57:42.488Z",
+      "wallTimeMs": 34524,
+      "dryRunRuns": 1,
+      "finalRuns": 1,
+      "commandInvocations": 4,
+      "cliInvocations": 4,
+      "commandDurationMs": 34098,
+      "checkGroupRuns": {
+        "focused": 1,
+        "module": 0,
+        "broad": 1
+      },
+      "uatJourneyRuns": 1,
+      "uatBatchRuns": 1,
+      "browserRoundTrips": 1,
+      "affectedHistoryPasses": 1,
+      "historyRuns": 6,
+      "historyCacheHits": 0,
+      "historyEpochReuse": 0,
+      "skippedCheckGroups": [],
+      "checkGroupSignatureReuse": [],
+      "evidenceWrites": 4,
+      "evidenceWritesByPhase": {
+        "checks": 2,
+        "uat": 2
+      },
+      "phaseDurationsMs": {
+        "preflight": 2,
+        "checks": 28832,
+        "uat": 5281,
+        "acceptance-mapping": 1,
+        "history": 35,
+        "handoff-readiness": 359
+      },
+      "linkChecks": 0,
+      "warnings": []
+    }
+  },
+  "timing": {
+    "currentPhase": "PRE_UAT",
+    "phaseStartedAt": "2026-07-29T16:34:07.500Z",
+    "phases": [
+      {
+        "phase": "ACCEPTANCE_DRAFT",
+        "startedAt": "2026-07-28T02:44:44.409Z",
+        "endedAt": "2026-07-28T02:46:58.592Z",
+        "durationMs": 134183
+      },
+      {
+        "phase": "ACCEPTANCE_APPROVED",
+        "startedAt": "2026-07-28T02:46:58.592Z",
+        "endedAt": "2026-07-28T02:46:58.649Z",
+        "durationMs": 57
+      },
+      {
+        "phase": "SOLUTION_DRAFT",
+        "startedAt": "2026-07-28T02:46:58.649Z",
+        "endedAt": "2026-07-28T02:46:58.651Z",
+        "durationMs": 2
+      },
+      {
+        "phase": "CONTRACT_APPROVED",
+        "startedAt": "2026-07-28T02:46:58.651Z",
+        "endedAt": "2026-07-28T02:46:58.718Z",
+        "durationMs": 67
+      },
+      {
+        "phase": "IMPLEMENTING",
+        "startedAt": "2026-07-28T02:46:58.718Z",
+        "endedAt": "2026-07-28T02:51:03.937Z",
+        "durationMs": 245219
+      },
+      {
+        "phase": "PRE_UAT",
+        "startedAt": "2026-07-28T02:51:03.937Z",
+        "endedAt": "2026-07-28T02:51:15.179Z",
+        "durationMs": 11242
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T02:51:15.179Z",
+        "endedAt": "2026-07-28T02:52:00.528Z",
+        "durationMs": 45349
+      },
+      {
+        "phase": "REPAIRING",
+        "startedAt": "2026-07-28T02:52:00.528Z",
+        "endedAt": "2026-07-28T02:52:00.611Z",
+        "durationMs": 83
+      },
+      {
+        "phase": "ACCEPTANCE_DRAFT",
+        "startedAt": "2026-07-28T02:52:00.611Z",
+        "endedAt": "2026-07-28T02:53:58.943Z",
+        "durationMs": 118332
+      },
+      {
+        "phase": "ACCEPTANCE_APPROVED",
+        "startedAt": "2026-07-28T02:53:58.943Z",
+        "endedAt": "2026-07-28T02:53:58.996Z",
+        "durationMs": 53
+      },
+      {
+        "phase": "SOLUTION_DRAFT",
+        "startedAt": "2026-07-28T02:53:58.996Z",
+        "endedAt": "2026-07-28T02:53:58.998Z",
+        "durationMs": 2
+      },
+      {
+        "phase": "CONTRACT_APPROVED",
+        "startedAt": "2026-07-28T02:53:58.998Z",
+        "endedAt": "2026-07-28T02:53:59.049Z",
+        "durationMs": 51
+      },
+      {
+        "phase": "IMPLEMENTING",
+        "startedAt": "2026-07-28T02:53:59.049Z",
+        "endedAt": "2026-07-28T02:56:45.188Z",
+        "durationMs": 166139
+      },
+      {
+        "phase": "PRE_UAT",
+        "startedAt": "2026-07-28T02:56:45.188Z",
+        "endedAt": "2026-07-28T02:58:16.998Z",
+        "durationMs": 91810
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T02:58:16.998Z",
+        "endedAt": "2026-07-28T16:31:08.549Z",
+        "durationMs": 48771551
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T16:31:08.549Z",
+        "endedAt": "2026-07-28T21:57:28.757Z",
+        "durationMs": 19580208
+      },
+      {
+        "phase": "READY_FOR_UAT",
+        "startedAt": "2026-07-28T21:57:28.757Z",
+        "endedAt": "2026-07-29T07:57:47.134Z",
+        "durationMs": 36018377
+      },
+      {
+        "phase": "DELIVERED",
+        "startedAt": "2026-07-29T07:57:47.134Z",
+        "endedAt": "2026-07-29T16:34:07.500Z",
+        "durationMs": 30980366
+      }
+    ]
+  },
+  "readyAt": "2026-07-29T16:57:57.709Z",
+  "history": [
+    {
+      "event": "TASK_CREATED",
+      "at": "2026-07-28T02:44:44.409Z",
+      "details": {
+        "requirement": "Allow bundled Codex agent evaluations to opt into the current user config so configured providers and quotas are preserved."
+      }
+    },
+    {
+      "event": "TASK_ASSESSED",
+      "at": "2026-07-28T02:44:44.726Z",
+      "details": {
+        "lane": "quick",
+        "reasons": [
+          "local-scope",
+          "established-project-pattern",
+          "low-uncertainty"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_APPROVED",
+      "at": "2026-07-28T02:46:58.592Z",
+      "details": {
+        "sha256": "3c310657ae619b850e9e722d9a35e0607c00f3ca0155e314bf170be9603762a2"
+      }
+    },
+    {
+      "event": "SOLUTION_DRAFTED",
+      "at": "2026-07-28T02:46:58.649Z"
+    },
+    {
+      "event": "SOLUTION_REVIEWED",
+      "at": "2026-07-28T02:46:58.650Z",
+      "details": {
+        "status": "passed",
+        "reviewer": "main"
+      }
+    },
+    {
+      "event": "SOLUTION_APPROVED",
+      "at": "2026-07-28T02:46:58.651Z",
+      "details": {
+        "sha256": "85e2c6d31fef2beec0d163708eb38ac8d7f871082ae5e026dd6b54dcb193cba6"
+      }
+    },
+    {
+      "event": "IMPLEMENTATION_STARTED",
+      "at": "2026-07-28T02:46:58.718Z"
+    },
+    {
+      "event": "SCOPED_CONTEXT_PREPARED",
+      "at": "2026-07-28T02:46:58.741Z",
+      "details": {
+        "lane": "quick",
+        "persisted": false,
+        "implementationReferences": 8,
+        "verificationReferences": 11
+      }
+    },
+    {
+      "event": "FINALIZATION_COMPLETED",
+      "at": "2026-07-28T02:51:15.179Z",
+      "details": {
+        "sourceFingerprint": "25c0f33acd4ab09730cac7a73ee2b49db6fa7aa587e7c4a1aab5edd4fa98e152",
+        "manifestDigest": "a0e71a8fd2552b4d1234987908abe27e91f9ec49d57b157961aee5fa1eac6700"
+      }
+    },
+    {
+      "event": "ISSUE_OPENED",
+      "at": "2026-07-28T02:52:00.528Z",
+      "details": {
+        "issueId": "ISSUE-001",
+        "acceptanceId": "AC-02"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_REOPENED",
+      "at": "2026-07-28T02:52:00.611Z",
+      "details": {
+        "reason": "默认隔离语义会选择错误 provider；改为默认保留用户 provider，隔离模式显式 opt-in。"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_APPROVED",
+      "at": "2026-07-28T02:53:58.943Z",
+      "details": {
+        "sha256": "ff1b1181b3eb59b5f3af0594a3e1a0b7580f445ff3958124647c05c59bf4085d"
+      }
+    },
+    {
+      "event": "SOLUTION_DRAFTED",
+      "at": "2026-07-28T02:53:58.996Z"
+    },
+    {
+      "event": "SOLUTION_REVIEWED",
+      "at": "2026-07-28T02:53:58.997Z",
+      "details": {
+        "status": "passed",
+        "reviewer": "main"
+      }
+    },
+    {
+      "event": "SOLUTION_APPROVED",
+      "at": "2026-07-28T02:53:58.998Z",
+      "details": {
+        "sha256": "9a6b994d0c3cc6fe84bb190e9caecdddadce6c431c3d0045ab64d73dba86565a"
+      }
+    },
+    {
+      "event": "IMPLEMENTATION_STARTED",
+      "at": "2026-07-28T02:53:59.049Z"
+    },
+    {
+      "event": "SCOPED_CONTEXT_PREPARED",
+      "at": "2026-07-28T02:53:59.068Z",
+      "details": {
+        "lane": "quick",
+        "persisted": false,
+        "implementationReferences": 8,
+        "verificationReferences": 11
+      }
+    },
+    {
+      "event": "ISSUE_RESOLVED",
+      "at": "2026-07-28T02:56:45.188Z",
+      "details": {
+        "issueId": "ISSUE-001",
+        "memoryId": "INC-2026-012"
+      }
+    },
+    {
+      "event": "ENVIRONMENT_PREFLIGHT",
+      "at": "2026-07-28T02:56:58.025Z",
+      "details": {
+        "environment": "local",
+        "status": "passed",
+        "failed": []
+      }
+    },
+    {
+      "event": "UAT_PLANNED",
+      "at": "2026-07-28T02:56:58.152Z",
+      "details": {
+        "batches": 3,
+        "warnings": []
+      }
+    },
+    {
+      "event": "FINALIZATION_COMPLETED",
+      "at": "2026-07-28T02:58:16.998Z",
+      "details": {
+        "sourceFingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191",
+        "manifestDigest": "04b514e75d8a3cf9cf6c26712731c7985cd23ae944a8a19e9b2a693f7c3bce29"
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T16:31:08.549Z",
+      "details": {
+        "byTask": "end-to-end-agent-eval",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/agent-eval.mjs",
+            "skills/openatdd/scripts/agent-eval.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/codex-agent-adapter.mjs",
+            "skills/openatdd/scripts/codex-agent-adapter.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ],
+          [
+            "tests/agent-eval.test.mjs",
+            "tests/agent-eval.test.mjs"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+          "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd/scripts/codex-agent-adapter.mjs",
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs",
+          "path-overlap:tests/agent-eval.test.mjs:tests/agent-eval.test.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-28T21:57:28.757Z",
+      "details": {
+        "byTask": "optimize-atdd-runtime-cost",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/codex-agent-adapter.mjs",
+            "skills/openatdd/scripts/codex-agent-adapter.mjs"
+          ],
+          [
+            "skills/openatdd/scripts/agent-eval.mjs",
+            "skills/openatdd/scripts/agent-eval.mjs"
+          ],
+          [
+            "tests/agent-eval.test.mjs",
+            "tests/agent-eval.test.mjs"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/agent-eval.mjs:skills/openatdd/scripts/agent-eval.mjs",
+          "path-overlap:skills/openatdd/scripts/codex-agent-adapter.mjs:skills/openatdd/scripts/codex-agent-adapter.mjs",
+          "path-overlap:tests/agent-eval.test.mjs:tests/agent-eval.test.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T07:57:47.134Z",
+      "details": {
+        "byTask": "acceptance-outcome-routing",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03"
+        ]
+      }
+    },
+    {
+      "event": "ACCEPTANCE_AFFECTED",
+      "at": "2026-07-29T16:34:07.500Z",
+      "details": {
+        "byTask": "lightweight-project-truth",
+        "overlaps": [
+          [
+            "skills/openatdd/scripts/openatdd.mjs",
+            "skills/openatdd/scripts/openatdd.mjs"
+          ]
+        ],
+        "reasons": [
+          "path-overlap:skills/openatdd/scripts/openatdd.mjs:skills/openatdd/scripts/openatdd.mjs"
+        ],
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03"
+        ]
+      }
+    }
+  ],
+  "sourceFingerprint": "db98538cfa2bb7da6e27f849ce811d4178b7004e92ebc0249f63419140450191"
+}

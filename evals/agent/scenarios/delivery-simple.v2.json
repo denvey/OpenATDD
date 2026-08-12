@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "kind": "delivery",
+  "difficulty": "simple",
+  "id": "delivery-simple-contact-search-v2",
+  "rubric": "../rubrics/delivery.v1.json",
+  "repetitions": 2,
+  "prompt": "A support agent wants contact search to ignore capitalization and surrounding spaces so a query such as `node src/cli.mjs search \" alice \"` finds Alice Nguyen. Preserve the existing one-name-per-line output and the `No contacts found` empty result. Implement this request in the current local project and prepare it for the user to test.",
+  "seed": {
+    "directory": "../fixtures/delivery-simple"
+  },
+  "hiddenChecks": [
+    {
+      "id": "contact-search-user-journey",
+      "argv": ["<node>", "<scenario-directory>/../hidden/delivery-simple.mjs", "<workspace>"],
+      "expect": { "exitCode": 0, "stdoutIncludes": "simple delivery acceptance passed" }
+    }
+  ]
+}

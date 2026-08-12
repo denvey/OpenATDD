@@ -1,0 +1,351 @@
+{
+  "schemaVersion": 1,
+  "surface": "file",
+  "environment": "local",
+  "source": {
+    "include": [
+      "**/*"
+    ],
+    "exclude": [
+      "evals/reports/**"
+    ]
+  },
+  "preflight": {
+    "scope": "project",
+    "reason": "The approved journey validates a local Codex Skill, disposable read-only review evidence, package contents, and a user-level symlink without live services or production accounts."
+  },
+  "dryRun": {
+    "commands": [
+      {
+        "id": "skill-load-smoke",
+        "argv": [
+          "node",
+          "--input-type=module",
+          "--eval",
+          "import assert from 'node:assert/strict';import{readFile}from'node:fs/promises';const skill=await readFile('skills/openatdd-code-review/SKILL.md','utf8');assert.match(skill,/name: openatdd-code-review/);console.log('code review skill loads');"
+        ],
+        "deterministic": true,
+        "timeoutMs": 30000
+      }
+    ],
+    "checkHttpLinks": false
+  },
+  "checks": [
+    {
+      "id": "focused-review-skill",
+      "name": "OpenATDD Code Review contract tests",
+      "scope": "focused",
+      "commands": [
+        {
+          "id": "focused-review-skill-tests",
+          "argv": [
+            "node",
+            "--test",
+            "tests/code-review-skill.test.mjs"
+          ],
+          "deterministic": true,
+          "timeoutMs": 120000
+        }
+      ]
+    },
+    {
+      "id": "module-review-distribution",
+      "name": "Skill structure, package, symlink, and forward evidence",
+      "scope": "module",
+      "commands": [
+        {
+          "id": "module-skill-creator-validation",
+          "argv": [
+            "uv",
+            "run",
+            "--with",
+            "pyyaml",
+            "python",
+            "/Users/denvey/.codex/skills/.system/skill-creator/scripts/quick_validate.py",
+            "skills/openatdd-code-review"
+          ],
+          "deterministic": true,
+          "timeoutMs": 120000
+        },
+        {
+          "id": "module-package-dry-run",
+          "argv": [
+            "npm",
+            "pack",
+            "--dry-run",
+            "--json"
+          ],
+          "deterministic": true,
+          "timeoutMs": 120000
+        },
+        {
+          "id": "module-installed-forward-evidence",
+          "argv": [
+            "node",
+            "--input-type=module",
+            "--eval",
+            "import assert from 'node:assert/strict';import{createHash}from'node:crypto';import{readFile,realpath}from'node:fs/promises';import{homedir}from'node:os';import path from'node:path';const source=await realpath('skills/openatdd-code-review');const installed=await realpath(path.join(homedir(),'.codex','skills','openatdd-code-review'));assert.equal(installed,source);const skill=await readFile(path.join(source,'SKILL.md'));assert(skill.length<=4096);const digest=createHash('sha256').update(skill).digest('hex');const evidence=await readFile('.openatdd/tasks/openatdd-code-review-skill/evidence/forward-review.md','utf8');assert.match(evidence,new RegExp(digest));assert.match(evidence,/P1.*Export truncates caller-provided collections/s);assert.match(evidence,/No blocking findings\\./);assert.match(evidence,/no specification/i);console.log(JSON.stringify({installed,digest,bytes:skill.length,forwardCases:2}));"
+          ],
+          "deterministic": true,
+          "timeoutMs": 30000
+        }
+      ]
+    },
+    {
+      "id": "broad-project",
+      "name": "Complete OpenATDD project checks",
+      "scope": "broad",
+      "commands": [
+        {
+          "id": "broad-project-check",
+          "argv": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "timeoutMs": 180000
+        }
+      ]
+    }
+  ],
+  "uat": {
+    "estimatedRoundTrips": 1,
+    "batches": [
+      {
+        "id": "review-skill-journey",
+        "name": "Validate the bounded read-only Review Skill, two forward cases, package, and global discovery",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06"
+        ],
+        "reuseSession": true,
+        "commands": [
+          {
+            "id": "uat-review-skill-tests",
+            "argv": [
+              "node",
+              "--test",
+              "tests/code-review-skill.test.mjs"
+            ],
+            "deterministic": true,
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-skill-creator-validation",
+            "argv": [
+              "uv",
+              "run",
+              "--with",
+              "pyyaml",
+              "python",
+              "/Users/denvey/.codex/skills/.system/skill-creator/scripts/quick_validate.py",
+              "skills/openatdd-code-review"
+            ],
+            "deterministic": true,
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-package-dry-run",
+            "argv": [
+              "npm",
+              "pack",
+              "--dry-run",
+              "--json"
+            ],
+            "deterministic": true,
+            "timeoutMs": 120000
+          },
+          {
+            "id": "uat-installed-forward-evidence",
+            "argv": [
+              "node",
+              "--input-type=module",
+              "--eval",
+              "import assert from 'node:assert/strict';import{createHash}from'node:crypto';import{readFile,realpath}from'node:fs/promises';import{homedir}from'node:os';import path from'node:path';const source=await realpath('skills/openatdd-code-review');const installed=await realpath(path.join(homedir(),'.codex','skills','openatdd-code-review'));assert.equal(installed,source);const skill=await readFile(path.join(source,'SKILL.md'));assert(skill.length<=4096);const digest=createHash('sha256').update(skill).digest('hex');const evidence=await readFile('.openatdd/tasks/openatdd-code-review-skill/evidence/forward-review.md','utf8');assert.match(evidence,new RegExp(digest));assert.match(evidence,/P1.*Export truncates caller-provided collections/s);assert.match(evidence,/No blocking findings\\./);assert.match(evidence,/no specification/i);console.log(JSON.stringify({installed,digest,bytes:skill.length,forwardCases:2}));"
+            ],
+            "deterministic": true,
+            "timeoutMs": 30000
+          }
+        ]
+      }
+    ]
+  },
+  "acceptance": {
+    "AC-01": [
+      "check:focused-review-skill",
+      "check:module-review-distribution",
+      "batch:review-skill-journey"
+    ],
+    "AC-02": [
+      "check:focused-review-skill",
+      "check:module-review-distribution",
+      "batch:review-skill-journey"
+    ],
+    "AC-03": [
+      "check:focused-review-skill",
+      "check:module-review-distribution",
+      "batch:review-skill-journey"
+    ],
+    "AC-04": [
+      "check:focused-review-skill",
+      "check:module-review-distribution",
+      "batch:review-skill-journey"
+    ],
+    "AC-05": [
+      "check:focused-review-skill",
+      "check:broad-project",
+      "batch:review-skill-journey"
+    ],
+    "AC-06": [
+      "check:focused-review-skill",
+      "check:module-review-distribution",
+      "check:broad-project",
+      "batch:review-skill-journey"
+    ]
+  },
+  "history": {
+    "mode": "deferred",
+    "overrides": [
+      {
+        "taskId": "detailed-uat-handoff",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      },
+      {
+        "taskId": "end-to-end-agent-eval",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      },
+      {
+        "taskId": "fast-portable-finalization",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      },
+      {
+        "taskId": "openatdd-1-0",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      },
+      {
+        "taskId": "openatdd-mvp",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08",
+          "AC-09"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      },
+      {
+        "taskId": "optimize-atdd-runtime-cost",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04",
+          "AC-05",
+          "AC-06",
+          "AC-07",
+          "AC-08"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      },
+      {
+        "taskId": "optimize-quick-delivery",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      },
+      {
+        "taskId": "strategy-visibility",
+        "acceptanceIds": [
+          "AC-01",
+          "AC-02",
+          "AC-03",
+          "AC-04"
+        ],
+        "evidenceFrom": [
+          "check:broad-project",
+          "batch:review-skill-journey"
+        ]
+      }
+    ]
+  },
+  "handoff": {
+    "estimatedMinutes": 6
+  },
+  "budgets": {
+    "wallTimeMs": 600000,
+    "commandInvocations": 10,
+    "browserRoundTrips": 1,
+    "evidenceWrites": 30
+  }
+}
