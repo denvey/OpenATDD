@@ -523,3 +523,34 @@ evals/                        deterministic and real-agent scenarios, rubrics, r
 ```
 
 中文定位：**OpenATDD 是面向 AI 编程的开源验收驱动交付框架。描述需求；Quick 直接交付，Standard / Deep 确认验收与方案，其余交给 AI。**
+
+Controller selection is deterministic rather than automatic escalation:
+Quick/Standard use `gpt-5.6-sol/high`; Deep uses `gpt-5.6-sol/xhigh`. A task
+started as High does not silently become xHigh. The Codex host must explicitly
+apply the routed controller and prove the actual runtime; a mismatch blocks the
+run instead of silently falling back.
+The controller remains workspace-write because Quick and any unbounded or
+ambiguous implementation stay with Sol; scouts and reviewers remain read-only.
+
+Agent roles are selected separately from the controller. Luna/low handles
+read-only discovery and research. Standard/Deep independent review uses a fresh
+Sol/high or Sol/xhigh context. Only an approved structured execution plan can
+delegate writes: bounded implementation uses Luna/max; complex or ambiguous
+implementation uses Terra/high. Workers are leaf Agents (`canSpawnAgents=false`)
+and cannot change acceptance, solution, authorization, scheduling, or the final
+verdict. PASS requires actual in-scope changed paths, all planned verification,
+fresh evidence, and the current candidate fingerprint.
+Only one writable worker may run in a worktree at a time; parallel writes require
+isolated worktrees so actual path ownership remains provable.
+
+```bash
+openatdd plan-execution TASK --input execution-plan.json
+openatdd agent-dispatch TASK --id AGENT-001 --role bounded-implementation \
+  --subtask-id ST-001 --status running --attestation runtime.json
+openatdd agent-result TASK --input execution-result.json
+```
+
+The JSON inputs are caller-side transient files. Accepted plans and results are
+stored in Git-private task state, preserving the one visible requirement file.
+This routing is measurable but not a claimed cost or quality win until a real
+project evaluation demonstrates it.

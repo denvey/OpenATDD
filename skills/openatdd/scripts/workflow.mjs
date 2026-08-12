@@ -32,8 +32,15 @@ import {
   validateAcceptance,
   validateSolution,
 } from "./contracts.mjs";
-import { RISK_OVERLAYS, authorizationOverlays, classifyTask, interactionPolicyForLane } from "./routing.mjs";
+import { RISK_OVERLAYS, agentPolicyForLane, authorizationOverlays, classifyTask, controllerProfileForLane, interactionPolicyForLane } from "./routing.mjs";
 import { profileForDispatch, verificationExecutionProfile } from "./agent-profiles.mjs";
+import {
+  IMPLEMENTATION_ROUTES,
+  validateExecutionPlan,
+  validateExecutionResult,
+  validateRuntimeAttestation,
+  validateRuntimeFailure,
+} from "./execution-contracts.mjs";
 import {
   blockingDecisions,
   createDecision,
@@ -144,12 +151,14 @@ function initialState(taskId, requirement, now) {
       lane: null,
       reasons: [],
       investigation: { externalResearch: false },
+      controller: null,
       agents: { roles: [] },
       interaction: { approvals: "human", contract: "full" },
     },
     decisions: [],
     reviews: { solution: null },
     agents: { dispatches: [] },
+    execution: { planStatus: "not_planned", plannedAt: null, plan: null, results: {} },
     context: { status: "not_prepared", path: null, digest: null, sourceDigests: {} },
     repair: { attempts: [], lastProgressFingerprint: null, lastHypothesis: null, consecutiveNoProgress: 0 },
     verificationNotBefore: null,
@@ -312,6 +321,15 @@ export async function loadTask(root, taskId) {
   const persisted = await readJson(files.state);
   assert(persisted.schemaVersion === 3, "UNSUPPORTED_STATE", `Unsupported task state version: ${persisted.schemaVersion}`);
   const state = persisted;
+  if (state.routing?.lane) {
+    state.routing.controller ??= controllerProfileForLane(state.routing.lane);
+    state.routing.agents = agentPolicyForLane(state.routing.lane);
+  }
+  state.execution ??= { planStatus: "not_planned", plannedAt: null, plan: null, results: {} };
+  state.execution.planStatus ??= state.execution.plan ? "planned" : "not_planned";
+  state.execution.plannedAt ??= null;
+  state.execution.plan ??= null;
+  state.execution.results ??= {};
   return { state, files };
 }
 
@@ -487,6 +505,9 @@ export async function recordSolutionReview(root, taskId, input, clock = () => ne
       "INDEPENDENT_REVIEW_AGENT_REQUIRED",
       "The referenced independent-review Agent dispatch must be completed successfully.",
     );
+    assert(independentDispatch.runtimeAttestation?.verified === true, "INDEPENDENT_REVIEW_ATTESTATION_REQUIRED", "The independent reviewer must have a verified runtime attestation.");
+    const expected = profileForDispatch({ role: "independent-review", lane: state.routing?.lane, deliveryVersion: state.deliveryVersion });
+    assert(independentDispatch.profile === expected.profile && independentDispatch.model === expected.model && independentDispatch.reasoningEffort === expected.reasoningEffort, "INDEPENDENT_REVIEW_PROFILE_REQUIRED", "The independent reviewer must use the authoritative lane-aware Sol profile.");
     assert(independentDispatch.context?.digest, "INDEPENDENT_REVIEW_CONTEXT_REQUIRED", "The independent reviewer must receive recorded scoped context.");
   }
   const now = isoNow(clock);
@@ -506,29 +527,100 @@ export async function recordSolutionReview(root, taskId, input, clock = () => ne
   return saveTask(files, state, clock);
 }
 
+function executionTask(state, subtaskId) {
+  return state.execution?.plan?.tasks?.find((item) => item.id === subtaskId) ?? null;
+}
+
+function inventoryChanges(beforeFiles, afterFiles) {
+  const before = new Map((beforeFiles ?? []).map((item) => [item.path, item]));
+  const after = new Map((afterFiles ?? []).map((item) => [item.path, item]));
+  return [...new Set([...before.keys(), ...after.keys()])]
+    .filter((file) => JSON.stringify(before.get(file)) !== JSON.stringify(after.get(file)))
+    .sort();
+}
+
+function pathWithinScope(file, scope) {
+  return scope.some((allowed) => file === allowed || file.startsWith(`${allowed}/`) || allowed.startsWith(`${file}/`));
+}
+
+export async function planExecution(root, taskId, input, clock = () => new Date()) {
+  const { state, files } = await loadTask(root, taskId);
+  assertPhase(state, [PHASES.CONTRACT_APPROVED, PHASES.IMPLEMENTING], "Execution planning");
+  await assertContractIntegrity(files, state);
+  assert(state.routing?.lane !== "quick", "QUICK_EXECUTION_DELEGATION_DISABLED", "Quick tasks remain direct by default and cannot create a routine delegated execution plan.");
+  const plan = validateExecutionPlan(state.acceptance.items.map((item) => item.id), input);
+  const now = isoNow(clock);
+  state.execution = { planStatus: "planned", plannedAt: now, plan, results: {} };
+  appendHistory(state, "EXECUTION_PLANNED", now, { taskCount: plan.tasks.length, stages: [...new Set(plan.tasks.map((item) => item.stage))].length });
+  return saveTask(files, state, clock);
+}
+
+export async function recordExecutionResult(root, taskId, input, clock = () => new Date()) {
+  const { state, files } = await loadTask(root, taskId);
+  assertPhase(state, [PHASES.IMPLEMENTING, PHASES.REPAIRING, PHASES.BLOCKED], "Execution result recording");
+  await assertContractIntegrity(files, state);
+  assert(state.execution?.planStatus === "planned", "EXECUTION_PLAN_REQUIRED", "Record a validated execution plan before worker results.");
+  const task = executionTask(state, input.taskId);
+  assert(task, "UNKNOWN_EXECUTION_TASK", `Unknown execution task: ${input.taskId ?? "missing"}.`);
+  const dispatch = state.agents.dispatches.find((item) => item.subtaskId === task.id && item.role === task.route);
+  if (input.status === "passed") {
+    assert(dispatch?.runtimeAttestation?.verified === true, "EXECUTION_AGENT_ATTESTATION_REQUIRED", `Execution task ${task.id} needs a runtime-attested Agent dispatch.`);
+    assert(dispatch.candidateBaseline?.files, "EXECUTION_AGENT_BASELINE_REQUIRED", `Execution task ${task.id} needs a source baseline captured when its Agent started.`);
+    assert(dispatch.status === "passed", "EXECUTION_AGENT_NOT_PASSED", `Execution task ${task.id} cannot pass before its Agent dispatch passes.`);
+  } else {
+    assert(dispatch && ["failed", "blocked"].includes(dispatch.status), "EXECUTION_AGENT_NOT_BLOCKED", `Execution task ${task.id} can only block after its Agent dispatch fails or blocks.`);
+    assert(dispatch.runtimeAttestation?.verified === true || dispatch.runtimeFailure?.verified === false, "EXECUTION_AGENT_FAILURE_REQUIRED", `Execution task ${task.id} needs an attested runtime or a concrete runtime failure.`);
+  }
+  const source = await fingerprintProject(root, { include: ["**/*"] });
+  const result = validateExecutionResult(task, input, source.fingerprint);
+  const allChangedPaths = dispatch.candidateBaseline?.files
+    ? inventoryChanges(dispatch.candidateBaseline.files, source.files)
+    : [];
+  const outOfScope = allChangedPaths.filter((file) => !pathWithinScope(file, task.writeScope));
+  assert(outOfScope.length === 0, "EXECUTION_ACTUAL_SCOPE_VIOLATION", `Execution task ${task.id} changed files outside its planned write scope.`, { errors: outOfScope });
+  const actualChangedPaths = allChangedPaths;
+  assert(JSON.stringify(actualChangedPaths) === JSON.stringify([...result.changedPaths].sort()), "EXECUTION_CHANGED_PATHS_MISMATCH", `Execution task ${task.id} changedPaths do not match the actual candidate diff.`, {
+    errors: [`reported=${result.changedPaths.join(",") || "none"}`, `actual=${actualChangedPaths.join(",") || "none"}`],
+  });
+  const evidence = result.status === "passed"
+    ? await captureEvidence(files.root, input.evidence, evidenceBoundary(state), clock)
+    : await optionalEvidence(files.root, input.evidence, evidenceBoundary(state), clock);
+  const now = isoNow(clock);
+  state.execution.results[task.id] = { ...result, evidence, recordedAt: now };
+  if (result.status === "blocked") setPhase(state, PHASES.BLOCKED, now);
+  appendHistory(state, "EXECUTION_RESULT_RECORDED", now, { taskId: task.id, status: result.status, candidateFingerprint: result.candidateFingerprint });
+  const saved = await saveTask(files, state, clock);
+  return { ...saved, result: state.execution.results[task.id] };
+}
+
 export async function recordAgentDispatch(root, taskId, input, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
   assertPhase(state, [PHASES.SOLUTION_DRAFT, PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING, PHASES.BLOCKED], "Agent dispatch recording");
   assert(input.role?.trim(), "AGENT_ROLE_REQUIRED", "Agent role is required.");
   assert(["planned", "running", "passed", "failed", "blocked"].includes(input.status), "INVALID_AGENT_STATUS", "Agent status is invalid.");
+  const role = input.role.trim();
+  const implementationRole = IMPLEMENTATION_ROUTES.includes(role);
+  if (implementationRole) {
+    assertPhase(state, [PHASES.IMPLEMENTING, PHASES.REPAIRING, PHASES.BLOCKED], "Implementation Agent dispatch recording");
+    assert(input.subtaskId?.trim(), "AGENT_SUBTASK_REQUIRED", "Implementation Agent dispatches must reference a planned subtask.");
+    assert(state.execution?.planStatus === "planned", "EXECUTION_PLAN_REQUIRED", "Implementation Agent dispatch requires a validated execution plan.");
+    const task = executionTask(state, input.subtaskId.trim());
+    assert(task, "UNKNOWN_EXECUTION_TASK", `Unknown execution task: ${input.subtaskId.trim()}.`);
+    assert(task.route === role, "EXECUTION_ROUTE_MISMATCH", `Execution task ${task.id} is routed to ${task.route}, not ${role}.`);
+  }
   if (state.deliveryVersion >= 3 && state.routing?.status === "assessed") {
     assert(
-      state.routing.agents.roles.includes(input.role.trim()),
+      state.routing.agents.roles.includes(role),
       "AGENT_NOT_ALLOWED_FOR_LANE",
-      `Agent role ${input.role.trim()} is not allowed for the ${state.routing.lane} lane.`,
+      `Agent role ${role} is not allowed for the ${state.routing.lane} lane.`,
     );
   }
-  const prepared = state.deliveryVersion >= 3
-    ? await loadContextForState(root, state, files, {
-      surface: input.surface ?? contextSurfaceForRole(input.role.trim()),
-    })
-    : null;
-  const now = isoNow(clock);
   const id = input.id?.trim() || `AGENT-${String(state.agents.dispatches.length + 1).padStart(3, "0")}`;
   const previous = state.agents.dispatches.find((item) => item.id === id);
-  assert(!previous || previous.role === input.role.trim(), "AGENT_DISPATCH_ROLE_MISMATCH", `Agent dispatch ${id} is already bound to role ${previous?.role}.`);
+  assert(!previous || previous.role === role, "AGENT_DISPATCH_ROLE_MISMATCH", `Agent dispatch ${id} is already bound to role ${previous?.role}.`);
+  assert(!previous || previous.subtaskId === (input.subtaskId?.trim() || null), "AGENT_DISPATCH_SUBTASK_MISMATCH", `Agent dispatch ${id} is already bound to subtask ${previous?.subtaskId}.`);
   const recommended = profileForDispatch({
-    role: input.role.trim(),
+    role,
     deliveryVersion: state.deliveryVersion,
     lane: state.routing?.lane,
     riskSignals: state.routing?.assessment?.riskSignals ?? [],
@@ -546,10 +638,32 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
       assert(
         String(input[property]).trim() === String(configured[property]),
         "AGENT_PROFILE_MISMATCH",
-        `Agent ${label} ${input[property]} does not match ${input.role.trim()} profile ${configured[property]}.`,
+        `Agent ${label} ${input[property]} does not match ${role} profile ${configured[property]}.`,
       );
     }
   }
+  const runtimeFailure = state.deliveryVersion >= 3 && input.status === "blocked" && input.runtimeAttestation?.verified === false
+    ? validateRuntimeFailure(input.runtimeAttestation)
+    : previous?.runtimeFailure ?? null;
+  const runtimeAttestation = state.deliveryVersion >= 3 && input.status !== "planned" && !runtimeFailure
+    ? validateRuntimeAttestation(configured, input.runtimeAttestation)
+    : previous?.runtimeAttestation ?? null;
+  const prepared = state.deliveryVersion >= 3
+    ? await loadContextForState(root, state, files, {
+      surface: input.surface ?? contextSurfaceForRole(role),
+    })
+    : null;
+  const now = isoNow(clock);
+  if (implementationRole && input.status === "passed") {
+    assert(previous?.status === "running", "IMPLEMENTATION_AGENT_MUST_RUN", `Implementation Agent ${id} must enter running before passed.`);
+  }
+  if (implementationRole && input.status === "running" && previous?.status !== "running") {
+    const otherRunning = state.agents.dispatches.find((item) => item.id !== id && IMPLEMENTATION_ROUTES.includes(item.role) && item.status === "running");
+    assert(!otherRunning, "CONCURRENT_WRITE_AGENT_UNSUPPORTED", `Writable Agent ${otherRunning?.id} is already running. Use isolated worktrees before enabling concurrent write Agents.`);
+  }
+  const candidateBaseline = implementationRole && input.status === "running" && !previous?.candidateBaseline
+    ? await fingerprintProject(root, { include: ["**/*"] })
+    : previous?.candidateBaseline ?? null;
   const metric = (value, label, integer = false) => {
     if (value === undefined || value === null || value === "") return undefined;
     const parsed = Number(value);
@@ -569,7 +683,8 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
   assert(inputTokens === null || cachedInputTokens === null || cachedInputTokens <= inputTokens, "INVALID_AGENT_METRIC", "Agent cached input tokens cannot exceed total input tokens.");
   const dispatch = {
     id,
-    role: input.role.trim(),
+    role,
+    subtaskId: input.subtaskId?.trim() || null,
     status: input.status,
     summary: input.summary?.trim() || "",
     profile: configured.profile,
@@ -577,6 +692,13 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     reasoningEffort: configured.reasoningEffort,
     forkTurns: configured.forkTurns,
     sandbox: configured.sandbox,
+    writable: configured.writable ?? false,
+    leaf: configured.leaf ?? true,
+    canSpawnAgents: configured.canSpawnAgents ?? false,
+    authority: configured.authority ?? null,
+    runtimeAttestation,
+    runtimeFailure,
+    candidateBaseline,
     escalation: configured.escalation ?? null,
     inputTokens,
     cachedInputTokens,
@@ -603,6 +725,7 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     profile: dispatch.profile,
     model: dispatch.model,
     reasoningEffort: dispatch.reasoningEffort,
+    subtaskId: dispatch.subtaskId,
     durationMs: dispatch.durationMs,
   });
   const saved = await saveTask(files, state, clock);
@@ -2472,6 +2595,7 @@ export function summarizeState(state) {
     decisions: state.decisions,
     solutionReview: state.reviews?.solution ?? null,
     agents: state.agents,
+    execution: state.execution,
     context: state.context,
     repair: state.repair,
     acceptance: state.acceptance.items.map((item) => ({

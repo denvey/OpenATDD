@@ -45,12 +45,27 @@ blocking decision before acceptance approval.
   independent solution review. Record unavailable research rather than silently
   treating Deep as Standard.
 
-Every allowed scout role uses the single default profile: Luna, low reasoning,
-`forkTurns:none`, read-only. Give a bounded role and scoped context, record it
-with `openatdd agent-dispatch`, dispatch independent work together, and wait for
-the result instead of duplicating it. Scouts explore or verify; the main Agent
-reads and edits code, makes decisions, and performs final validation. Stop an
-abnormal ten-minute scout and use its partial evidence.
+Controller routing is explicit: Quick/Standard use Sol/high and Deep uses
+Sol/xhigh. The current controller never auto-upgrades from High to xHigh.
+The controller remains workspace-write for direct implementation and final
+integration; read-only applies to scouts and independent reviewers.
+Discovery and external research use Luna/low, read-only; independent review uses
+a fresh Sol/high context for Standard and Sol/xhigh for Deep. Give every role a
+bounded context and record a host runtime attestation matching model, reasoning
+effort, sandbox, `forkTurns:none`, and leaf capability. Parent runtime overrides
+remain authoritative, so an unverifiable or mismatched runtime fails closed.
+
+After solution approval, a Standard/Deep controller may persist a structured
+Git-private execution plan. Route bounded, unambiguous, independently verifiable
+tasks to Luna/max and complex/cross-module or ambiguous implementation to
+Terra/high. Workers are leaves: `canSpawnAgents=false`; they cannot change
+acceptance, solution, authorization, scheduling, or final verdicts. Their PASS
+must match actual in-scope changed paths, every planned verification command,
+fresh evidence, and the current candidate fingerprint. Lifecycle `completed`
+is never a PASS. This release permits one running writable worker per worktree;
+parallel writes require isolated worktrees so scope attribution remains provable.
+Scouts explore or verify; Sol owns contracts, scheduling,
+integration, final validation, and the verdict.
 
 For dynamic Web verification only, follow `browser-verification.md`: a
 browser-only Luna/low executor may perform approved steps without code writes.

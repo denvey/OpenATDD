@@ -45,7 +45,11 @@ export const AGENT_POLICIES = Object.freeze({
   }),
   [LANES.STANDARD]: Object.freeze({
     policy: "optional",
-    roles: Object.freeze(["independent-review"]),
+    roles: Object.freeze([
+      "independent-review",
+      "bounded-implementation",
+      "complex-implementation",
+    ]),
   }),
   [LANES.DEEP]: Object.freeze({
     policy: "parallel",
@@ -53,7 +57,33 @@ export const AGENT_POLICIES = Object.freeze({
       "local-discovery",
       "external-research",
       "independent-review",
+      "bounded-implementation",
+      "complex-implementation",
     ]),
+  }),
+});
+
+export const CONTROLLER_PROFILES = Object.freeze({
+  [LANES.QUICK]: Object.freeze({
+    profile: "sol-controller",
+    model: "gpt-5.6-sol",
+    reasoningEffort: "high",
+    forkTurns: "none",
+    sandbox: "workspace-write",
+  }),
+  [LANES.STANDARD]: Object.freeze({
+    profile: "sol-controller",
+    model: "gpt-5.6-sol",
+    reasoningEffort: "high",
+    forkTurns: "none",
+    sandbox: "workspace-write",
+  }),
+  [LANES.DEEP]: Object.freeze({
+    profile: "sol-critical-controller",
+    model: "gpt-5.6-sol",
+    reasoningEffort: "xhigh",
+    forkTurns: "none",
+    sandbox: "workspace-write",
   }),
 });
 
@@ -114,6 +144,10 @@ function cloneAgentPolicy(lane) {
 function cloneInteractionPolicy(lane) {
   const policy = INTERACTION_POLICIES[lane];
   return { approvals: policy.approvals, contract: policy.contract };
+}
+
+function cloneControllerProfile(lane) {
+  return { ...CONTROLLER_PROFILES[lane] };
 }
 
 function collectRiskSignals(assessment) {
@@ -187,6 +221,11 @@ export function interactionPolicyForLane(lane) {
   return cloneInteractionPolicy(lane);
 }
 
+export function controllerProfileForLane(lane) {
+  assert(LANE_VALUES.has(lane), "INVALID_ROUTING_LANE", `Unknown routing lane: ${lane}`);
+  return cloneControllerProfile(lane);
+}
+
 /**
  * Deterministically classify a task from facts gathered by discovery.
  * No repository access, model judgment, clocks, or environment state is used.
@@ -233,6 +272,7 @@ export function classifyTask(assessment) {
     investigation: {
       externalResearch: lane === LANES.DEEP,
     },
+    controller: cloneControllerProfile(lane),
     agents: cloneAgentPolicy(lane),
     interaction: interactionPolicyForLane(lane),
   };
@@ -268,6 +308,15 @@ export function validateRouting(routing) {
     errors.push("investigation.externalResearch must be boolean.");
   } else if (LANE_VALUES.has(routing.lane) && routing.investigation.externalResearch !== (routing.lane === LANES.DEEP)) {
     errors.push("External research policy does not match the routing lane.");
+  }
+
+  if (!isRecord(routing.controller)) {
+    errors.push("controller must contain the authoritative controller profile.");
+  } else if (LANE_VALUES.has(routing.lane)) {
+    const expected = CONTROLLER_PROFILES[routing.lane];
+    for (const key of ["profile", "model", "reasoningEffort", "forkTurns", "sandbox"]) {
+      if (routing.controller[key] !== expected[key]) errors.push(`Controller ${key} does not match the routing lane.`);
+    }
   }
 
   if (!isRecord(routing.agents) || !Array.isArray(routing.agents.roles) || typeof routing.agents.policy !== "string") {

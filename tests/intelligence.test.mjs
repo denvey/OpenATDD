@@ -9,6 +9,11 @@ import {
 } from "../skills/openatdd/scripts/routing.mjs";
 import { profileForDispatch, verificationExecutionProfile } from "../skills/openatdd/scripts/agent-profiles.mjs";
 import {
+  validateExecutionPlan,
+  validateExecutionResult,
+  validateRuntimeAttestation,
+} from "../skills/openatdd/scripts/execution-contracts.mjs";
+import {
   blockingDecisions,
   createDecision,
   invalidationForDecisionChange,
@@ -43,11 +48,35 @@ function decisionInput(overrides = {}) {
   };
 }
 
+function planTask(overrides = {}) {
+  return {
+    id: "ST-001",
+    acceptanceIds: ["AC-01"],
+    task: "Implement the bounded change",
+    stage: 1,
+    dependsOn: [],
+    writeScope: ["src/feature"],
+    doNotTouch: ["src/other"],
+    expectedResult: "The approved behavior is implemented",
+    verification: ["node --test tests/feature.test.mjs"],
+    firstArtifact: "src/feature/index.mjs",
+    route: "bounded-implementation",
+    ...overrides,
+  };
+}
+
 test("routing classifies a local established low-risk task as quick", () => {
   const routing = classifyTask(assessment());
   assert.equal(routing.schemaVersion, 1);
   assert.equal(routing.lane, "quick");
   assert.equal(routing.investigation.externalResearch, false);
+  assert.deepEqual(routing.controller, {
+    profile: "sol-controller",
+    model: "gpt-5.6-sol",
+    reasoningEffort: "high",
+    forkTurns: "none",
+    sandbox: "workspace-write",
+  });
   assert.deepEqual(routing.agents, { policy: "none", roles: [] });
   assert.deepEqual(routing.interaction, { approvals: "autonomous", contract: "compact" });
   assert.equal(validateRouting(routing).valid, true);
@@ -71,7 +100,8 @@ test("routing classifies ordinary cross-module work as standard", () => {
   const routing = classifyTask(assessment({ scope: "cross-module", uncertainty: "medium" }));
   assert.equal(routing.lane, "standard");
   assert.equal(routing.investigation.externalResearch, false);
-  assert.deepEqual(routing.agents, { policy: "optional", roles: ["independent-review"] });
+  assert.deepEqual(routing.agents, { policy: "optional", roles: ["independent-review", "bounded-implementation", "complex-implementation"] });
+  assert.equal(routing.controller.reasoningEffort, "high");
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.reasons.includes("cross-module-scope"));
 });
@@ -80,6 +110,7 @@ test("routing classifies novel cross-cutting work as deep", () => {
   const routing = classifyTask(assessment({ scope: "cross-module", projectPattern: "none" }));
   assert.equal(routing.lane, "deep");
   assert.equal(routing.investigation.externalResearch, true);
+  assert.equal(routing.controller.reasoningEffort, "xhigh");
   assert.equal(routing.agents.policy, "parallel");
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.agents.roles.includes("external-research"));
@@ -140,24 +171,28 @@ test("routing overlay validation is additive for persisted schema-v1 tasks", () 
   assert.equal(validateRouting({ ...routing, riskOverlays: [] }).valid, false);
 });
 
-test("every allowed Agent task label resolves to the single Luna low read-only scout", () => {
-  assert.deepEqual(profileForDispatch({ role: "local-discovery" }), {
-    role: "local-discovery",
-    profile: "default",
-    model: "gpt-5.6-luna",
-    reasoningEffort: "low",
-    forkTurns: "none",
-    sandbox: "read-only",
-    escalation: null,
-  });
-  for (const role of ["external-research", "independent-review"]) {
-    const profile = profileForDispatch({ role, riskSignals: ["security"] });
-    assert.equal(profile.profile, "default");
+test("Agent roles resolve to deterministic lane-aware model and authority profiles", () => {
+  for (const role of ["local-discovery", "external-research"]) {
+    const profile = profileForDispatch({ role });
+    assert.equal(profile.profile, "luna-low-scout");
     assert.equal(profile.model, "gpt-5.6-luna");
     assert.equal(profile.reasoningEffort, "low");
     assert.equal(profile.sandbox, "read-only");
-    assert.equal(profile.escalation, null);
+    assert.equal(profile.writable, false);
+    assert.equal(profile.canSpawnAgents, false);
   }
+  assert.equal(profileForDispatch({ role: "independent-review", lane: "standard" }).reasoningEffort, "high");
+  assert.equal(profileForDispatch({ role: "independent-review", lane: "deep" }).reasoningEffort, "xhigh");
+  const bounded = profileForDispatch({ role: "bounded-implementation", lane: "standard" });
+  assert.equal(bounded.model, "gpt-5.6-luna");
+  assert.equal(bounded.reasoningEffort, "max");
+  assert.equal(bounded.sandbox, "workspace-write");
+  assert.equal(bounded.authority, "approved-subtask-only");
+  const complex = profileForDispatch({ role: "complex-implementation", lane: "deep" });
+  assert.equal(complex.model, "gpt-5.6-terra");
+  assert.equal(complex.reasoningEffort, "high");
+  assert.equal(complex.leaf, true);
+  assert.equal(complex.canSpawnAgents, false);
   assert.throws(
     () => profileForDispatch({ role: "clean-context-execution" }),
     (error) => error.code === "UNKNOWN_AGENT_ROLE",
@@ -171,6 +206,73 @@ test("every allowed Agent task label resolves to the single Luna low read-only s
     sandbox: "workspace-write",
     escalation: null,
   });
+});
+
+test("routing documentation exposes explicit tiers without claiming unmeasured quality or cost gains", async () => {
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  const skill = await readFile(new URL("../skills/openatdd/SKILL.md", import.meta.url), "utf8");
+  const governance = await readFile(new URL("../skills/openatdd/references/governance.md", import.meta.url), "utf8");
+  const docs = `${readme}\n${skill}\n${governance}`;
+  assert.match(docs, /Quick\/Standard use `gpt-5\.6-sol\/high`/);
+  assert.match(docs, /Deep uses `gpt-5\.6-sol\/xhigh`/);
+  assert.match(docs, /does not silently become xHigh|never\s+auto-upgrades from High to xHigh/);
+  assert.match(readme, /not a claimed cost or quality win until a real\s+project evaluation demonstrates it/);
+});
+
+test("execution plans cover acceptance and reject ownership, dependency, and path conflicts", () => {
+  const plan = validateExecutionPlan(["AC-01"], { schemaVersion: 1, tasks: [planTask()] });
+  assert.equal(plan.tasks[0].writeScope[0], "src/feature");
+  assert.throws(
+    () => validateExecutionPlan(["AC-01"], { schemaVersion: 1, tasks: [planTask(), planTask({ id: "ST-002", writeScope: ["src/feature/file.mjs"] })] }),
+    (error) => error.code === "EXECUTION_SCOPE_OWNER_CONFLICT",
+  );
+  assert.throws(
+    () => validateExecutionPlan(["AC-01"], { schemaVersion: 1, tasks: [planTask({ stage: 1, dependsOn: ["ST-002"] }), planTask({ id: "ST-002", stage: 1, acceptanceIds: ["AC-01"], writeScope: ["tests/feature"] })] }),
+    (error) => error.code === "INVALID_EXECUTION_DEPENDENCY_ORDER",
+  );
+  assert.throws(
+    () => validateExecutionPlan(["AC-01"], { schemaVersion: 1, tasks: [planTask({ writeScope: ["../outside"] })] }),
+    (error) => error.code === "EXECUTION_PATH_ESCAPE",
+  );
+});
+
+test("runtime attestation proves the authoritative profile and leaf capability", () => {
+  const expected = profileForDispatch({ role: "bounded-implementation", lane: "standard" });
+  const attested = validateRuntimeAttestation(expected, { ...expected, verified: true, source: "host-runtime" });
+  assert.equal(attested.model, "gpt-5.6-luna");
+  assert.equal(attested.canSpawnAgents, false);
+  assert.throws(
+    () => validateRuntimeAttestation(expected, { ...expected, verified: true, source: "host-runtime", canSpawnAgents: true }),
+    (error) => error.code === "RUNTIME_PROFILE_MISMATCH",
+  );
+});
+
+test("passed execution results require current candidate, scope, verification, evidence, and no authority mutation", () => {
+  const task = planTask();
+  const valid = validateExecutionResult(task, {
+    taskId: "ST-001",
+    status: "passed",
+    summary: "Implemented and verified",
+    changedPaths: ["src/feature/index.mjs"],
+    verification: [{ command: task.verification[0], status: "passed", summary: "1 test passed" }],
+    evidence: ["evidence.txt"],
+    candidateFingerprint: "candidate-1",
+    failureClass: "none",
+    blocker: null,
+  }, "candidate-1");
+  assert.equal(valid.status, "passed");
+  assert.throws(
+    () => validateExecutionResult(task, { ...valid, evidence: ["evidence.txt"], changedPaths: ["src/other/file.mjs"] }, "candidate-1"),
+    (error) => error.code === "EXECUTION_RESULT_SCOPE_VIOLATION",
+  );
+  assert.throws(
+    () => validateExecutionResult(task, { ...valid, evidence: ["evidence.txt"], candidateFingerprint: "stale" }, "candidate-1"),
+    (error) => error.code === "STALE_EXECUTION_CANDIDATE",
+  );
+  assert.throws(
+    () => validateExecutionResult(task, { ...valid, evidence: ["evidence.txt"], contractMutation: true }, "candidate-1"),
+    (error) => error.code === "EXECUTION_AUTHORITY_VIOLATION",
+  );
 });
 
 test("verification execution uses zero-model commands first and a bounded low browser model only for dynamic Web", () => {

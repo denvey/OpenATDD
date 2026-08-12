@@ -186,6 +186,12 @@ function executionMetrics(state, clock) {
       criticalPathMs: durations.length ? Math.max(...durations) : 0,
       integrationTailMs,
     },
+    execution: {
+      planStatus: state.execution?.planStatus ?? "not_planned",
+      plannedTasks: state.execution?.plan?.tasks?.length ?? 0,
+      passedTasks: Object.values(state.execution?.results ?? {}).filter((item) => item.status === "passed").length,
+      blockedTasks: Object.values(state.execution?.results ?? {}).filter((item) => item.status === "blocked").length,
+    },
   };
 }
 
@@ -251,7 +257,7 @@ function observationFor(id, state, evaluationReports, language) {
     }
     case "adaptive-depth":
       return state.routing?.status === "assessed"
-        ? { status: "observed", evidence: [stateEvidence(t(language, `深度=${state.routing.lane}；原因=${state.routing.reasons.join(",")}`, `lane=${state.routing.lane}; reasons=${state.routing.reasons.join(",")}`))] }
+        ? { status: "observed", evidence: [stateEvidence(t(language, `深度=${state.routing.lane}；主控=${state.routing.controller?.model ?? "unknown"}/${state.routing.controller?.reasoningEffort ?? "unknown"}；原因=${state.routing.reasons.join(",")}`, `lane=${state.routing.lane}; controller=${state.routing.controller?.model ?? "unknown"}/${state.routing.controller?.reasoningEffort ?? "unknown"}; reasons=${state.routing.reasons.join(",")}`))] }
         : { status: "unavailable", evidence: [] };
     case "recommended-decisions":
       return (state.decisions?.length ?? 0) > 0
@@ -267,7 +273,7 @@ function observationFor(id, state, evaluationReports, language) {
         : { status: "not-used", evidence: [] };
     case "conditional-agents":
       return dispatches.length > 0
-        ? { status: "observed", evidence: dispatches.map((item) => stateEvidence(`${item.id}:${item.role}:${item.status}`)) }
+        ? { status: "observed", evidence: dispatches.map((item) => stateEvidence(`${item.id}:${item.role}:${item.profile}:${item.model}/${item.reasoningEffort}:${item.status}`)) }
         : { status: "not-used", evidence: [stateEvidence(t(language, "没有记录 Agent 调用", "No Agent dispatch was recorded"))] };
     case "risk-research": {
       const research = dispatches.filter((item) => /research|investigation/i.test(item.role));
@@ -469,6 +475,7 @@ export function buildStrategyRetrospective(state, evaluationReports = [], clock 
       criticalPathMs: execution.agents.criticalPathMs,
       integrationTailMs: execution.agents.integrationTailMs,
     },
+    execution: execution.execution,
     repairs: execution.issues.resolved,
     repairAttempts: state.repair?.attempts?.length ?? 0,
     issues: execution.issues,
@@ -487,6 +494,7 @@ export function buildStrategyRetrospective(state, evaluationReports = [], clock 
     phase: state.phase,
     lane: state.routing?.lane ?? null,
     laneReasons: state.routing?.reasons ?? [],
+    controller: state.routing?.controller ?? null,
     summary: {
       selectedCapabilities: selected.map((item) => item.id),
       observedCapabilities: observed.map((item) => item.id),
@@ -605,6 +613,7 @@ export function renderStrategyRetrospective(retrospective) {
     `## ${zh ? "一屏结论" : "One-screen summary"}`,
     "",
     `- ${zh ? "任务深度" : "Lane"}：${retrospective.lane ?? "—"}（${retrospective.laneReasons.map((item) => localizedLaneReason(item, retrospective.language)).join("，") || "—"}）`,
+    `- ${zh ? "主控档位" : "Controller profile"}：${retrospective.controller ? `${retrospective.controller.model}/${retrospective.controller.reasoningEffort}` : "—"}`,
     `- ${zh ? "选择能力" : "Selected capabilities"}：${retrospective.summary.selectedCapabilities.map((id) => capabilityLabel(id, retrospective.language)).join("、") || "—"}`,
     `- ${zh ? "实际观察" : "Observed capabilities"}：${retrospective.summary.observedCapabilities.map((id) => capabilityLabel(id, retrospective.language)).join("、") || "—"}`,
     `- ${zh ? "未调用" : "Not used"}：${retrospective.summary.notUsedCapabilities.map((id) => capabilityLabel(id, retrospective.language)).join("、") || "—"}`,
@@ -623,6 +632,7 @@ export function renderStrategyRetrospective(retrospective) {
   lines.push(`- ${zh ? "预检尝试 / 失败" : "Preflight attempts / failures"}：${retrospective.metrics.preflight.attempts} / ${retrospective.metrics.preflight.failed}`);
   lines.push(`- ${zh ? "已解决问题 / 修复尝试" : "Resolved issues / repair attempts"}：${retrospective.metrics.issues.resolved} / ${retrospective.metrics.repairAttempts}`);
   lines.push(`- ${zh ? "Agent 关键路径 / 整合尾巴" : "Agent critical path / integration tail"}：${duration(retrospective.metrics.agents.criticalPathMs)} / ${duration(retrospective.metrics.agents.integrationTailMs)}`);
+  lines.push(`- ${zh ? "执行计划 / 通过 / 阻塞" : "Execution plan / passed / blocked"}：${retrospective.metrics.execution.planStatus} / ${retrospective.metrics.execution.passedTasks} / ${retrospective.metrics.execution.blockedTasks}`);
   lines.push(`- ${zh ? "验收状态" : "Acceptance statuses"}：${Object.entries(retrospective.metrics.acceptance).map(([key, value]) => `${key}=${value}`).join(", ")}`);
   lines.push(`- ${zh ? "检查状态" : "Check statuses"}：${Object.entries(retrospective.metrics.checks).map(([key, value]) => `${key}=${value}`).join(", ")}`);
   if (retrospective.metrics.finalization) {

@@ -80,6 +80,13 @@ when a machine summary is needed. Do not repeat persisted approvals.
   parallel local discovery, relevant external research, and independent
   solution review. Record unavailable research.
 
+Routing also fixes the controller profile: Quick/Standard use
+`gpt-5.6-sol` with `high`; Deep uses `gpt-5.6-sol` with `xhigh`. High never
+auto-upgrades to xHigh. The host must explicitly select and prove the routed
+profile; an unproven model, effort, or permission blocks a compliant run.
+The controller retains workspace write access because Quick and unbounded work
+remain direct; read-only applies to scouts and independent reviewers.
+
 Risk never changes the complexity lane by itself. It strengthens authorization,
 denial-path, rollback, compatibility, redaction, preflight, and evidence. The
 `deletion`, `production`, `irreversible`, `shared-data-migration`, and
@@ -149,6 +156,27 @@ openatdd review-solution TASK --status passed --reviewer main \
 Deep requires a bounded independent-review dispatch and a passed independent
 review bound to that Agent ID. User-visible solution changes reopen acceptance;
 other edits invalidate and repeat solution review.
+
+Read-only discovery and research use Luna/low. Independent review uses a fresh
+Sol/high context for Standard and Sol/xhigh for Deep. After solution approval,
+delegate only a structured execution plan: `bounded-implementation` uses
+Luna/max and `complex-implementation` uses Terra/high. Both are leaf workers,
+cannot create Agents or change acceptance, solution, authorization, scheduling,
+or final verdicts, and must return scope-bound changes, verification, evidence,
+and the current candidate fingerprint. Keep ambiguous or unbounded work in the
+main Sol controller.
+Run only one writable worker in a worktree at a time. Parallel writable work
+requires isolated worktrees so actual path ownership can be proven.
+
+```bash
+openatdd plan-execution TASK --input execution-plan.json
+openatdd agent-dispatch TASK --id AGENT-001 --role bounded-implementation \
+  --subtask-id ST-001 --status running --attestation runtime.json
+openatdd agent-result TASK --input execution-result.json
+```
+
+The input JSON files are transient caller inputs. OpenATDD persists the accepted
+plan and result only in Git-private task state; do not add a public plan artifact.
 
 Quick writes both compact cards in one working turn and runs the entire approval
 chain once:

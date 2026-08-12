@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
@@ -31,6 +31,8 @@ import {
   writeSolution,
 } from "./helpers.mjs";
 import { replaceRequirementSection, solutionContract } from "../skills/openatdd/scripts/contracts.mjs";
+import { fingerprintProject } from "../skills/openatdd/scripts/manifest.mjs";
+import { writeEvidence } from "./helpers.mjs";
 
 const execFileAsync = promisify(execFile);
 const cli = path.resolve("skills/openatdd/scripts/openatdd.mjs");
@@ -318,20 +320,31 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     () => recordAgentDispatch(root, "resume-context", {
       role: "independent-review",
       status: "passed",
-      model: "gpt-5.6-sol",
+      model: "gpt-5.6-luna",
     }),
     (error) => error.code === "AGENT_PROFILE_MISMATCH",
   );
   const reviewed = await recordAgentDispatch(root, "resume-context", {
     role: "independent-review",
     status: "passed",
+    runtimeAttestation: {
+      verified: true,
+      source: "test-host",
+      profile: "sol-review",
+      model: "gpt-5.6-sol",
+      reasoningEffort: "high",
+      forkTurns: "none",
+      sandbox: "read-only",
+      leaf: true,
+      canSpawnAgents: false,
+    },
     inputTokens: 30,
     cachedInputTokens: 20,
     outputTokens: 10,
     durationMs: 250,
   });
-  assert.equal(reviewed.dispatch.model, "gpt-5.6-luna");
-  assert.equal(reviewed.dispatch.reasoningEffort, "low");
+  assert.equal(reviewed.dispatch.model, "gpt-5.6-sol");
+  assert.equal(reviewed.dispatch.reasoningEffort, "high");
   assert.equal(reviewed.dispatch.durationMs, 250);
 
   await recordRepairAttempt(root, "resume-context", {
@@ -361,6 +374,92 @@ test("legacy delivery tasks can still record their historical execution role", a
   assert.equal(recorded.dispatch.profile, "clean-context-execution");
   assert.equal(recorded.dispatch.model, "gpt-5.6-terra");
   assert.equal(recorded.dispatch.sandbox, "workspace-write");
+});
+
+test("schema v3 routing state receives additive controller, Agent policy, and execution defaults", async (t) => {
+  const root = await temporaryProject(t);
+  await prepareApprovedTask(root, "routing-defaults", {
+    assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
+  });
+  const files = taskFiles(root, "routing-defaults");
+  const persisted = JSON.parse(await readFile(files.state, "utf8"));
+  delete persisted.routing.controller;
+  persisted.routing.agents = { policy: "optional", roles: ["independent-review"] };
+  delete persisted.execution;
+  await writeFile(files.state, `${JSON.stringify(persisted, null, 2)}\n`);
+
+  const loaded = (await loadTask(root, "routing-defaults")).state;
+  assert.equal(loaded.routing.controller.model, "gpt-5.6-sol");
+  assert.equal(loaded.routing.controller.reasoningEffort, "high");
+  assert.deepEqual(loaded.routing.agents.roles, ["independent-review", "bounded-implementation", "complex-implementation"]);
+  assert.deepEqual(loaded.execution, { planStatus: "not_planned", plannedAt: null, plan: null, results: {} });
+});
+
+test("planned workers prove runtime identity, actual scoped changes, verification, evidence, and current candidate", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "execution-contract";
+  await writeFile(path.join(root, "package.json"), `${JSON.stringify({ type: "module" }, null, 2)}\n`);
+  await prepareApprovedTask(root, taskId, {
+    assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
+    impactPaths: ["src/feature"],
+  });
+  await beginImplementation(root, taskId);
+  const files = taskFiles(root, taskId);
+  const planFile = path.join(files.task, "execution-plan.input.json");
+  await writeFile(planFile, `${JSON.stringify({
+    schemaVersion: 1,
+    tasks: [{
+      id: "ST-001",
+      acceptanceIds: ["AC-01"],
+      task: "Implement the bounded feature",
+      stage: 1,
+      dependsOn: [],
+      writeScope: ["src/feature"],
+      doNotTouch: ["src/other"],
+      expectedResult: "A bounded implementation exists",
+      verification: ["node --check src/feature/index.mjs"],
+      firstArtifact: "src/feature/index.mjs",
+      route: "bounded-implementation",
+    }],
+  }, null, 2)}\n`);
+  await run(root, "plan-execution", taskId, "--input", planFile);
+  const attestation = {
+    verified: true,
+    source: "test-host",
+    profile: "luna-max-worker",
+    model: "gpt-5.6-luna",
+    reasoningEffort: "max",
+    forkTurns: "none",
+    sandbox: "workspace-write",
+    leaf: true,
+    canSpawnAgents: false,
+  };
+  const attestationFile = path.join(files.task, "worker-attestation.input.json");
+  await writeFile(attestationFile, `${JSON.stringify(attestation, null, 2)}\n`);
+  await run(root, "agent-dispatch", taskId, "--id", "AGENT-WORK-001", "--role", "bounded-implementation", "--subtask-id", "ST-001", "--status", "planned");
+  await run(root, "agent-dispatch", taskId, "--id", "AGENT-WORK-001", "--role", "bounded-implementation", "--subtask-id", "ST-001", "--status", "running", "--attestation", attestationFile);
+  await mkdir(path.join(root, "src", "feature"), { recursive: true });
+  await writeFile(path.join(root, "src", "feature", "index.mjs"), "export const implemented = true;\n");
+  await run(root, "agent-dispatch", taskId, "--id", "AGENT-WORK-001", "--role", "bounded-implementation", "--subtask-id", "ST-001", "--status", "passed", "--attestation", attestationFile);
+  const evidence = await writeEvidence(root, taskId, "worker.txt", "node --check passed");
+  const candidate = await fingerprintProject(root, { include: ["**/*"] });
+  const resultFile = path.join(files.task, "execution-result.input.json");
+  await writeFile(resultFile, `${JSON.stringify({
+    taskId: "ST-001",
+    status: "passed",
+    summary: "Bounded implementation completed",
+    changedPaths: ["src/feature/index.mjs"],
+    verification: [{ command: "node --check src/feature/index.mjs", status: "passed", summary: "syntax valid" }],
+    evidence: [evidence],
+    candidateFingerprint: candidate.fingerprint,
+    failureClass: "none",
+    blocker: null,
+  }, null, 2)}\n`);
+  const recorded = await run(root, "agent-result", taskId, "--input", resultFile, "--json");
+  const result = JSON.parse(recorded.stdout);
+  assert.equal(result.status, "passed");
+  assert.equal(result.evidence[0].path.startsWith("git:tasks/execution-contract/evidence/"), true);
+  assert.deepEqual(result.changedPaths, ["src/feature/index.mjs"]);
 });
 
 test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, context, and eval options", async (t) => {
@@ -406,6 +505,18 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   await run(root, "draft-solution", "cli-intelligence");
   const files = taskFiles(root, "cli-intelligence");
   await writeSolution(root, "cli-intelligence", criteria, ["src/export"]);
+  const attestationFile = path.join(root, "attestation.json");
+  await writeFile(attestationFile, `${JSON.stringify({
+    verified: true,
+    source: "cli-test-host",
+    profile: "sol-review",
+    model: "gpt-5.6-sol",
+    reasoningEffort: "high",
+    forkTurns: "none",
+    sandbox: "read-only",
+    leaf: true,
+    canSpawnAgents: false,
+  }, null, 2)}\n`);
   await run(
     root,
     "agent-dispatch",
@@ -419,11 +530,11 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
     "--summary",
     "Review completed",
     "--profile",
-    "default",
+    "sol-review",
     "--model",
-    "gpt-5.6-luna",
+    "gpt-5.6-sol",
     "--reasoning-effort",
-    "low",
+    "high",
     "--fork-turns",
     "none",
     "--sandbox",
@@ -436,6 +547,8 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
     "40",
     "--duration-ms",
     "1500",
+    "--attestation",
+    attestationFile,
   );
   await run(
     root,
@@ -486,15 +599,16 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   assert.equal(state.agents.dispatches[0].context.surface, "verification");
   assert(state.agents.dispatches[0].context.digest);
   assert.equal(state.agents.dispatches[0].id, "AGENT-009");
-  assert.equal(state.agents.dispatches[0].profile, "default");
-  assert.equal(state.agents.dispatches[0].model, "gpt-5.6-luna");
-  assert.equal(state.agents.dispatches[0].reasoningEffort, "low");
+  assert.equal(state.agents.dispatches[0].profile, "sol-review");
+  assert.equal(state.agents.dispatches[0].model, "gpt-5.6-sol");
+  assert.equal(state.agents.dispatches[0].reasoningEffort, "high");
   assert.equal(state.agents.dispatches[0].forkTurns, "none");
   assert.equal(state.agents.dispatches[0].sandbox, "read-only");
   assert.equal(state.agents.dispatches[0].inputTokens, 120);
   assert.equal(state.agents.dispatches[0].cachedInputTokens, 80);
   assert.equal(state.agents.dispatches[0].outputTokens, 40);
   assert.equal(state.agents.dispatches[0].durationMs, 1500);
+  assert.equal(state.agents.dispatches[0].runtimeAttestation.source, "cli-test-host");
   assert.equal(state.repair.attempts[0].progressFingerprint, "repair-v2");
   assert.equal(state.context.path, "git:tasks/cli-intelligence/context.json");
 });

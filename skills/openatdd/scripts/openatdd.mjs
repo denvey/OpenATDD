@@ -35,10 +35,12 @@ import {
   prepareHandoff,
   prepareTaskContext,
   prepareUatPlan,
+  planExecution,
   recordAcceptanceResult,
   recordAgentDispatch,
   recordCheck,
   recordEnvironmentObservation,
+  recordExecutionResult,
   recordIssue,
   recordRepairAttempt,
   recordSolutionReview,
@@ -88,6 +90,8 @@ Usage:
   openatdd preflight TASK [--environment local] [--assertions FILE]
   openatdd observe-env ENV --key KEY --value VALUE --source TEXT --evidence PATH
   openatdd plan-uat TASK [--plan FILE] [--execution-mode auto|deterministic|browser-low|human]
+  openatdd plan-execution TASK --input FILE
+  openatdd agent-result TASK --input FILE
   openatdd batch TASK --id BATCH --status STATUS --evidence PATH
   openatdd handoff TASK [--estimated-minutes N]
   openatdd record TASK --acceptance AC-01 --status STATUS [--human-confirmed] [--summary TEXT] --evidence PATH
@@ -97,6 +101,7 @@ Usage:
   openatdd issue TASK --id ISSUE-001 --status resolved --root-cause TEXT
                   --regression TEST --invariant TEXT --paths PATH --evidence PATH
   openatdd agent-dispatch TASK --role ROLE --status STATUS [--id ID] [--surface implementation|verification]
+                  [--subtask-id ST-001] [--attestation FILE]
                   [--profile NAME] [--model MODEL] [--reasoning-effort LEVEL]
                   [--fork-turns none] [--sandbox MODE] [--input-tokens N]
                   [--cached-input-tokens N] [--output-tokens N] [--duration-ms N]
@@ -503,6 +508,20 @@ async function execute(parsed, io) {
       else io.stdout.write(`Prepared ${result.plan.batches.length} cohesive UAT batch(es): ${result.files.uatPlan}\n`);
       return 0;
     }
+    case "plan-execution": {
+      const input = await readJsonInput(root, options.input, "--input");
+      const result = await planExecution(root, taskId(positionals), input);
+      if (json) outputJson(io, result.state.execution);
+      else io.stdout.write(`Execution planned: ${result.state.taskId} (${result.state.execution.plan.tasks.length} tasks)\n`);
+      return 0;
+    }
+    case "agent-result": {
+      const input = await readJsonInput(root, options.input, "--input");
+      const result = await recordExecutionResult(root, taskId(positionals), input);
+      if (json) outputJson(io, result.result);
+      else io.stdout.write(`Execution result ${result.result.taskId}: ${result.result.status}\n`);
+      return 0;
+    }
     case "batch": {
       const result = await recordUatBatch(root, taskId(positionals), {
         batchId: required(options.id, "--id"),
@@ -576,6 +595,7 @@ async function execute(parsed, io) {
         status: required(options.status, "--status"),
         summary: options.summary,
         surface: options.surface,
+        subtaskId: options["subtask-id"],
         profile: options.profile,
         model: options.model,
         reasoningEffort: options["reasoning-effort"],
@@ -585,6 +605,7 @@ async function execute(parsed, io) {
         cachedInputTokens: options["cached-input-tokens"],
         outputTokens: options["output-tokens"],
         durationMs: options["duration-ms"],
+        runtimeAttestation: options.attestation ? await readJsonInput(root, options.attestation, "--attestation") : undefined,
       });
       const dispatch = result.dispatch ?? result.state.agents.dispatches.find((item) => item.id === (options.id ?? result.state.agents.dispatches.at(-1).id));
       if (json) outputJson(io, { ...dispatch, scopedContext: result.scopedContext });
