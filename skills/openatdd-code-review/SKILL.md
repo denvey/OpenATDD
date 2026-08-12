@@ -22,7 +22,8 @@ OpenATDD artifacts as the specification; do not create a task merely to review.
 
 Use the first grounded specification available:
 
-1. the user-named OpenATDD task's approved `acceptance.md` and `solution.md`;
+1. the approved acceptance and solution sections in the user-named
+   `.openatdd/requirements/<task>.md`;
 2. one unambiguous related approved task found from branch, commits, or paths;
 3. the PR, issue, design document, or user description.
 

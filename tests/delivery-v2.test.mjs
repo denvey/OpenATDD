@@ -46,7 +46,7 @@ async function writeProfile(root, changes) {
   return files;
 }
 
-test("schema-v1 tasks migrate additively to schema v3 and persist only on the next mutation", async (t) => {
+test("legacy schema states are rejected without migration", async (t) => {
   const root = await temporaryProject(t);
   await prepareApprovedTask(root, "legacy-migration");
   const files = taskFiles(root, "legacy-migration");
@@ -55,16 +55,8 @@ test("schema-v1 tasks migrate additively to schema v3 and persist only on the ne
   for (const key of ["deliveryVersion", "verification", "checkSequence", "preflight", "uat", "handoff", "timing", "routing", "decisions", "reviews", "agents", "context", "repair"]) delete legacy[key];
   await writeFile(files.state, `${JSON.stringify(legacy, null, 2)}\n`);
 
-  const loaded = await loadTask(root, "legacy-migration");
-  assert.equal(loaded.state.schemaVersion, 3);
-  assert.equal(loaded.state.deliveryVersion, 1);
-  assert.equal(loaded.state.routing.status, "not_assessed");
-  assert.deepEqual(loaded.state.decisions, []);
-  assert.deepEqual(loaded.state.agents.dispatches, []);
+  await assert.rejects(() => loadTask(root, "legacy-migration"), (error) => error.code === "UNSUPPORTED_STATE");
   assert.equal(JSON.parse(await readFile(files.state, "utf8")).schemaVersion, 1);
-
-  await beginImplementation(root, "legacy-migration");
-  assert.equal(JSON.parse(await readFile(files.state, "utf8")).schemaVersion, 3);
 });
 
 test("environment facts accumulate with stale history while credentials remain local and scannable", async (t) => {
@@ -270,7 +262,7 @@ test("focused, module, and broad checks preserve order and automatic handoff avo
     await recordAcceptanceResult(root, "detailed-handoff", {
       acceptanceId: item.id,
       status: "passed",
-      evidence: item.id === "AC-02" ? [evidence, ".openatdd/environments/observations.json"] : evidence,
+      evidence: item.id === "AC-02" ? [evidence, taskFiles(root, "detailed-handoff").environmentObservations] : evidence,
     });
   }
   for (const [scope, durationMs] of [["focused", 10], ["module", 20], ["broad", 30]]) {
@@ -295,15 +287,14 @@ test("focused, module, and broad checks preserve order and automatic handoff avo
   assert.equal((await validateHandoff(prepared.state, broken, prepared.files)).valid, false);
 
   const ready = await markReady(root, "detailed-handoff");
-  const report = await readFile(ready.files.report, "utf8");
+  const report = await readFile(ready.files.requirement, "utf8");
   const notification = await readFile(ready.files.notification, "utf8");
   assert.equal(ready.state.phase, "DELIVERED");
-  assert.match(report, /## Start here/);
-  assert.match(report, /## Automatic verification complete/);
+  assert.match(report, /## Status and merge recommendation/);
+  assert.match(report, /## Human acceptance entry/);
   assert.doesNotMatch(report, /### Step 1/);
   assert.doesNotMatch(report, /\[ \] Pass  \[ \] Fail/);
-  assert.match(report, /## Relevant links/);
-  assert.match(report, /\[observations\.json\]\(\.\.\/\.\.\/environments\/observations\.json\)/);
+  assert.match(report, /no blocking MANUAL or ASSISTED items/i);
   assert.match(notification, /has completed AI verification and been delivered/);
   assert.match(notification, /no reply is required when there is no objection/);
   assert.doesNotMatch(notification, /First action/);

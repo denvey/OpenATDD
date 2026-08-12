@@ -43,8 +43,7 @@ when its stated trigger applies.
     advance the epoch and rerun the complete approved journey.
 
 Treat unmistakable natural-language approval as approval and persist it
-immediately. Never hand-edit `state.json`, `issues.md`, `report.md`, or memory
-indexes.
+immediately. Never hand-edit Git-private state, issue, evidence, or index files.
 
 ## CLI and task start
 
@@ -108,7 +107,8 @@ or repair.
 ## Gate 1 — acceptance
 
 Inspect current roles, states, neighboring behavior, tests, and verification
-environment. Write `acceptance.md` with one user goal, an observable journey,
+environment. Complete the marked acceptance section in
+`.openatdd/requirements/<task>.md` with one user goal, an observable journey,
 criteria, boundaries, and exclusions. Quick uses 1-4 steps and 1-3 criteria;
 Standard/Deep normally use 3-7 steps and 3-8 criteria.
 
@@ -133,10 +133,10 @@ openatdd approve-acceptance TASK
 
 ## Gate 2 — solution
 
-Run `openatdd draft-solution TASK`. Keep one canonical `solution.md`. Its first
-screen contains recommendation, project fit, main changes, material risks, and
-exclusions. Below it, keep concise details, impact paths, and one trace row per
-acceptance ID. Preserve the scaffold's `openatdd:*` markers.
+Run `openatdd draft-solution TASK`. Complete the marked solution section in the
+same requirement Markdown. Keep recommendation, project fit, main changes,
+material risks, and exclusions before concise details, impact paths, and one
+trace row per acceptance ID. Preserve all `openatdd:*` markers.
 
 Review simplicity, project fit, summary/detail consistency, hidden material
 choices, acceptance trace, and unnecessary infrastructure:
@@ -236,13 +236,14 @@ Continue autonomously through ordinary failures. For a verified defect, use the
 issue flow in [governance.md](references/governance.md), repair it, advance the
 epoch, and rerun the complete journey.
 
-Successful finalization prepares `report.md` and `notification.md` and enters
-`DELIVERED`. The report starts with version, environment, role, prerequisites,
-safe account-variable references, entry point, and evidence. Automatic and API
-criteria show actual results without asking the person to repeat tests. Only
-blocking `MANUAL` criteria add ordered UAT steps. Passing requires no reply;
-an objection reopens the same task through the issue flow. Notifications remain
-drafts unless an authorized channel already exists.
+Successful finalization enters `DELIVERED` and updates the top delivery section
+of the single requirement Markdown. It starts with status/merge recommendation,
+conclusion, and the human acceptance entry, followed by Reviewer focus and
+actual changes. Automatic criteria show actual results without asking the
+person to repeat tests. Blocking `ASSISTED` and `MANUAL` criteria add the full
+ordered human operation chain. Record explicit human success with
+`openatdd record TASK --acceptance AC-01 --status manual --human-confirmed`;
+an objection reopens the same task through the issue flow.
 
 If inspection or human UAT finds a defect, resume the same task through the issue
 flow, repair, rerun the entire journey, and generate a fresh delivery report.

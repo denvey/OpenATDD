@@ -4,6 +4,7 @@ import path from "node:path";
 import {
   assert,
   assertNoSecretValues,
+  artifactLocator,
   atomicWrite,
   atomicWriteBatch,
   captureEvidence,
@@ -42,6 +43,7 @@ import {
   readinessErrorsForState,
   renderTaskNotification,
   renderTaskReport,
+  renderRequirementDocument,
   setPhase,
   taskFiles,
   validateHandoff,
@@ -67,7 +69,9 @@ function finalizedAcceptanceSummary(criterion, prefix) {
 }
 
 function taskRelative(files, projectRelative) {
-  return toPosix(path.relative(files.task, path.join(files.root, projectRelative)));
+  if (String(projectRelative).startsWith("git:")) return String(projectRelative);
+  const absolute = path.isAbsolute(projectRelative) ? projectRelative : path.join(files.root, projectRelative);
+  return toPosix(path.relative(path.dirname(files.requirement), absolute));
 }
 
 async function profileDigest(root, environment) {
@@ -163,7 +167,7 @@ async function executeCommand(root, commandInput, credentials, outputPath, metri
     argv: command.argv,
     durationMs,
     exitCode,
-    evidencePath: toPosix(path.relative(root, outputPath)),
+    evidencePath: artifactLocator(root, outputPath),
     stdout: stdoutText,
   };
 }
@@ -245,13 +249,10 @@ async function detectedVersion(root) {
 }
 
 async function buildHandoff(root, state, files, manifest, profile, evidenceReferences, reportName, manifestPath) {
-  const language = inferHumanLanguage(await readFile(files.solution, "utf8"), state.requirement);
+  const language = inferHumanLanguage(await readFile(files.requirement, "utf8"), state.requirement);
   const zh = language === "zh-CN";
   const links = [
-    { label: zh ? "详细交付报告" : "Detailed delivery report", target: reportName, applicable: true },
-    { label: zh ? "已批准的验收卡" : "Approved acceptance card", target: "acceptance.md", applicable: true },
-    { label: zh ? "已批准的方案卡" : "Approved solution card", target: "solution.md", applicable: true },
-    { label: zh ? "问题与修复日志" : "Issue and repair log", target: "issues.md", applicable: true },
+    { label: zh ? "唯一需求交付文档" : "Single requirement delivery document", target: path.basename(files.requirement), applicable: true },
     { label: `${manifest.environment} ${zh ? "环境档案" : "environment profile"}`, target: taskRelative(files, `.openatdd/environments/${manifest.environment}.yaml`), applicable: true },
     { label: zh ? "Finalization 清单" : "Finalization manifest", target: taskRelative(files, manifestPath), applicable: true },
   ];
@@ -263,7 +264,7 @@ async function buildHandoff(root, state, files, manifest, profile, evidenceRefer
   for (const [acceptanceId, captured] of evidenceReferences) {
     for (const item of captured) links.push({
       label: `${acceptanceId} ${zh ? "证据" : "evidence"}: ${path.basename(item.path)}`,
-      target: taskRelative(files, item.path),
+      target: item.path,
       applicable: true,
     });
   }
@@ -292,7 +293,7 @@ async function buildHandoff(root, state, files, manifest, profile, evidenceRefer
       action: criterion.when,
       expected: criterion.then,
       checkbox: "[ ] Pass  [ ] Fail",
-      evidence: (evidenceReferences.get(criterion.id) ?? []).map((item) => taskRelative(files, item.path)),
+      evidence: (evidenceReferences.get(criterion.id) ?? []).map((item) => item.path),
       judgment: criterion.classification === "AUTO"
         ? (zh ? "确认准备的证据与可观察结果。" : "Confirm prepared evidence and observable result.")
         : (zh ? "此项需要人工判断。" : "A person must make this judgment."),
@@ -472,7 +473,7 @@ export async function dryRunFinalization(root, taskId, input = {}, clock = () =>
     previewState.preflight = preflight.result;
     previewState.uat = { planStatus: "planned", batches: {}, warnings: [], estimatedRoundTrips: plan.estimatedRoundTrips };
     const emptyEvidence = new Map(state.acceptance.items.map((item) => [item.id, []]));
-    const handoff = await buildHandoff(root, previewState, files, manifestInfo.manifest, profileInfo.profile, emptyEvidence, "report.preview.md", manifestInfo.relativePath);
+    const handoff = await buildHandoff(root, previewState, files, manifestInfo.manifest, profileInfo.profile, emptyEvidence, path.basename(files.requirement), manifestInfo.relativePath);
     const previewReport = renderTaskReport(previewState, handoff);
     assertNoSecretValues(previewReport, credentials.secretValues, "Preview report");
     await atomicWrite(files.previewReport, previewReport);
@@ -671,11 +672,11 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   assert(preview.status === "passed", "FINALIZATION_PREVIEW_FAILED", "The latest finalization preview did not pass.");
   const previewFiles = new Map((preview.candidateFiles ?? []).map((item) => [item.path, item]));
   const currentFiles = new Map(inventory.files.map((item) => [item.path, item]));
-  const changedFiles = [...new Set([...previewFiles.keys(), ...currentFiles.keys()])].filter(
+  const previewDrift = [...new Set([...previewFiles.keys(), ...currentFiles.keys()])].filter(
     (file) => JSON.stringify(previewFiles.get(file)) !== JSON.stringify(currentFiles.get(file)),
   );
   assert(preview.candidateFingerprint === inventory.fingerprint, "FINALIZATION_PREVIEW_STALE", "Source changed after finalize --dry-run.", {
-    errors: changedFiles.map((file) => `${file}: ${JSON.stringify(previewFiles.get(file))} -> ${JSON.stringify(currentFiles.get(file))}`),
+    errors: previewDrift.map((file) => `${file}: ${JSON.stringify(previewFiles.get(file))} -> ${JSON.stringify(currentFiles.get(file))}`),
   });
   assert(preview.manifestDigest === manifestInfo.digest, "FINALIZATION_PREVIEW_STALE", "Manifest changed after finalize --dry-run.");
   assert(preview.profileDigest === profileInfo.digest, "FINALIZATION_PREVIEW_STALE", "Environment profile changed after finalize --dry-run.");
@@ -806,7 +807,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
       await atomicWrite(target, `# Manual UAT handoff: ${batch.name}\n\nNo automatic UAT journey was executed for this batch.\n\nCovered acceptance: ${batch.acceptanceIds.join(", ")}\nSource fingerprint: ${inventory.fingerprint}\nRequired outcome: a person must judge the approved journey.\n`);
       metrics.evidenceWrites += 1;
       metrics.evidenceWritesByPhase.uat = (metrics.evidenceWritesByPhase.uat ?? 0) + 1;
-      paths.push(toPosix(path.relative(root, target)));
+      paths.push(artifactLocator(root, target));
     } else {
       for (const command of batch.commands) {
         const result = await executeCommand(root, command, credentials, path.join(runDirectory, `batch-${batch.id}-${command.id}.md`), metrics, clock);
@@ -854,7 +855,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   const history = await projectHistoricalStates(root, draft, manifestInfo.manifest, referenceEvidence, inventory.fingerprint, boundary, clock, metrics);
   endMetricsPhase(metrics, "history", phaseStarted);
   phaseStarted = beginMetricsPhase(metrics, "handoff-readiness");
-  const handoff = await buildHandoff(root, draft, files, manifestInfo.manifest, profileInfo.profile, acceptanceEvidence, "report.md", manifestInfo.relativePath);
+  const handoff = await buildHandoff(root, draft, files, manifestInfo.manifest, profileInfo.profile, acceptanceEvidence, path.basename(files.requirement), manifestInfo.relativePath);
   draft.handoff = { status: "prepared", preparedAt: handoff.preparedAt, estimatedMinutes: handoff.context.estimatedMinutes };
   const handoffValidation = await validateHandoff(draft, handoff, files);
   assert(handoffValidation.valid, "INVALID_HANDOFF", "Final handoff is invalid.", { errors: handoffValidation.errors });
@@ -867,6 +868,21 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   const readyAt = isoNow(clock);
   setPhase(draft, PHASES.DELIVERED, readyAt);
   draft.readyAt = readyAt;
+  const startingFiles = new Map((draft.implementationBaseline?.files ?? []).map((item) => [item.path, item]));
+  const endingFiles = new Map(inventory.files.map((item) => [item.path, item]));
+  const changedFiles = [...new Set([...startingFiles.keys(), ...endingFiles.keys()])]
+    .filter((file) => JSON.stringify(startingFiles.get(file)) !== JSON.stringify(endingFiles.get(file)))
+    .map((file) => ({
+      path: file,
+      status: !startingFiles.has(file) ? "A" : !endingFiles.has(file) ? "D" : "M",
+    }));
+  const withinImpact = (file) => draft.solution.impactPaths.some((impact) => (
+    file === impact || file.startsWith(`${impact}/`) || impact.startsWith(`${file}/`)
+  ));
+  const creationFiles = new Map((draft.creationBaseline?.files ?? []).map((item) => [item.path, item]));
+  const preexistingDirty = (file) => creationFiles.has(file) && !startingFiles.has(file);
+  const scopeDrift = changedFiles.map((item) => item.path).filter((file) => !withinImpact(file) && !preexistingDirty(file));
+  draft.delivery = { changedFiles, scopeDrift };
   draft.history.push({ event: "FINALIZATION_COMPLETED", at: readyAt, details: { sourceFingerprint: inventory.fingerprint, manifestDigest: manifestInfo.digest } });
   metrics.wallTimeMs = Math.max(0, Date.now() - wallStart);
   applyBudgets(metrics, manifestInfo.manifest.budgets);
@@ -909,9 +925,11 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     },
   };
   const report = renderTaskReport(draft, handoff);
+  const requirement = renderRequirementDocument(await readFile(files.requirement, "utf8"), draft, handoff);
   const notification = renderTaskNotification(draft, handoff);
   for (const [label, content] of [
     ["Final report", report],
+    ["Requirement delivery document", requirement],
     ["Notification draft", notification],
     ["Finalization result", json(result)],
     ["Finalization snapshot", json(snapshot)],
@@ -930,6 +948,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     { target: files.finalizeResult, content: json(result) },
     { target: files.finalizationSnapshot, content: json(snapshot) },
     { target: files.state, content: json(draft) },
+    { target: files.requirement, content: requirement },
   );
   await atomicWriteBatch(root, entries, clock);
   try {

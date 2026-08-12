@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import { mkdir, readFile, readdir, rename, rm, stat, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 export class OpenATDDError extends Error {
@@ -66,18 +68,63 @@ export async function writeJson(target, value) {
   await atomicWrite(target, `${JSON.stringify(value, null, 2)}\n`);
 }
 
-function assertAbsoluteInside(root, target) {
+function absoluteInside(root, target) {
   const projectRoot = path.resolve(root);
   const absolute = path.resolve(target);
   const relative = path.relative(projectRoot, absolute);
-  assert(relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative)), "PATH_OUTSIDE_PROJECT", `Transaction target leaves project root: ${target}`);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function assertAbsoluteInsideRoots(roots, target) {
+  const absolute = path.resolve(target);
+  assert(
+    roots.some((root) => absoluteInside(root, absolute)),
+    "PATH_OUTSIDE_ALLOWED_ROOTS",
+    `Transaction target leaves the project and Git-private roots: ${target}`,
+  );
   return absolute;
 }
 
-async function rollbackJournal(root, journal) {
+export function gitPrivateRoot(root) {
+  const projectRoot = path.resolve(root);
+  try {
+    const resolved = execFileSync(
+      "git",
+      ["rev-parse", "--path-format=absolute", "--git-path", "openatdd"],
+      { cwd: projectRoot, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+    ).trim();
+    if (resolved) return path.resolve(projectRoot, resolved);
+  } catch {
+    // Keep non-Git fixture projects private as well. Real delivery projects are
+    // expected to be Git repositories, where the branch above is authoritative.
+  }
+  return path.join(tmpdir(), "openatdd-runtime", sha256(projectRoot));
+}
+
+export function artifactLocator(root, target) {
+  const projectRoot = path.resolve(root);
+  const runtimeRoot = gitPrivateRoot(projectRoot);
+  const absolute = path.resolve(target);
+  if (absoluteInside(runtimeRoot, absolute)) return `git:${toPosix(path.relative(runtimeRoot, absolute))}`;
+  if (absoluteInside(projectRoot, absolute)) return `project:${toPosix(path.relative(projectRoot, absolute))}`;
+  throw new OpenATDDError("PATH_OUTSIDE_ALLOWED_ROOTS", `Artifact leaves the project and Git-private roots: ${target}`);
+}
+
+export function resolveArtifactPath(root, locator) {
+  const value = String(locator);
+  if (value.startsWith("project:")) return resolveInside(root, value.slice("project:".length)).resolved;
+  if (value.startsWith("git:")) return resolveInside(gitPrivateRoot(root), value.slice("git:".length)).resolved;
+  if (path.isAbsolute(value)) {
+    artifactLocator(root, value);
+    return path.resolve(value);
+  }
+  return resolveInside(root, value).resolved;
+}
+
+async function rollbackJournal(roots, journal) {
   for (const entry of [...journal.entries].reverse()) {
-    const target = assertAbsoluteInside(root, entry.target);
-    const before = assertAbsoluteInside(root, entry.before);
+    const target = assertAbsoluteInsideRoots(roots, entry.target);
+    const before = assertAbsoluteInsideRoots(roots, entry.before);
     await mkdir(path.dirname(target), { recursive: true });
     if (entry.existed) {
       const content = await readFile(before);
@@ -89,7 +136,10 @@ async function rollbackJournal(root, journal) {
 }
 
 export async function recoverTransactions(root) {
-  const directory = path.join(path.resolve(root), ".openatdd", "transactions");
+  const projectRoot = path.resolve(root);
+  const runtimeRoot = gitPrivateRoot(projectRoot);
+  const roots = [projectRoot, runtimeRoot];
+  const directory = path.join(runtimeRoot, "transactions");
   if (!(await pathExists(directory))) return [];
   const recovered = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
@@ -102,7 +152,7 @@ export async function recoverTransactions(root) {
     }
     const journal = await readJson(journalPath);
     if (journal.status !== "committed") {
-      await rollbackJournal(root, journal);
+      await rollbackJournal(roots, journal);
       recovered.push(journal.id);
     }
     await rm(transaction, { recursive: true, force: true });
@@ -113,14 +163,16 @@ export async function recoverTransactions(root) {
 export async function atomicWriteBatch(root, entries, clock = () => new Date()) {
   assert(Array.isArray(entries) && entries.length > 0, "TRANSACTION_EMPTY", "A file transaction requires entries.");
   const projectRoot = path.resolve(root);
+  const runtimeRoot = gitPrivateRoot(projectRoot);
+  const roots = [projectRoot, runtimeRoot];
   const id = `txn-${clock().toISOString().replace(/[^0-9]/g, "")}-${process.pid}-${Math.random().toString(16).slice(2)}`;
-  const directory = path.join(projectRoot, ".openatdd", "transactions", id);
+  const directory = path.join(runtimeRoot, "transactions", id);
   await mkdir(directory, { recursive: true });
   const seen = new Set();
   const journal = { schemaVersion: 1, id, status: "preparing", createdAt: isoNow(clock), entries: [] };
   try {
     for (const [index, input] of entries.entries()) {
-      const target = assertAbsoluteInside(projectRoot, input.target);
+      const target = assertAbsoluteInsideRoots(roots, input.target);
       assert(!seen.has(target), "TRANSACTION_DUPLICATE_TARGET", `Duplicate transaction target: ${target}`);
       seen.add(target);
       const existed = await pathExists(target);
@@ -141,7 +193,7 @@ export async function atomicWriteBatch(root, entries, clock = () => new Date()) 
     await rm(directory, { recursive: true, force: true });
     return { id, files: journal.entries.map((entry) => entry.target) };
   } catch (error) {
-    if (journal.entries.length > 0) await rollbackJournal(projectRoot, journal);
+    if (journal.entries.length > 0) await rollbackJournal(roots, journal);
     await rm(directory, { recursive: true, force: true });
     throw error;
   }
@@ -190,7 +242,8 @@ export async function captureEvidence(root, values, notBefore, clock = () => new
   const captured = [];
 
   for (const value of evidencePaths) {
-    const { resolved, relative } = resolveInside(root, String(value));
+    const resolved = resolveArtifactPath(root, value);
+    const relative = artifactLocator(root, resolved);
     let info;
     try {
       info = await stat(resolved);
@@ -226,7 +279,7 @@ export async function verifyCapturedEvidence(root, captured, notBefore) {
 
   for (const item of captured ?? []) {
     try {
-      const { resolved } = resolveInside(root, item.path);
+      const resolved = resolveArtifactPath(root, item.path);
       const info = await stat(resolved);
       if (!info.isFile()) {
         errors.push(`Evidence is no longer a file: ${item.path}`);

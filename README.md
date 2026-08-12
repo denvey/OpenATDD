@@ -66,10 +66,13 @@ $openatdd Let finance export filtered orders
 $openatdd-code-review Review the current changes against the approved task
 ```
 
-The agent writes `.openatdd/tasks/order-export/acceptance.md` and `solution.md`
-in deterministic order. Quick validates and approves the compact cards without
-routine pauses; Standard and Deep pause at both gates. The CLI protects state
-transitions and contract hashes while the agent performs the implementation.
+The agent writes exactly one task file:
+`.openatdd/requirements/order-export.md`. Its top is the delivery and human
+acceptance entry; approved acceptance, solution, and trace details follow below.
+Machine state, evidence, previews, indexes, and recovery data live under the
+Git-private path resolved by `git rev-parse --path-format=absolute --git-path openatdd`,
+so they never enter the worktree or a commit. Quick validates and approves its
+compact contracts without routine pauses; Standard and Deep pause at both gates.
 `$openatdd-code-review` is the read-only companion: it reviews a diff against
 approved OpenATDD contracts and repository rules without creating a task or
 modifying code. If the user later requests fixes, verified findings return to
@@ -148,15 +151,14 @@ grounded recommendation, and the final selection. Blocking decisions stop the
 first approval; routine Agent-owned implementation choices do not become user
 questions.
 
-`solution.md` is the single canonical solution source. Its first screen holds
-the recommendation, rationale, main changes, material risks, and exclusions;
-concise technical details and acceptance trace remain below for anyone who
-wants them. A review bound to the current file hash rejects hidden choices,
-summary/detail drift, and needless architecture before approval.
+The marked solution section in `.openatdd/requirements/<task>.md` is the
+canonical solution source. Section-level hashes protect the acceptance and
+solution contracts independently, so delivery-summary updates do not invalidate
+either approval.
 
 ## Rebuildable knowledge and scoped context
 
-`.openatdd/knowledge/graph.json` is a local JSON semantic index derived from
+The Git-private `knowledge/graph.json` is a rebuildable semantic index derived from
 tasks, decisions, acceptance, solutions, paths, incidents, invariants,
 the current project truth, standards, research, checks, evidence, and
 environment observations. Every node and edge has source provenance. Missing
@@ -337,8 +339,8 @@ Automatic acceptance must be exercised by real argv-only journey commands.
 `runner: "internal"` is only a manual handoff for `ASSISTED` or `MANUAL`
 criteria; it records `manual` and can never satisfy an `AUTO` criterion.
 
-Manifest resolution prefers an explicit path, then
-`.openatdd/tasks/<task>/finalization.manifest.json`, then the reusable project
+Manifest resolution prefers an explicit path, then the task's Git-private
+`tasks/<task>/finalization.manifest.json`, then the reusable project
 manifest. The frozen `finalization.json` snapshot that a successful finalization
 writes into the task is evidence, never an input for a later run.
 `validate-finalization` checks schema and current acceptance mappings without
@@ -457,12 +459,14 @@ failure or uncertainty to the main model. Subjective visual conclusions use
 reduces price, while batching, scoped DOM facts, and checkpoint-only screenshots
 reduce Token.
 
-Successful formal finalization validates `handoff.json` and generates a report
-that starts with the version, environment, role, prerequisites, safe account
-reference, entry point, and evidence. Automatic and API criteria show results
-without asking the person to repeat them. Only blocking `MANUAL` criteria render
-numbered UAT steps with expected results and prepared evidence. This remains
-part of the normal two-gate workflow and does not add a third confirmation.
+Successful formal finalization updates the top of the single requirement file
+in Reviewer decision order: status and merge recommendation, conclusion, human
+acceptance entry, Reviewer focus, actual changes, and acceptance summary.
+Automatic results require no repetition. Blocking `ASSISTED` and `MANUAL`
+criteria render environment, entry point, identity, credential variable names,
+prerequisites, estimated time, ordered actions, expected results, judgment, and
+failure feedback. Record a successful human result with
+`openatdd record <task> --acceptance AC-01 --status manual --human-confirmed`.
 
 Run the project checks with:
 

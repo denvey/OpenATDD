@@ -12,7 +12,7 @@ test("OpenATDD Code Review stays bounded and routes review without copying deliv
   assert.match(skill, /name: openatdd-code-review/);
   assert.match(skill, /Use when asked to review code, a PR, branch, diff, or current changes/);
   assert.match(skill, /read-only intent, not a fourth Quick\/Standard\/Deep lane/);
-  assert.match(skill, /OpenATDD task's approved `acceptance\.md` and `solution\.md`/);
+  assert.match(skill, /approved acceptance and solution sections[\s\S]*\.openatdd\/requirements\/<task>\.md/);
   assert.match(skill, /PR, issue, design document, or user description/);
   assert.match(skill, /skip spec-conformance conclusions.*never fabricate requirements/s);
   assert.doesNotMatch(skill, /approve-acceptance|approve-solution|finalize --fast|Gate 1/);

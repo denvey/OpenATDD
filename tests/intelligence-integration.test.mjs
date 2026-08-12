@@ -28,7 +28,9 @@ import {
   solutionMarkdown,
   temporaryProject,
   writeAcceptance,
+  writeSolution,
 } from "./helpers.mjs";
+import { replaceRequirementSection, solutionContract } from "../skills/openatdd/scripts/contracts.mjs";
 
 const execFileAsync = promisify(execFile);
 const cli = path.resolve("skills/openatdd/scripts/openatdd.mjs");
@@ -65,7 +67,7 @@ test("schema v3 hard gates require assessment, resolved blocking decisions, and 
   await approveAcceptance(root, "hard-gates");
   await draftSolution(root, "hard-gates");
   const files = taskFiles(root, "hard-gates");
-  await writeFile(files.solution, solutionMarkdown("hard-gates", criteria));
+  await writeSolution(root, "hard-gates", criteria);
   await assert.rejects(() => approveSolution(root, "hard-gates"), (error) => error.code === "SOLUTION_REVIEW_REQUIRED");
   await assert.rejects(
     () => recordSolutionReview(root, "hard-gates", {
@@ -81,7 +83,8 @@ test("schema v3 hard gates require assessment, resolved blocking decisions, and 
     summary: "The solution is concise and follows the established path.",
     checks: "all",
   });
-  await writeFile(files.solution, `${await readFile(files.solution, "utf8")}\n<!-- clarified without changing behavior -->\n`);
+  const hardDocument = await readFile(files.requirement, "utf8");
+  await writeFile(files.requirement, replaceRequirementSection(hardDocument, "solution", `${solutionContract(hardDocument)}\n<!-- clarified without changing behavior -->\n`));
   await assert.rejects(() => approveSolution(root, "hard-gates"), (error) => error.code === "SOLUTION_REVIEW_REQUIRED");
   await recordSolutionReview(root, "hard-gates", {
     status: "passed",
@@ -121,7 +124,7 @@ test("a dangerous risk overlay requires resolved authorization before product co
   await approveAcceptance(root, "overlay-authorization");
   await draftSolution(root, "overlay-authorization");
   const files = taskFiles(root, "overlay-authorization");
-  await writeFile(files.solution, solutionMarkdown("overlay-authorization", criteria));
+  await writeSolution(root, "overlay-authorization", criteria);
   await recordSolutionReview(root, "overlay-authorization", {
     status: "passed",
     reviewer: "main",
@@ -197,7 +200,7 @@ async function solutionReadyTask(root, taskId, assessment) {
   await writeAcceptance(root, taskId, criteria);
   await approveAcceptance(root, taskId);
   await draftSolution(root, taskId);
-  await writeFile(taskFiles(root, taskId).solution, solutionMarkdown(taskId, criteria));
+  await writeSolution(root, taskId, criteria);
   await recordSolutionReview(root, taskId, {
     status: "passed",
     reviewer: "main",
@@ -402,7 +405,7 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   await run(root, "approve-acceptance", "cli-intelligence");
   await run(root, "draft-solution", "cli-intelligence");
   const files = taskFiles(root, "cli-intelligence");
-  await writeFile(files.solution, solutionMarkdown("cli-intelligence", criteria, ["src/export"]));
+  await writeSolution(root, "cli-intelligence", criteria, ["src/export"]);
   await run(
     root,
     "agent-dispatch",
@@ -493,5 +496,5 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   assert.equal(state.agents.dispatches[0].outputTokens, 40);
   assert.equal(state.agents.dispatches[0].durationMs, 1500);
   assert.equal(state.repair.attempts[0].progressFingerprint, "repair-v2");
-  assert.equal(state.context.path, ".openatdd/tasks/cli-intelligence/context.json");
+  assert.equal(state.context.path, "git:tasks/cli-intelligence/context.json");
 });

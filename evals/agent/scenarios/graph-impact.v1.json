@@ -7,8 +7,7 @@
   "seed": {
     "files": {
       "src/export/csv.mjs": "export const format = 'csv';\n",
-      ".openatdd/knowledge/graph.json": "{\"nodes\":[{\"id\":\"acceptance:historical-export:AC-01\",\"type\":\"Acceptance\"}],\"edges\":[{\"from\":\"solution:current-export\",\"type\":\"shares-invariant-with\",\"to\":\"acceptance:historical-export:AC-01\"}]}\n",
-      ".openatdd/tasks/historical-export/solution.md": "## Impact paths\n\n- `src/export`\n"
+      ".openatdd/requirements/historical-export.md": "<!-- openatdd:solution -->\n## Impact paths\n\n- `src/export`\n<!-- /openatdd:solution -->\n"
     }
   },
   "expect": {

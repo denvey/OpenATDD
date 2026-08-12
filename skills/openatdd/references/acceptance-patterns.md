@@ -53,7 +53,7 @@ human judgment.
 
 Successful verification enters `DELIVERED` for every surface. `AUTO`,
 `ASSISTED`, and `MANUAL` determine report content, not extra approval gates.
-Only blocking `MANUAL` criteria produce human UAT steps. No reply is required
+Blocking `ASSISTED` and `MANUAL` criteria produce human UAT steps. No reply is required
 when the delivered result is acceptable; a reported objection reopens repair.
 
 ## Risk expansion

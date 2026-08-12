@@ -20,7 +20,7 @@ the task's scoped context; do not reuse implementation assumptions as proof.
 ## Evidence rules
 
 - Capture evidence after solution approval and after the latest relevant repair.
-- Store local evidence in `.openatdd/tasks/<task>/evidence/`.
+- Store local evidence in the task's Git-private `tasks/<task>/evidence/` directory.
 - Remove secrets, tokens, personal data, and unsafe production payloads.
 - Record failed observations as failures; never overwrite them into passes.
 - After a repair, rerun the failed item, affected items, relevant automated
@@ -58,8 +58,8 @@ evidence must be recaptured in the new verification epoch.
 - history: one affected-history pass after current acceptance succeeds.
 
 Successful formal verification enters `DELIVERED`. Automatic and API evidence
-is presented without asking the person to repeat it. Only blocking `MANUAL`
-criteria remain as human UAT steps; passing requires no reply, while an
+is presented without asking the person to repeat it. Blocking `ASSISTED` and
+`MANUAL` criteria remain as human UAT steps; passing requires no reply, while an
 objection enters the existing issue and repair flow.
 
 If the rehearsal fails, return to focused repair and rehearse again. If a

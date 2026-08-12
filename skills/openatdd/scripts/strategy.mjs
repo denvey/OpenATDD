@@ -101,7 +101,7 @@ function checkStatusCounts(state) {
 }
 
 const DELIVERY_PHASES = new Set(["IMPLEMENTING", "REPAIRING", "PRE_UAT"]);
-const DELIVERY_TERMINAL_PHASES = new Set(["DELIVERED", "READY_FOR_UAT"]);
+const DELIVERY_TERMINAL_PHASES = new Set(["DELIVERED"]);
 
 function elapsedMs(start, end) {
   const started = new Date(start ?? 0).getTime();
@@ -235,7 +235,7 @@ function stateEvidence(summary) {
 }
 
 function taskLocalSource(state, source) {
-  const prefix = `.openatdd/tasks/${state.taskId}/`;
+  const prefix = `git:tasks/${state.taskId}/`;
   return source?.startsWith(prefix) ? source.slice(prefix.length) : source;
 }
 

@@ -5,20 +5,29 @@ import {
   assert,
   assertTaskId,
   atomicWrite,
+  artifactLocator,
   captureEvidence,
+  gitPrivateRoot,
   inferHumanLanguage,
   isoNow,
   normalizeImpactPath,
   pathExists,
   readJson,
   readUtf8,
+  resolveArtifactPath,
   tokenize,
   verifyCapturedEvidence,
   writeJson,
 } from "./lib.mjs";
 import {
   acceptanceTemplate,
+  acceptanceContract,
+  acceptanceFingerprint,
   fingerprint,
+  replaceRequirementSection,
+  requirementDocument,
+  solutionContract,
+  solutionFingerprint,
   solutionTemplate,
   validateAcceptance,
   validateSolution,
@@ -50,6 +59,7 @@ import {
   scanEnvironmentArtifacts,
   splitProfileList,
 } from "./profiles.mjs";
+import { fingerprintProject } from "./manifest.mjs";
 
 export const PHASES = Object.freeze({
   ACCEPTANCE_DRAFT: "ACCEPTANCE_DRAFT",
@@ -61,13 +71,10 @@ export const PHASES = Object.freeze({
   REPAIRING: "REPAIRING",
   BLOCKED: "BLOCKED",
   DELIVERED: "DELIVERED",
-  // Legacy terminal phase retained so existing task state remains readable.
-  READY_FOR_UAT: "READY_FOR_UAT",
 });
 
 export const DELIVERY_TERMINAL_PHASES = Object.freeze([
   PHASES.DELIVERED,
-  PHASES.READY_FOR_UAT,
 ]);
 
 export function isDeliveryTerminalPhase(phase) {
@@ -162,74 +169,6 @@ function initialState(taskId, requirement, now) {
   };
 }
 
-function migrateState(persisted) {
-  assert([1, 2, 3].includes(persisted.schemaVersion), "UNSUPPORTED_STATE", `Unsupported task state version: ${persisted.schemaVersion}`);
-  const state = structuredClone(persisted);
-  const legacy = state.schemaVersion === 1;
-  const boundary = state.verificationNotBefore ?? state.solution?.approvedAt ?? state.createdAt;
-  state.schemaVersion = 3;
-  state.deliveryVersion ??= legacy ? 1 : 2;
-  state.verification ??= { epoch: 1, startedAt: boundary, clean: !state.issues?.some((issue) => issue.status === "open") };
-  state.verification.epoch ??= 1;
-  state.verification.startedAt ??= boundary;
-  state.verification.clean ??= !state.issues?.some((issue) => issue.status === "open");
-  state.results ??= {};
-  state.checks ??= {};
-  for (const result of Object.values(state.results)) result.epoch ??= state.verification.epoch;
-  for (const check of Object.values(state.checks)) {
-    check.epoch ??= state.verification.epoch;
-    check.scope ??= "broad";
-    check.sourceFingerprint ??= "legacy";
-  }
-  state.checkSequence ??= Object.values(state.checks).map((check) => ({
-    id: check.id,
-    scope: check.scope,
-    status: check.status,
-    verifiedAt: check.verifiedAt,
-    sourceFingerprint: check.sourceFingerprint,
-    epoch: check.epoch,
-  }));
-  state.preflight ??= legacy
-    ? { status: "not_required", environment: "local", checkedAt: null, warnings: [] }
-    : { status: "not_run", environment: "local", checkedAt: null, warnings: [] };
-  state.uat ??= { planStatus: legacy ? "not_required" : "not_planned", batches: {}, warnings: [] };
-  state.uat.batches ??= {};
-  state.uat.warnings ??= [];
-  state.handoff ??= legacy
-    ? { status: "legacy", preparedAt: null }
-    : { status: "not_prepared", preparedAt: null };
-  state.timing ??= { currentPhase: state.phase, phaseStartedAt: state.updatedAt ?? state.createdAt, phases: [] };
-  state.timing.phases ??= [];
-  state.finalization ??= { status: "not_started", version: 1 };
-  state.routing ??= {
-    status: "not_assessed",
-    lane: null,
-    reasons: [],
-    investigation: { externalResearch: false },
-    agents: { roles: [] },
-    interaction: { approvals: "human", contract: "full" },
-  };
-  state.routing.reasons ??= [];
-  state.routing.investigation ??= { externalResearch: false };
-  state.routing.agents ??= { roles: [] };
-  state.routing.interaction ??= state.routing.lane
-    ? interactionPolicyForLane(state.routing.lane)
-    : { approvals: "human", contract: "full" };
-  state.decisions ??= [];
-  state.reviews ??= { solution: null };
-  state.reviews.solution ??= null;
-  state.agents ??= { dispatches: [] };
-  state.agents.dispatches ??= [];
-  state.context ??= { status: "not_prepared", path: null, digest: null, sourceDigests: {} };
-  state.context.sourceDigests ??= {};
-  state.repair ??= { attempts: [], lastProgressFingerprint: null, lastHypothesis: null, consecutiveNoProgress: 0 };
-  state.repair.attempts ??= [];
-  state.repair.lastHypothesis ??= null;
-  state.repair.consecutiveNoProgress ??= 0;
-  state.history ??= [];
-  return state;
-}
-
 export function setPhase(state, phase, now) {
   if (state.phase === phase) return;
   const startedAt = state.timing?.phaseStartedAt ?? state.updatedAt ?? state.createdAt;
@@ -252,27 +191,30 @@ export function advanceEpoch(state, now, reason) {
 export function projectFiles(root) {
   const projectRoot = path.resolve(root);
   const openatdd = path.join(projectRoot, ".openatdd");
+  const runtime = gitPrivateRoot(projectRoot);
   return {
     root: projectRoot,
     openatdd,
     config: path.join(openatdd, "config.yaml"),
-    tasks: path.join(openatdd, "tasks"),
-    memory: path.join(openatdd, "memory"),
-    incidents: path.join(openatdd, "memory", "incidents"),
-    invariants: path.join(openatdd, "memory", "invariants.md"),
-    memoryIndex: path.join(openatdd, "memory", "index.json"),
+    requirements: path.join(openatdd, "requirements"),
+    tasks: path.join(runtime, "tasks"),
+    runtime,
+    memory: path.join(runtime, "memory"),
+    incidents: path.join(runtime, "memory", "incidents"),
+    invariants: path.join(openatdd, "knowledge", "invariants.md"),
+    memoryIndex: path.join(runtime, "memory", "index.json"),
     knowledge: path.join(openatdd, "knowledge"),
     projectTruth: path.join(openatdd, "knowledge", "project.md"),
     standards: path.join(openatdd, "knowledge", "standards"),
     research: path.join(openatdd, "knowledge", "research"),
-    knowledgeGraph: path.join(openatdd, "knowledge", "graph.json"),
+    knowledgeGraph: path.join(runtime, "knowledge", "graph.json"),
     environments: path.join(openatdd, "environments"),
-    environmentObservations: path.join(openatdd, "environments", "observations.json"),
+    environmentObservations: path.join(runtime, "environments", "observations.json"),
     dotenv: path.join(projectRoot, ".env.openatdd.local"),
     dotenvExample: path.join(projectRoot, ".env.openatdd.example"),
     finalizationManifest: path.join(openatdd, "finalization.json"),
-    transactions: path.join(openatdd, "transactions"),
-    reverificationIndex: path.join(openatdd, "reverification", "index.json"),
+    transactions: path.join(runtime, "transactions"),
+    reverificationIndex: path.join(runtime, "reverification", "index.json"),
   };
 }
 
@@ -280,11 +222,13 @@ export function taskFiles(root, taskId) {
   assertTaskId(taskId);
   const project = projectFiles(root);
   const task = path.join(project.tasks, taskId);
+  const requirement = path.join(project.requirements, `${taskId}.md`);
   return {
     ...project,
     task,
-    acceptance: path.join(task, "acceptance.md"),
-    solution: path.join(task, "solution.md"),
+    requirement,
+    acceptance: requirement,
+    solution: requirement,
     state: path.join(task, "state.json"),
     issues: path.join(task, "issues.md"),
     evidence: path.join(task, "evidence"),
@@ -307,6 +251,7 @@ export function taskFiles(root, taskId) {
 
 export async function initProject(root) {
   const files = projectFiles(root);
+  await mkdir(files.requirements, { recursive: true });
   await mkdir(files.tasks, { recursive: true });
   await mkdir(files.incidents, { recursive: true });
   await mkdir(files.standards, { recursive: true });
@@ -329,12 +274,19 @@ export async function createTask(root, taskId, requirement, clock = () => new Da
   assert(requirement?.trim(), "REQUIREMENT_REQUIRED", "A one-line requirement is required.");
   await initProject(root);
   const files = taskFiles(root, taskId);
-  assert(!(await pathExists(files.task)), "TASK_EXISTS", `Task already exists: ${taskId}`);
+  assert(!(await pathExists(files.requirement)) && !(await pathExists(files.state)), "TASK_EXISTS", `Task already exists: ${taskId}`);
   await mkdir(files.evidence, { recursive: true });
   const now = isoNow(clock);
-  await atomicWrite(files.acceptance, acceptanceTemplate(taskId, requirement.trim()));
-  await atomicWrite(files.issues, renderIssues(initialState(taskId, requirement.trim(), now)));
-  await writeJson(files.state, initialState(taskId, requirement.trim(), now));
+  const state = initialState(taskId, requirement.trim(), now);
+  const creationBaseline = await fingerprintProject(root, { include: ["**/*"] });
+  state.creationBaseline = {
+    recordedAt: now,
+    fingerprint: creationBaseline.fingerprint,
+    files: creationBaseline.files,
+  };
+  await atomicWrite(files.requirement, requirementDocument(taskId, requirement.trim()));
+  await atomicWrite(files.issues, renderIssues(state));
+  await writeJson(files.state, state);
   return loadTask(root, taskId);
 }
 
@@ -343,7 +295,7 @@ export async function adoptTask(root, taskId, requirement, clock = () => new Dat
   assert(requirement?.trim(), "REQUIREMENT_REQUIRED", "A one-line requirement is required.");
   await initProject(root);
   const files = taskFiles(root, taskId);
-  assert(await pathExists(files.acceptance), "ACCEPTANCE_NOT_FOUND", `Cannot adopt ${taskId} without acceptance.md.`);
+  assert(await pathExists(files.requirement), "ACCEPTANCE_NOT_FOUND", `Cannot adopt ${taskId} without its requirement document.`);
   assert(!(await pathExists(files.state)), "TASK_EXISTS", `Task state already exists: ${taskId}`);
   await mkdir(files.evidence, { recursive: true });
   const now = isoNow(clock);
@@ -356,9 +308,10 @@ export async function adoptTask(root, taskId, requirement, clock = () => new Dat
 
 export async function loadTask(root, taskId) {
   const files = taskFiles(root, taskId);
-  assert(await pathExists(files.state), "TASK_NOT_FOUND", `OpenATDD task does not exist: ${taskId}`);
+  assert(await pathExists(files.requirement) && await pathExists(files.state), "TASK_NOT_FOUND", `OpenATDD task does not exist: ${taskId}`);
   const persisted = await readJson(files.state);
-  const state = migrateState(persisted);
+  assert(persisted.schemaVersion === 3, "UNSUPPORTED_STATE", `Unsupported task state version: ${persisted.schemaVersion}`);
+  const state = persisted;
   return { state, files };
 }
 
@@ -407,7 +360,7 @@ async function loadContextForState(root, state, files, input = {}) {
   const context = await loadScopedContext(root, state.taskId, { lane, persist });
   state.context = {
     status: "prepared",
-    path: persist ? path.relative(files.root, files.contextFile).split(path.sep).join("/") : null,
+    path: persist ? artifactLocator(files.root, files.contextFile) : null,
     digest: context.digest,
     sourceDigests: context.sourceDigests,
   };
@@ -428,22 +381,24 @@ function validationFailure(code, message, validation) {
 
 async function assertAcceptanceIntegrity(files, state) {
   assert(state.acceptance.approvedAt, "ACCEPTANCE_NOT_APPROVED", "Acceptance has not been approved.");
-  const markdown = await readUtf8(files.acceptance);
+  const document = await readUtf8(files.requirement);
+  const markdown = acceptanceContract(document);
   assert(
-    fingerprint(markdown) === state.acceptance.sha256,
+    acceptanceFingerprint(document) === state.acceptance.sha256,
     "ACCEPTANCE_DRIFT",
-    "acceptance.md changed after approval. Reopen acceptance before changing it.",
+    "The acceptance section changed after approval. Reopen acceptance before changing it.",
   );
   return markdown;
 }
 
 async function assertSolutionIntegrity(files, state) {
   assert(state.solution.approvedAt, "SOLUTION_NOT_APPROVED", "Solution has not been approved.");
-  const markdown = await readUtf8(files.solution);
+  const document = await readUtf8(files.requirement);
+  const markdown = solutionContract(document);
   assert(
-    fingerprint(markdown) === state.solution.sha256,
+    solutionFingerprint(document) === state.solution.sha256,
     "SOLUTION_DRIFT",
-    "solution.md changed after approval. Reopen the solution before changing it.",
+    "The solution section changed after approval. Reopen the solution before changing it.",
   );
   return markdown;
 }
@@ -544,7 +499,7 @@ export async function recordSolutionReview(root, taskId, input, clock = () => ne
     agentId: independentDispatch?.id ?? null,
     contextDigest: independentDispatch?.context?.digest ?? null,
     reviewedAt: now,
-    solutionSha256: fingerprint(await readUtf8(files.solution)),
+    solutionSha256: solutionFingerprint(await readUtf8(files.requirement)),
   };
   state.readyAt = null;
   appendHistory(state, "SOLUTION_REVIEWED", now, { status: input.status, reviewer: input.reviewer });
@@ -709,7 +664,8 @@ export async function recordRepairAttempt(root, taskId, input, clock = () => new
 export async function approveAcceptance(root, taskId, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
   assertPhase(state, [PHASES.ACCEPTANCE_DRAFT, PHASES.ACCEPTANCE_APPROVED], "Acceptance approval");
-  const markdown = await readUtf8(files.acceptance);
+  const document = await readUtf8(files.requirement);
+  const markdown = acceptanceContract(document);
   const validation = validateAcceptance(markdown);
   validationFailure("INVALID_ACCEPTANCE", "Acceptance card is not ready for approval.", validation);
   if (state.deliveryVersion >= 3) {
@@ -719,7 +675,7 @@ export async function approveAcceptance(root, taskId, clock = () => new Date()) 
       errors: pending.map((decision) => `${decision.id}: ${decision.question}`),
     });
   }
-  const digest = fingerprint(markdown);
+  const digest = acceptanceFingerprint(document);
 
   if (state.acceptance.sha256 === digest && state.acceptance.approvedAt) {
     return { state, files, warnings: validation.warnings, unchanged: true };
@@ -743,8 +699,9 @@ export async function draftSolution(root, taskId, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
   assertPhase(state, [PHASES.ACCEPTANCE_APPROVED, PHASES.SOLUTION_DRAFT], "Solution drafting");
   await assertAcceptanceIntegrity(files, state);
-  if (!(await pathExists(files.solution))) {
-    await atomicWrite(files.solution, solutionTemplate(taskId, state.acceptance.items));
+  const document = await readUtf8(files.requirement);
+  if (!solutionContract(document).trim()) {
+    await atomicWrite(files.requirement, replaceRequirementSection(document, "solution", solutionTemplate(taskId, state.acceptance.items)));
   }
   if (state.phase !== PHASES.SOLUTION_DRAFT) {
     const now = isoNow(clock);
@@ -764,8 +721,8 @@ function pathsOverlap(left, right) {
 async function taskIds(root) {
   const files = projectFiles(root);
   try {
-    const entries = await readdir(files.tasks, { withFileTypes: true });
-    return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+    const entries = await readdir(files.requirements, { withFileTypes: true });
+    return entries.filter((entry) => entry.isFile() && entry.name.endsWith(".md")).map((entry) => entry.name.slice(0, -3)).sort();
   } catch (error) {
     if (error?.code === "ENOENT") return [];
     throw error;
@@ -882,10 +839,11 @@ export async function approveSolution(root, taskId, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
   assertPhase(state, [PHASES.SOLUTION_DRAFT, PHASES.CONTRACT_APPROVED], "Solution approval");
   await assertAcceptanceIntegrity(files, state);
-  const markdown = await readUtf8(files.solution);
+  const document = await readUtf8(files.requirement);
+  const markdown = solutionContract(document);
   const validation = validateSolution(markdown, state.acceptance.items, { progressive: state.deliveryVersion >= 3 });
   validationFailure("INVALID_SOLUTION", "Solution card is not ready for approval.", validation);
-  const digest = fingerprint(markdown);
+  const digest = solutionFingerprint(document);
   if (state.deliveryVersion >= 3) {
     const pending = blockingDecisions(state.decisions);
     assert(pending.length === 0, "BLOCKING_DECISIONS_PENDING", "Resolve every blocking decision before approving the solution.", {
@@ -948,6 +906,12 @@ export async function beginImplementation(root, taskId, clock = () => new Date()
   await assertContractIntegrity(files, state);
   if (state.phase !== PHASES.IMPLEMENTING) {
     const now = isoNow(clock);
+    const baseline = await fingerprintProject(root, { include: ["**/*"] });
+    state.implementationBaseline = {
+      recordedAt: now,
+      fingerprint: baseline.fingerprint,
+      files: baseline.files,
+    };
     appendHistory(state, "IMPLEMENTATION_STARTED", now);
     setPhase(state, PHASES.IMPLEMENTING, now);
     await saveTask(files, state, clock);
@@ -1007,11 +971,12 @@ export async function advanceQuickTask(root, taskId, input = {}, clock = () => n
 
   if (phase === PHASES.SOLUTION_DRAFT) {
     const { state, files } = await loadTask(root, taskId);
-    const markdown = await readUtf8(files.solution);
+    const document = await readUtf8(files.requirement);
+    const markdown = solutionContract(document);
     const validation = validateSolution(markdown, state.acceptance.items, { progressive: state.deliveryVersion >= 3 });
     validationFailure("INVALID_SOLUTION", "Solution card is not ready for autonomous approval.", validation);
     const review = state.reviews?.solution;
-    if (review?.status === "passed" && review.solutionSha256 === fingerprint(markdown)) {
+    if (review?.status === "passed" && review.solutionSha256 === solutionFingerprint(document)) {
       steps.push({ step: "review-solution", performed: false });
     } else {
       await recordSolutionReview(root, taskId, {
@@ -1270,6 +1235,10 @@ export async function recordAcceptanceResult(root, taskId, input, clock = () => 
   assert(criterion, "UNKNOWN_ACCEPTANCE", `Unknown acceptance criterion: ${input.acceptanceId}`);
   const allowed = ["passed", "failed", "blocked", "manual", "affected", "deferred", "cancelled"];
   assert(allowed.includes(input.status), "INVALID_RESULT_STATUS", `Invalid acceptance status: ${input.status}`);
+  if (input.humanConfirmed === true) {
+    assert(criterion.classification !== "AUTO", "AUTO_CANNOT_BE_HUMAN_CONFIRMED", `${criterion.id} is automatic and does not accept a human confirmation flag.`);
+    assert(input.status === "manual", "HUMAN_CONFIRMATION_REQUIRES_MANUAL", "Human confirmation must preserve the manual result classification.");
+  }
   if (input.status === "passed") {
     assert(!state.issues.some((issue) => issue.status === "open"), "OPEN_ISSUE_BLOCKS_PASS", "Resolve every open issue before recording formal passed acceptance evidence.");
   }
@@ -1291,11 +1260,14 @@ export async function recordAcceptanceResult(root, taskId, input, clock = () => 
     assert(!criterion.blocking, "BLOCKING_CANNOT_BE_SKIPPED", `${criterion.id} is blocking and cannot be ${input.status}.`);
   }
 
-  const needsEvidence = input.status === "passed" || (input.status === "manual" && criterion.classification === "ASSISTED");
+  const needsEvidence = input.status === "passed"
+    || (input.status === "manual" && criterion.classification === "ASSISTED" && input.humanConfirmed !== true);
   const boundary = evidenceBoundary(state);
-  const evidence = needsEvidence
-    ? await captureEvidence(files.root, input.evidence, boundary, clock)
-    : await optionalEvidence(files.root, input.evidence, boundary, clock);
+  const evidence = input.humanConfirmed === true && asArray(input.evidence).length === 0
+    ? (state.results[criterion.id]?.evidence ?? [])
+    : needsEvidence
+      ? await captureEvidence(files.root, input.evidence, boundary, clock)
+      : await optionalEvidence(files.root, input.evidence, boundary, clock);
   const now = isoNow(clock);
   state.results[criterion.id] = {
     acceptanceId: criterion.id,
@@ -1306,13 +1278,20 @@ export async function recordAcceptanceResult(root, taskId, input, clock = () => 
     evidence,
     verifiedAt: now,
     epoch: state.verification.epoch,
+    ...(input.humanConfirmed === true ? { humanStatus: "passed", humanConfirmedAt: now } : {}),
   };
   state.readyAt = null;
   if (input.status === "failed") setPhase(state, PHASES.REPAIRING, now);
   else if (input.status === "blocked") setPhase(state, PHASES.BLOCKED, now);
-  else if (isDeliveryTerminalPhase(state.phase) || state.phase === PHASES.BLOCKED) setPhase(state, PHASES.PRE_UAT, now);
-  appendHistory(state, "ACCEPTANCE_RECORDED", now, { acceptanceId: criterion.id, status: input.status });
-  return saveTask(files, state, clock);
+  else if (input.humanConfirmed !== true && (isDeliveryTerminalPhase(state.phase) || state.phase === PHASES.BLOCKED)) setPhase(state, PHASES.PRE_UAT, now);
+  appendHistory(state, input.humanConfirmed === true ? "HUMAN_ACCEPTANCE_CONFIRMED" : "ACCEPTANCE_RECORDED", now, { acceptanceId: criterion.id, status: input.status });
+  const saved = await saveTask(files, state, clock);
+  if (input.humanConfirmed === true && await pathExists(files.handoff)) {
+    const handoff = await readJson(files.handoff);
+    const document = await readUtf8(files.requirement);
+    await atomicWrite(files.requirement, renderRequirementDocument(document, state, handoff));
+  }
+  return saved;
 }
 
 function checkKey(name) {
@@ -1664,19 +1643,20 @@ async function contractErrors(files, state) {
     const pending = blockingDecisions(state.decisions);
     for (const decision of pending) errors.push(`Blocking decision remains pending: ${decision.id}.`);
   }
+  const document = await readUtf8(files.requirement);
   if (state.acceptance.approvedAt) {
-    const markdown = await readUtf8(files.acceptance);
+    const markdown = acceptanceContract(document);
     const validation = validateAcceptance(markdown);
     errors.push(...validation.errors.map((item) => `Acceptance: ${item}`));
     warnings.push(...validation.warnings.map((item) => `Acceptance: ${item}`));
-    if (fingerprint(markdown) !== state.acceptance.sha256) errors.push("Acceptance contract hash does not match the approved version.");
+    if (acceptanceFingerprint(document) !== state.acceptance.sha256) errors.push("Acceptance contract hash does not match the approved version.");
   }
   if (state.solution.approvedAt) {
-    const markdown = await readUtf8(files.solution);
+    const markdown = solutionContract(document);
     const validation = validateSolution(markdown, state.acceptance.items, { progressive: state.deliveryVersion >= 3 });
     errors.push(...validation.errors.map((item) => `Solution: ${item}`));
     warnings.push(...validation.warnings.map((item) => `Solution: ${item}`));
-    if (fingerprint(markdown) !== state.solution.sha256) errors.push("Solution contract hash does not match the approved version.");
+    if (solutionFingerprint(document) !== state.solution.sha256) errors.push("Solution contract hash does not match the approved version.");
     if (state.deliveryVersion >= 3) {
       const review = state.reviews?.solution;
       if (review?.status !== "passed" || review.solutionSha256 !== state.solution.sha256) {
@@ -1719,7 +1699,8 @@ export async function validateTask(root, taskId) {
 }
 
 function taskRelativeTarget(files, absolute) {
-  return path.relative(files.task, absolute).split(path.sep).join("/");
+  const relative = path.relative(path.dirname(files.requirement), absolute).split(path.sep).join("/");
+  return relative || path.basename(files.requirement);
 }
 
 async function detectedVersion(root, profile) {
@@ -1767,10 +1748,19 @@ export async function validateHandoff(state, handoff, files) {
       try { new URL(link.target); } catch { errors.push(`Handoff link ${link.label} is not a valid URL.`); }
       continue;
     }
-    const absolute = path.resolve(files.task, link.target);
+    if (/^(?:git|project):/.test(link.target)) {
+      let absolute;
+      try { absolute = resolveArtifactPath(files.root, link.target); } catch (error) {
+        errors.push(`Handoff link ${link.label} is invalid: ${error.message}`);
+        continue;
+      }
+      if (!(await pathExists(absolute))) errors.push(`Handoff link ${link.label} does not exist: ${link.target}.`);
+      continue;
+    }
+    const absolute = path.resolve(path.dirname(files.requirement), link.target);
     const relative = path.relative(files.root, absolute);
     if (relative.startsWith("..") || path.isAbsolute(relative)) errors.push(`Handoff link ${link.label} leaves the project root.`);
-    else if (path.basename(absolute) !== "report.md" && !(await pathExists(absolute))) errors.push(`Handoff link ${link.label} does not exist: ${link.target}.`);
+    else if (!(await pathExists(absolute))) errors.push(`Handoff link ${link.label} does not exist: ${link.target}.`);
   }
   return { valid: errors.length === 0, errors };
 }
@@ -1781,7 +1771,7 @@ export async function prepareHandoff(root, taskId, input = {}, clock = () => new
   await assertContractIntegrity(files, state);
   const environment = input.environment || state.preflight?.environment || "local";
   const { profile } = await loadEnvironmentProfile(root, environment);
-  const language = inferHumanLanguage(await readUtf8(files.solution), state.requirement);
+  const language = inferHumanLanguage(solutionContract(await readUtf8(files.requirement)), state.requirement);
   const zh = language === "zh-CN";
   const credentialVariables = splitProfileList(profile.credential_variables);
   const evidenceLinks = [];
@@ -1789,16 +1779,13 @@ export async function prepareHandoff(root, taskId, input = {}, clock = () => new
     for (const item of state.results[criterion.id]?.evidence ?? []) {
       evidenceLinks.push({
         label: `${criterion.id} ${zh ? "证据" : "evidence"}: ${path.basename(item.path)}`,
-        target: taskRelativeTarget(files, path.join(files.root, item.path)),
+        target: item.path,
         applicable: true,
       });
     }
   }
   const links = [
-    { label: zh ? "详细交付报告" : "Detailed delivery report", target: "report.md", applicable: true },
-    { label: zh ? "已批准的验收卡" : "Approved acceptance card", target: "acceptance.md", applicable: true },
-    { label: zh ? "已批准的方案卡" : "Approved solution card", target: "solution.md", applicable: true },
-    { label: zh ? "问题与修复日志" : "Issue and repair log", target: "issues.md", applicable: true },
+    { label: zh ? "唯一需求交付文档" : "Single requirement delivery document", target: path.basename(files.requirement), applicable: true },
     { label: `${environment} ${zh ? "环境档案" : "environment profile"}`, target: taskRelativeTarget(files, path.join(files.environments, `${environment}.yaml`)), applicable: true },
   ];
   const packageFile = path.join(files.root, "package.json");
@@ -1848,7 +1835,7 @@ export async function prepareHandoff(root, taskId, input = {}, clock = () => new
       action: criterion.when,
       expected: criterion.then,
       checkbox: "[ ] Pass  [ ] Fail",
-      evidence: (state.results[criterion.id]?.evidence ?? []).map((item) => taskRelativeTarget(files, path.join(files.root, item.path))),
+      evidence: (state.results[criterion.id]?.evidence ?? []).map((item) => item.path),
       judgment: criterion.classification === "AUTO"
         ? (zh ? "确认准备的证据与预期结果一致。" : "Confirm the prepared evidence matches the expected result.")
         : (zh ? "此项需要人工判断。" : "A person must make this judgment."),
@@ -1984,17 +1971,21 @@ export async function readinessErrorsForState(root, state, files, options = {}) 
 function resultTable(state, language = "en") {
   const zh = language === "zh-CN";
   const lines = [zh ? "| 验收 | 类型 | 阻塞 | 状态 | 证据 |" : "| Acceptance | Class | Blocking | Status | Evidence |", "|---|---|---:|---|---|"];
-  const taskPrefix = `.openatdd/tasks/${state.taskId}/`;
-  const taskDirectory = `.openatdd/tasks/${state.taskId}`;
   for (const criterion of state.acceptance.items) {
     const result = state.results[criterion.id];
-    const evidence = (result?.evidence ?? []).map((item) => {
-      const target = item.path.startsWith(taskPrefix)
-        ? item.path.slice(taskPrefix.length)
-        : path.posix.relative(taskDirectory, item.path);
-      return `[${path.basename(item.path)}](${target})`;
-    }).join(", ") || "-";
+    const evidence = (result?.evidence ?? []).map((item) => `\`${item.path}\``).join(", ") || "-";
     lines.push(`| ${criterion.id} | ${criterion.classification} | ${criterion.blocking ? (zh ? "是" : "yes") : (zh ? "否" : "no")} | ${result?.status ?? (zh ? "未验证" : "unverified")} | ${evidence} |`);
+  }
+  return lines.join("\n");
+}
+
+function deliveryResultTable(state, language = "en") {
+  const zh = language === "zh-CN";
+  const lines = [zh ? "| 验收 | 类型 | 状态 | 结果摘要 |" : "| Acceptance | Class | Status | Result summary |", "|---|---|---|---|"];
+  for (const criterion of state.acceptance.items) {
+    const result = state.results[criterion.id];
+    const summary = result?.summary?.replace(/\|/g, "\\|") || (zh ? "尚未验证" : "Not verified yet");
+    lines.push(`| ${criterion.id} | ${criterion.classification} | ${result?.status ?? (zh ? "未验证" : "unverified")} | ${summary} |`);
   }
   return lines.join("\n");
 }
@@ -2003,7 +1994,7 @@ function renderChineseTaskReport(state, handoff = null) {
   const checks = Object.values(state.checks);
   const manual = state.acceptance.items.filter((item) => item.classification !== "AUTO");
   const manualIds = new Set(state.acceptance.items
-    .filter((item) => item.classification === "MANUAL" && item.blocking)
+    .filter((item) => item.classification !== "AUTO" && item.blocking)
     .map((item) => item.id));
   const manualSteps = (handoff?.steps ?? []).filter((step) => manualIds.has(step.acceptanceId));
   const lines = [`# 交付报告：${state.taskId}`, ""];
@@ -2040,7 +2031,7 @@ function renderChineseTaskReport(state, handoff = null) {
           `- 预期结果：${step.expected}`,
           `- 检查记录：${step.checkbox}`,
           `- 判断方式：${step.judgment}`,
-          `- 已准备证据：${step.evidence.length > 0 ? step.evidence.map((target) => `[${path.basename(target)}](${target})`).join(", ") : "无独立证据文件；请判断上述可观察结果。"}`,
+          `- 已准备证据：${step.evidence.length > 0 ? step.evidence.map((target) => `\`${target}\``).join(", ") : "无独立证据文件；请判断上述可观察结果。"}`,
           "",
         );
       }
@@ -2098,7 +2089,7 @@ export function renderTaskReport(state, handoff = null) {
   const checks = Object.values(state.checks);
   const manual = state.acceptance.items.filter((item) => item.classification !== "AUTO");
   const manualIds = new Set(state.acceptance.items
-    .filter((item) => item.classification === "MANUAL" && item.blocking)
+    .filter((item) => item.classification !== "AUTO" && item.blocking)
     .map((item) => item.id));
   const manualSteps = (handoff?.steps ?? []).filter((step) => manualIds.has(step.acceptanceId));
   const lines = [
@@ -2138,7 +2129,7 @@ export function renderTaskReport(state, handoff = null) {
           `- Expected result: ${step.expected}`,
           `- Check record: ${step.checkbox}`,
           `- Judgment: ${step.judgment}`,
-          `- Prepared evidence: ${step.evidence.length > 0 ? step.evidence.map((target) => `[${path.basename(target)}](${target})`).join(", ") : "No separate evidence file; judge the stated observable result."}`,
+          `- Prepared evidence: ${step.evidence.length > 0 ? step.evidence.map((target) => `\`${target}\``).join(", ") : "No separate evidence file; judge the stated observable result."}`,
           "",
         );
       }
@@ -2198,6 +2189,101 @@ export function renderTaskReport(state, handoff = null) {
   return `${lines.join("\n")}\n`;
 }
 
+function mergeRecommendation(state) {
+  const humanPending = state.acceptance.items.some((item) => (
+    item.blocking
+    && item.classification !== "AUTO"
+    && state.results[item.id]?.humanStatus !== "passed"
+  ));
+  const scopeDrift = state.delivery?.scopeDrift ?? [];
+  if (scopeDrift.length > 0) return { humanPending, mergeable: false, reason: "scope-drift" };
+  if (!isDeliveryTerminalPhase(state.phase)) return { humanPending, mergeable: false, reason: "not-delivered" };
+  return { humanPending, mergeable: !humanPending, reason: humanPending ? "human-acceptance" : "ready" };
+}
+
+export function renderDeliverySection(state, handoff = null) {
+  const language = handoff?.context?.language ?? inferHumanLanguage(state.requirement, state.acceptance.items.map((item) => item.title));
+  const zh = language === "zh-CN";
+  const recommendation = mergeRecommendation(state);
+  const humanIds = new Set(state.acceptance.items.filter((item) => item.blocking && item.classification !== "AUTO").map((item) => item.id));
+  const humanSteps = (handoff?.steps ?? []).filter((step) => humanIds.has(step.acceptanceId));
+  const changedFiles = state.delivery?.changedFiles ?? [];
+  const scopeDrift = state.delivery?.scopeDrift ?? [];
+  const checks = Object.values(state.checks ?? {});
+  const status = recommendation.humanPending
+    ? (zh ? "等待人工验收" : "Waiting for human acceptance")
+    : isDeliveryTerminalPhase(state.phase)
+      ? (zh ? "已验收" : "Accepted")
+      : (zh ? "交付处理中" : "Delivery in progress");
+  const merge = recommendation.reason === "scope-drift"
+    ? (zh ? "不可合并：存在计划外变更" : "Do not merge: scope drift exists")
+    : recommendation.humanPending
+      ? (zh ? "人工验收通过后可合并" : "Merge after human acceptance passes")
+      : recommendation.mergeable
+        ? (zh ? "可以合并" : "Ready to merge")
+        : (zh ? "暂不可合并" : "Do not merge yet");
+  const lines = [
+    zh ? "## 状态与合并建议" : "## Status and merge recommendation",
+    "",
+    `- ${zh ? "状态" : "Status"}：${status}`,
+    `- ${zh ? "合并建议" : "Merge recommendation"}：${merge}`,
+    "",
+    zh ? "## 交付结论" : "## Delivery conclusion",
+    "",
+    isDeliveryTerminalPhase(state.phase)
+      ? (zh ? `自动验证已完成，验证 epoch 为 ${state.verification.epoch}。` : `Automatic verification is complete for epoch ${state.verification.epoch}.`)
+      : (zh ? "需求正在按批准契约实施和验证。" : "The requirement is being implemented and verified against the approved contracts."),
+    "",
+    zh ? "## 人工验收入口" : "## Human acceptance entry",
+    "",
+  ];
+  if (humanSteps.length > 0 && handoff) {
+    lines.push(
+      `- ${zh ? "环境" : "Environment"}：${handoff.context.environment}`,
+      `- ${zh ? "入口" : "Entry point"}：${handoff.context.entryPoint}`,
+      `- ${zh ? "身份" : "Identity / role"}：${handoff.context.role}`,
+      `- ${zh ? "凭据变量" : "Credential variables"}：${handoff.context.accountReference}`,
+      `- ${zh ? "预计时间" : "Estimated time"}：${handoff.context.estimatedMinutes} ${zh ? "分钟" : "minutes"}`,
+      "",
+      zh ? "### 前置条件" : "### Prerequisites",
+      "",
+      ...handoff.context.prerequisites.map((item) => `- ${item}`),
+      "",
+      zh ? "### 操作步骤" : "### Ordered steps",
+      "",
+    );
+    for (const step of humanSteps) {
+      lines.push(
+        `${step.number}. **${step.acceptanceId} — ${step.title}**`,
+        `   - ${zh ? "操作" : "Action"}：${step.action}`,
+        `   - ${zh ? "预期" : "Expected"}：${step.expected}`,
+        `   - ${zh ? "人工判断" : "Human judgment"}：${step.judgment}`,
+      );
+    }
+    lines.push("", zh ? "失败反馈：请回复失败步骤、实际结果和必要截图，任务会沿同一 issue/repair 链路重新打开。" : "Failure feedback: report the failed step, observed result, and any necessary screenshot; the same task will reopen through its issue/repair flow.", "");
+  } else {
+    lines.push(zh ? "本次没有阻塞的 MANUAL 或 ASSISTED 项，无需人工重复自动测试。" : "There are no blocking MANUAL or ASSISTED items; a person does not need to repeat the automatic tests.", "");
+  }
+  lines.push(
+    zh ? "## Reviewer 重点" : "## Reviewer focus",
+    "",
+    `- ${zh ? "范围漂移" : "Scope drift"}：${scopeDrift.length ? scopeDrift.join(", ") : (zh ? "无计划外变更" : "none")}`,
+    `- ${zh ? "未完成检查" : "Incomplete checks"}：${checks.filter((item) => item.status !== "passed").map((item) => item.name).join(", ") || (zh ? "无" : "none")}`,
+    `- ${zh ? "回滚" : "Rollback"}：${zh ? "还原下方实际变更文件，并删除本需求的 Git 私有运行目录。" : "Revert the actual changed files below and remove this task's Git-private runtime directory."}`,
+    "",
+    zh ? "## 实际变更与验收摘要" : "## Actual changes and acceptance summary",
+    "",
+  );
+  if (changedFiles.length) lines.push(...changedFiles.map((item) => `- ${typeof item === "string" ? item : `${item.status ?? "M"} ${item.path}`}`));
+  else lines.push(zh ? "- 尚未记录产品文件变更。" : "- No product-file changes have been recorded yet.");
+  lines.push("", deliveryResultTable(state, language));
+  return `${lines.join("\n")}\n`;
+}
+
+export function renderRequirementDocument(document, state, handoff = null) {
+  return replaceRequirementSection(document, "delivery", renderDeliverySection(state, handoff));
+}
+
 export function renderTaskNotification(state, handoff = null) {
   const automatic = state.acceptance.items.filter((item) => item.classification === "AUTO" && item.blocking);
   const manual = state.acceptance.items.filter((item) => item.classification !== "AUTO");
@@ -2226,7 +2312,8 @@ export async function markReady(root, taskId, clock = () => new Date()) {
   appendHistory(state, "DELIVERED", now);
   await saveTask(files, state, clock);
   const handoff = state.deliveryVersion >= 2 ? await readJson(files.handoff) : null;
-  await atomicWrite(files.report, renderTaskReport(state, handoff));
+  const document = await readUtf8(files.requirement);
+  await atomicWrite(files.requirement, renderRequirementDocument(document, state, handoff));
   await atomicWrite(files.notification, renderTaskNotification(state, handoff));
   return { state, files };
 }
@@ -2234,7 +2321,8 @@ export async function markReady(root, taskId, clock = () => new Date()) {
 export async function writeReport(root, taskId) {
   const { state, files } = await loadTask(root, taskId);
   const handoff = await pathExists(files.handoff) ? await readJson(files.handoff) : null;
-  await atomicWrite(files.report, renderTaskReport(state, handoff));
+  const document = await readUtf8(files.requirement);
+  await atomicWrite(files.requirement, renderRequirementDocument(document, state, handoff));
   if (isDeliveryTerminalPhase(state.phase)) await atomicWrite(files.notification, renderTaskNotification(state, handoff));
   return { state, files };
 }
@@ -2292,7 +2380,7 @@ export async function prepareTaskContext(root, taskId, input = {}, clock = () =>
   });
   state.context = {
     status: "prepared",
-    path: persist ? path.relative(files.root, files.contextFile).split(path.sep).join("/") : null,
+    path: persist ? artifactLocator(files.root, files.contextFile) : null,
     digest: context.digest,
     sourceDigests: context.sourceDigests,
   };

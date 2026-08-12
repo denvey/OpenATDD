@@ -7,6 +7,7 @@ import {
   captureEvidence,
   createRedactor,
   filesBelow,
+  gitPrivateRoot,
   isoNow,
   pathExists,
   readJson,
@@ -55,12 +56,13 @@ export function environmentFiles(root, environment = "local") {
   const name = environmentName(environment);
   const openatdd = path.join(projectRoot, ".openatdd");
   const environments = path.join(openatdd, "environments");
+  const runtime = gitPrivateRoot(projectRoot);
   return {
     root: projectRoot,
     openatdd,
     environments,
     profile: path.join(environments, `${name}.yaml`),
-    observations: path.join(environments, "observations.json"),
+    observations: path.join(runtime, "environments", "observations.json"),
     dotenv: path.join(projectRoot, ".env.openatdd.local"),
     dotenvExample: path.join(projectRoot, ".env.openatdd.example"),
     gitignore: path.join(projectRoot, ".gitignore"),
@@ -397,8 +399,10 @@ export async function runEnvironmentPreflight(root, environment = "local", input
 
 export async function scanEnvironmentArtifacts(root, secretValues) {
   const files = environmentFiles(root);
-  const leaks = await scanFilesForSecrets(files.openatdd, secretValues, [files.dotenv]);
-  for (const file of await filesBelow(files.openatdd)) {
+  const roots = [files.openatdd, gitPrivateRoot(root)];
+  const leaks = [];
+  for (const directory of roots) leaks.push(...await scanFilesForSecrets(directory, secretValues, [files.dotenv]));
+  for (const file of (await Promise.all(roots.map((directory) => filesBelow(directory)))).flat()) {
     if (!/\.(?:json|ya?ml)$/i.test(file)) continue;
     const content = await readFile(file, "utf8");
     const pattern = /\.json$/i.test(file)

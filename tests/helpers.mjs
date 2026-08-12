@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import {
@@ -10,6 +10,7 @@ import {
   recordSolutionReview,
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
+import { replaceRequirementSection } from "../skills/openatdd/scripts/contracts.mjs";
 
 export function clock(value) {
   return () => new Date(value);
@@ -115,13 +116,15 @@ ${rows}
 
 export async function writeAcceptance(root, taskId, criteria) {
   const files = taskFiles(root, taskId);
-  await writeFile(files.acceptance, acceptanceMarkdown(taskId, criteria));
+  const document = await readFile(files.requirement, "utf8");
+  await writeFile(files.requirement, replaceRequirementSection(document, "acceptance", acceptanceMarkdown(taskId, criteria)));
   return files;
 }
 
 export async function writeSolution(root, taskId, criteria, impactPaths) {
   const files = taskFiles(root, taskId);
-  await writeFile(files.solution, solutionMarkdown(taskId, criteria, impactPaths));
+  const document = await readFile(files.requirement, "utf8");
+  await writeFile(files.requirement, replaceRequirementSection(document, "solution", solutionMarkdown(taskId, criteria, impactPaths)));
   return files;
 }
 
@@ -156,5 +159,5 @@ export async function writeEvidence(root, taskId, name, content = name) {
   await mkdir(files.evidence, { recursive: true });
   const target = path.join(files.evidence, name);
   await writeFile(target, `${content}\n`);
-  return path.relative(root, target);
+  return target;
 }

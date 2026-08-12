@@ -2,8 +2,11 @@ import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import {
   assertTaskId,
+  artifactLocator,
   atomicWrite,
+  gitPrivateRoot,
   pathExists,
+  resolveArtifactPath,
   sha256,
   toPosix,
 } from "./lib.mjs";
@@ -47,7 +50,7 @@ function contextDigest(context) {
 }
 
 function relativePath(root, target) {
-  return toPosix(path.relative(path.resolve(root), path.resolve(target)));
+  return artifactLocator(root, target);
 }
 
 function withLoadStatus(context, status) {
@@ -58,13 +61,14 @@ function withLoadStatus(context, status) {
 export function contextFiles(root, taskId) {
   assertTaskId(taskId);
   const projectRoot = path.resolve(root);
-  const task = path.join(projectRoot, ".openatdd", "tasks", taskId);
+  const task = path.join(gitPrivateRoot(projectRoot), "tasks", taskId);
+  const requirement = path.join(projectRoot, ".openatdd", "requirements", `${taskId}.md`);
   return {
     root: projectRoot,
     task,
     state: path.join(task, "state.json"),
-    acceptance: path.join(task, "acceptance.md"),
-    solution: path.join(task, "solution.md"),
+    acceptance: requirement,
+    solution: requirement,
     context: path.join(task, "context.json"),
   };
 }
@@ -394,8 +398,8 @@ export async function checkContextStaleness(root, context, options = {}) {
   const validation = validateScopedContext(context);
   reasons.push(...validation.errors);
   for (const [relative, expected] of Object.entries(context?.sourceDigests ?? {})) {
-    const target = path.resolve(root, relative);
-    const currentTaskState = relative === `.openatdd/tasks/${context.taskId}/state.json`;
+    const target = resolveArtifactPath(root, relative);
+    const currentTaskState = relative === `git:tasks/${context.taskId}/state.json`;
     const source = await sourceDescriptor(root, target, { semanticTaskState: currentTaskState });
     if (!source) reasons.push(`Context source is missing: ${relative}`);
     else if (source.sha256 !== expected) reasons.push(`Context source changed: ${relative}`);

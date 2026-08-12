@@ -8,7 +8,7 @@
     "files": {
       "src/export.mjs": "export function exportRows(rows) { return rows; }\n",
       "test/fixtures/current-orders.json": "[]\n",
-      ".openatdd/tasks/export/context.json": "{\"repair\":{\"attempts\":[{\"hypothesis\":\"pagination cursor\",\"outcome\":\"no-progress\"}]}}\n"
+      ".openatdd/requirements/export.md": "# Requirement delivery: export\n\nThe persisted Git-private context records one no-progress pagination-cursor hypothesis.\n"
     }
   },
   "expect": {

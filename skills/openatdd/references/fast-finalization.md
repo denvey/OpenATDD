@@ -28,7 +28,7 @@ and solution confirmations before the agent executes finalization.
 ## Project manifest
 
 Store the reusable versioned contract at `.openatdd/finalization.json`. A task
-may provide `.openatdd/tasks/<task>/finalization.manifest.json` when its
+may provide a Git-private `tasks/<task>/finalization.manifest.json` when its
 acceptance IDs or commands cannot safely reuse the project contract. Resolution
 order is an explicit `--manifest`, then the task manifest, then the project
 manifest. The separate `finalization.json` that finalization writes inside the

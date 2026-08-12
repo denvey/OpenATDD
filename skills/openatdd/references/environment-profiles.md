@@ -30,7 +30,7 @@ Record a changed fact only with a non-secret evidence file:
 openatdd observe-env local --key entry_url \
   --value "http://127.0.0.1:3000" \
   --source "local startup output" \
-  --evidence .openatdd/tasks/<task>/evidence/startup.txt
+  --evidence /absolute/path/to/sanitized/startup.txt
 ```
 
 When a value changes, OpenATDD preserves the old observation in stale history
@@ -65,12 +65,12 @@ sanitized evidence newer than the current verification boundary:
   "login": {
     "status": "passed",
     "summary": "Tester reached the expected workspace",
-    "evidence": ".openatdd/tasks/<task>/evidence/login.txt"
+    "evidence": "/absolute/path/to/sanitized/login.txt"
   },
   "organization": {
     "status": "passed",
     "summary": "qa-org is active",
-    "evidence": ".openatdd/tasks/<task>/evidence/login.txt"
+    "evidence": "/absolute/path/to/sanitized/login.txt"
   }
 }
 ```

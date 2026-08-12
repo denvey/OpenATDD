@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 import {
   assert,
   filesBelow,
+  gitPrivateRoot,
   normalizeImpactPath,
   pathExists,
   readJson,
@@ -20,12 +21,7 @@ const PREFLIGHT_SCOPES = new Set(["environment", "project"]);
 const HARD_EXCLUDES = Object.freeze([
   ".git/**",
   ".env.openatdd.local",
-  ".openatdd/tasks/**",
-  ".openatdd/memory/**",
-  ".openatdd/knowledge/graph.json",
-  ".openatdd/transactions/**",
-  ".openatdd/reverification/**",
-  ".openatdd/environments/observations.json",
+  ".openatdd/requirements/**",
   "node_modules/**",
   "coverage/**",
   ".cache/**",
@@ -259,7 +255,7 @@ export async function loadFinalizationManifest(root, taskId, candidate = undefin
   // The author-provided task manifest is deliberately distinct from
   // `finalization.json`, which formal finalization writes as a frozen snapshot.
   // Sharing one path would silently turn that snapshot back into an input.
-  const taskManifest = path.join(projectRoot, ".openatdd", "tasks", taskId, "finalization.manifest.json");
+  const taskManifest = path.join(gitPrivateRoot(projectRoot), "tasks", taskId, "finalization.manifest.json");
   const projectManifest = path.join(projectRoot, ".openatdd", "finalization.json");
   const manifestPath = candidate
     ? resolveInside(root, candidate).resolved
@@ -271,7 +267,9 @@ export async function loadFinalizationManifest(root, taskId, candidate = undefin
   return {
     manifest,
     manifestPath,
-    relativePath: toPosix(path.relative(path.resolve(root), manifestPath)),
+    relativePath: manifestPath === taskManifest
+      ? `git:tasks/${taskId}/finalization.manifest.json`
+      : toPosix(path.relative(path.resolve(root), manifestPath)),
     digest: sha256(canonicalJson(manifest)),
     taskId,
   };

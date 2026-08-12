@@ -39,6 +39,7 @@ import {
   writeAcceptance,
   writeEvidence,
 } from "./helpers.mjs";
+import { acceptanceContract, replaceRequirementSection } from "../skills/openatdd/scripts/contracts.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -120,7 +121,8 @@ async function probeContractDrift(t) {
   const root = await temporaryProject(t);
   await prepareApprovedTask(root, "drift-probe");
   const files = taskFiles(root, "drift-probe");
-  await writeFile(files.acceptance, `${await readFile(files.acceptance, "utf8")}\nunapproved drift\n`);
+  const document = await readFile(files.requirement, "utf8");
+  await writeFile(files.requirement, replaceRequirementSection(document, "acceptance", `${acceptanceContract(document)}\nunapproved drift\n`));
   let rejected = false;
   try {
     await beginImplementation(root, "drift-probe");
@@ -240,7 +242,7 @@ async function probeProjectContextHandoff(t) {
   return {
     automatic_preflight_passed: prepared.state.preflight.status === "passed",
     numbered_steps_cover_acceptance: prepared.handoff.steps.length === criteria.length && prepared.handoff.steps.every((step, index) => step.number === index + 1),
-    descriptive_links_prepared: prepared.handoff.links.some((link) => link.label === "Approved acceptance card" && link.applicable),
+    descriptive_links_prepared: prepared.handoff.links.some((link) => link.label === "Single requirement delivery document" && link.applicable),
     only_two_human_gates: prepared.state.acceptance.approvedAt !== null && prepared.state.solution.approvedAt !== null,
   };
 }

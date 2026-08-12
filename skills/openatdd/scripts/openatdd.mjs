@@ -90,7 +90,7 @@ Usage:
   openatdd plan-uat TASK [--plan FILE] [--execution-mode auto|deterministic|browser-low|human]
   openatdd batch TASK --id BATCH --status STATUS --evidence PATH
   openatdd handoff TASK [--estimated-minutes N]
-  openatdd record TASK --acceptance AC-01 --status STATUS [--summary TEXT] --evidence PATH
+  openatdd record TASK --acceptance AC-01 --status STATUS [--human-confirmed] [--summary TEXT] --evidence PATH
   openatdd check TASK --name NAME --scope focused|module|broad --status STATUS
                   --command COMMAND --evidence PATH [--source-fingerprint HASH]
   openatdd issue TASK --acceptance AC-01 --status open --symptom TEXT [--evidence PATH]
@@ -443,7 +443,7 @@ async function execute(parsed, io) {
           if (result.preview) io.stdout.write(`Rehearsal passed: ${result.preview.candidateFingerprint}\n`);
           else io.stdout.write("Rehearsal skipped: finalization is already complete for the current fingerprint.\n");
           io.stdout.write(`${result.unchanged ? "Finalization remains complete" : "Finalization completed"}: ${result.state.taskId}\n`);
-          io.stdout.write(`Report: ${result.files.report}\n`);
+          io.stdout.write(`Requirement delivery: ${result.files.requirement}\n`);
           io.stdout.write(`Result: ${result.files.finalizeResult}\n`);
           for (const warning of result.validation.warnings) io.stdout.write(`Warning: ${warning}\n`);
         }
@@ -452,7 +452,7 @@ async function execute(parsed, io) {
         if (json) outputJson(io, { ...result.result, unchanged: result.unchanged });
         else {
           io.stdout.write(`${result.unchanged ? "Finalization remains complete" : "Finalization completed"}: ${result.state.taskId}\n`);
-          io.stdout.write(`Report: ${result.files.report}\n`);
+          io.stdout.write(`Requirement delivery: ${result.files.requirement}\n`);
           io.stdout.write(`Result: ${result.files.finalizeResult}\n`);
         }
       }
@@ -509,6 +509,7 @@ async function execute(parsed, io) {
         status: required(options.status, "--status"),
         summary: options.summary,
         evidence: options.evidence,
+        humanConfirmed: Boolean(options["human-confirmed"]),
       });
       if (json) outputJson(io, summarizeState(result.state));
       else io.stdout.write(`Recorded UAT batch ${options.id}: ${options.status}\n`);
@@ -796,14 +797,14 @@ async function execute(parsed, io) {
     }
     case "ready": {
       const result = await markReady(root, taskId(positionals));
-      if (json) outputJson(io, { ...summarizeState(result.state), report: result.files.report, notification: result.files.notification });
-      else io.stdout.write(`DELIVERED: ${result.state.taskId}\nReport: ${result.files.report}\nNotification draft: ${result.files.notification}\n`);
+      if (json) outputJson(io, { ...summarizeState(result.state), requirement: result.files.requirement });
+      else io.stdout.write(`DELIVERED: ${result.state.taskId}\nRequirement delivery: ${result.files.requirement}\n`);
       return 0;
     }
     case "report": {
       const result = await writeReport(root, taskId(positionals));
-      if (json) outputJson(io, { taskId: result.state.taskId, report: result.files.report });
-      else io.stdout.write(`Wrote report: ${result.files.report}\n`);
+      if (json) outputJson(io, { taskId: result.state.taskId, requirement: result.files.requirement });
+      else io.stdout.write(`Updated requirement delivery: ${result.files.requirement}\n`);
       return 0;
     }
     case "memory": {

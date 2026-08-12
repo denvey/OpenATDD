@@ -7,6 +7,7 @@ const REQUIRED_ACCEPTANCE_FIELDS = Object.freeze({
   then: ["Then", "结果"],
   evidence: ["Evidence", "证据"],
 });
+const REQUIREMENT_SECTIONS = new Set(["delivery", "acceptance", "solution", "details"]);
 
 function escaped(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -51,6 +52,64 @@ export function acceptanceTemplate(taskId, requirement) {
     return `# 验收卡：${taskId}\n\n## 目标\n\n${requirement}\n\n## 建议用户旅程\n\n1. 待填写：描述真实用户的第一个动作。\n2. 待填写：描述可观察的成功结果。\n\n## 验收标准\n\n### AC-01 [AUTO] [BLOCKING] 待填写：命名一个可观察结果\n- 前提：待填写\n- 操作：待填写\n- 结果：待填写\n- 证据：待填写\n\n## 边界\n\n- 待填写：说明重要范围、角色、环境或排除项。\n`;
   }
   return `# Acceptance card: ${taskId}\n\n## Goal\n\n${requirement}\n\n## Suggested user journey\n\n1. TODO: Describe the real user's first action.\n2. TODO: Describe the observable successful outcome.\n\n## Criteria\n\n### AC-01 [AUTO] [BLOCKING] TODO: Name an observable outcome\n- Given: TODO\n- When: TODO\n- Then: TODO\n- Evidence: TODO\n\n## Boundaries\n\n- TODO: State important scope, role, environment, or exclusion.\n`;
+}
+
+function sectionMarkers(name) {
+  if (!REQUIREMENT_SECTIONS.has(name)) throw new Error(`Unknown requirement section: ${name}`);
+  return {
+    start: `<!-- openatdd:${name} -->`,
+    end: `<!-- /openatdd:${name} -->`,
+  };
+}
+
+export function extractRequirementSection(markdown, name) {
+  const markers = sectionMarkers(name);
+  const start = markdown.indexOf(markers.start);
+  const end = markdown.indexOf(markers.end, start + markers.start.length);
+  if (start === -1 || end === -1) return "";
+  return markdown.slice(start + markers.start.length, end).trim();
+}
+
+export function replaceRequirementSection(markdown, name, content) {
+  const markers = sectionMarkers(name);
+  const start = markdown.indexOf(markers.start);
+  const end = markdown.indexOf(markers.end, start + markers.start.length);
+  if (start === -1 || end === -1) throw new Error(`Requirement document is missing the ${name} markers.`);
+  const before = markdown.slice(0, start + markers.start.length);
+  const after = markdown.slice(end);
+  return `${before}\n${String(content ?? "").trim()}\n${after}`;
+}
+
+function initialDelivery(taskId, language) {
+  if (language === "zh-CN") {
+    return `## 状态与合并建议\n\n- 状态：验收契约待完善\n- 合并建议：暂不可合并\n\n## 交付结论\n\n需求已创建，等待完成验收与方案门禁。\n\n## 人工验收入口\n\n尚未进入交付验收。完成实现和自动验证后，本节会显示完整操作链路。\n\n## Reviewer 重点\n\n- 先确认验收标准是否准确覆盖真实用户结果。\n\n## 实际变更与验收摘要\n\n- 尚未开始实现。`;
+  }
+  return `## Status and merge recommendation\n\n- Status: acceptance contract pending\n- Merge recommendation: do not merge yet\n\n## Delivery conclusion\n\nThe requirement exists and is waiting for its acceptance and solution gates.\n\n## Human acceptance entry\n\nDelivery acceptance has not started. This section will contain the complete operation chain after implementation and automatic verification.\n\n## Reviewer focus\n\n- Confirm that the acceptance criteria cover the real user outcome.\n\n## Actual changes and acceptance summary\n\n- Implementation has not started.`;
+}
+
+export function requirementDocument(taskId, requirement) {
+  const language = inferHumanLanguage(requirement);
+  const title = language === "zh-CN" ? `# 需求交付：${taskId}` : `# Requirement delivery: ${taskId}`;
+  const details = language === "zh-CN"
+    ? `## 追溯说明\n\n此处保留验证、修复和运行历史的摘要；机器原始产物存放在 Git 私有运行目录。`
+    : `## Traceability notes\n\nThis area keeps verification, repair, and runtime-history summaries. Raw machine artifacts live in Git-private runtime storage.`;
+  return `${title}\n\n<!-- openatdd:delivery -->\n${initialDelivery(taskId, language)}\n<!-- /openatdd:delivery -->\n\n<!-- openatdd:acceptance -->\n${acceptanceTemplate(taskId, requirement).trim()}\n<!-- /openatdd:acceptance -->\n\n<!-- openatdd:solution -->\n<!-- /openatdd:solution -->\n\n<!-- openatdd:details -->\n${details}\n<!-- /openatdd:details -->\n`;
+}
+
+export function acceptanceContract(markdown) {
+  return extractRequirementSection(markdown, "acceptance") || markdown;
+}
+
+export function solutionContract(markdown) {
+  return extractRequirementSection(markdown, "solution") || markdown;
+}
+
+export function acceptanceFingerprint(markdown) {
+  return fingerprint(acceptanceContract(markdown));
+}
+
+export function solutionFingerprint(markdown) {
+  return fingerprint(solutionContract(markdown));
 }
 
 export function parseAcceptance(markdown) {

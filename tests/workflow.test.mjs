@@ -36,6 +36,7 @@ import {
   writeEvidence,
   writeSolution,
 } from "./helpers.mjs";
+import { acceptanceContract, replaceRequirementSection, solutionContract } from "../skills/openatdd/scripts/contracts.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -74,7 +75,7 @@ test("enforces acceptance approval before solution and solution approval before 
 
   const files = taskFiles(root, "gate-order");
   const { solutionMarkdown } = await import("./helpers.mjs");
-  await writeFile(files.solution, solutionMarkdown("gate-order", criteria));
+  await writeFile(files.requirement, replaceRequirementSection(await readFile(files.requirement, "utf8"), "solution", solutionMarkdown("gate-order", criteria)));
   await recordSolutionReview(root, "gate-order", {
     status: "passed",
     reviewer: "main",
@@ -90,8 +91,8 @@ test("detects silent changes to an approved contract", async (t) => {
   const root = await temporaryProject(t);
   await prepareApprovedTask(root, "contract-drift");
   const files = taskFiles(root, "contract-drift");
-  const acceptance = await readFile(files.acceptance, "utf8");
-  await writeFile(files.acceptance, `${acceptance}\nSilent change.\n`);
+  const document = await readFile(files.requirement, "utf8");
+  await writeFile(files.requirement, replaceRequirementSection(document, "acceptance", `${acceptanceContract(document)}\nSilent change.\n`));
 
   await assert.rejects(
     () => beginImplementation(root, "contract-drift"),
@@ -127,8 +128,8 @@ test("requires fresh evidence and a passing project check before readiness", asy
 
   const ready = await markReady(root, "evidence-gate");
   assert.equal(ready.state.phase, "DELIVERED");
-  const report = await readFile(ready.files.report, "utf8");
-  assert.match(report, /^# Delivery report:/);
+  const report = await readFile(ready.files.requirement, "utf8");
+  assert.match(report, /^# Requirement delivery:/);
   assert.match(report, /AC-01/);
 
   await writeFile(path.resolve(root, acceptanceEvidence), "mutated after recording\n");
@@ -158,9 +159,9 @@ test("delivery is final by default and a later objection reopens repair", async 
   assert.equal(reopened.state.issues[0].status, "open");
 });
 
-test("new and legacy delivery phases are both recognized as terminal", () => {
+test("only the current delivery phase is recognized as terminal", () => {
   assert.equal(isDeliveryTerminalPhase(PHASES.DELIVERED), true);
-  assert.equal(isDeliveryTerminalPhase(PHASES.READY_FOR_UAT), true);
+  assert.equal(isDeliveryTerminalPhase("READY_FOR_UAT"), false);
   assert.equal(isDeliveryTerminalPhase(PHASES.PRE_UAT), false);
 });
 
@@ -281,7 +282,7 @@ test("the Skill CLI runs from a copied standalone directory", async (t) => {
   await execFileAsync(process.execPath, [script, "new", "portable", "--requirement", "Portable workflow", "--root", target]);
   const { stdout } = await execFileAsync(process.execPath, [script, "status", "portable", "--json", "--root", target]);
   assert.equal(JSON.parse(stdout).phase, "ACCEPTANCE_DRAFT");
-  assert.match(await readFile(path.join(target, ".openatdd", "tasks", "portable", "acceptance.md"), "utf8"), /Portable workflow/);
+  assert.match(await readFile(path.join(target, ".openatdd", "requirements", "portable.md"), "utf8"), /Portable workflow/);
 });
 
 test("acceptance validation rejects placeholders and duplicate IDs", async () => {
@@ -515,7 +516,7 @@ test("CLI new accepts inline assessment and returns related knowledge hits", asy
   assert.equal(payload.routing.lane, "quick");
   assert(Array.isArray(payload.knowledge.memory.matches));
   assert(Array.isArray(payload.knowledge.graph.matches));
-  assert.equal(payload.knowledge.graph.projectTruth.path, ".openatdd/knowledge/project.md");
+  assert.equal(payload.knowledge.graph.projectTruth.path, "project:.openatdd/knowledge/project.md");
   assert.deepEqual(Object.keys(payload.knowledge.graph.projectTruth).sort(), ["path", "sha256", "size", "title"]);
   assert(!payload.knowledge.graph.matches.some((match) => match.node.type === "ProjectTruth"));
   assert(!created.stdout.includes("Export button state is deterministic."));

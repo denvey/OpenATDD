@@ -19,6 +19,8 @@ import {
   loadScopedContext,
   validateScopedContext,
 } from "../skills/openatdd/scripts/context.mjs";
+import { gitPrivateRoot } from "../skills/openatdd/scripts/lib.mjs";
+import { requirementDocument, replaceRequirementSection } from "../skills/openatdd/scripts/contracts.mjs";
 
 async function temporaryProject(t) {
   const root = await mkdtemp(path.join(tmpdir(), "openatdd-knowledge-"));
@@ -99,12 +101,16 @@ async function writeJson(target, value) {
 }
 
 async function writeTask(root, taskId, requirement, item, impactPath, approvedAt, extra = {}) {
-  const directory = path.join(root, ".openatdd", "tasks", taskId);
+  const directory = path.join(gitPrivateRoot(root), "tasks", taskId);
   await mkdir(directory, { recursive: true });
-  await writeFile(path.join(directory, "acceptance.md"), acceptance(taskId, item));
-  await writeFile(path.join(directory, "solution.md"), solution(taskId, item, impactPath));
+  const requirementPath = path.join(root, ".openatdd", "requirements", `${taskId}.md`);
+  await mkdir(path.dirname(requirementPath), { recursive: true });
+  let document = requirementDocument(taskId, requirement);
+  document = replaceRequirementSection(document, "acceptance", acceptance(taskId, item));
+  document = replaceRequirementSection(document, "solution", solution(taskId, item, impactPath));
+  await writeFile(requirementPath, document);
   await writeJson(path.join(directory, "state.json"), {
-    schemaVersion: 2,
+    schemaVersion: 3,
     taskId,
     requirement,
     phase: "IMPLEMENTING",
@@ -142,11 +148,12 @@ async function projectFixture(t) {
   });
   await writeTask(root, "invariant-export", "Filter a separate reporting source", invariantRelated, "src/report-filter", "2026-01-04T00:00:00.000Z");
 
-  const memory = path.join(root, ".openatdd", "memory");
+  const memory = path.join(gitPrivateRoot(root), "memory");
   await mkdir(path.join(memory, "incidents"), { recursive: true });
   await writeFile(path.join(memory, "incidents", "INC-2026-001-pagination.md"), "# Pagination incident\n\nThe final cursor was omitted.\n");
   await writeFile(path.join(memory, "incidents", "INC-2026-002-filter.md"), "# Filter incident\n\nA reporting filter bypassed the shared pagination invariant.\n");
-  await writeFile(path.join(memory, "invariants.md"), `# Project invariants
+  await mkdir(path.join(root, ".openatdd", "knowledge"), { recursive: true });
+  await writeFile(path.join(root, ".openatdd", "knowledge", "invariants.md"), `# Project invariants
 
 ## INV-2026-001
 
@@ -201,7 +208,7 @@ Every matching pagination cursor is consumed exactly once.
 `);
   await writeFile(path.join(knowledge, "standards", "export.md"), "# Export standard\n\nEvery export consumes deterministic pagination and reuses established paths.\n");
   await writeFile(path.join(knowledge, "research", "filtered-export.md"), "# Filtered export research\n\nLocal analysis favors the existing cursor implementation over new infrastructure.\n");
-  await writeJson(path.join(root, ".openatdd", "environments", "observations.json"), {
+  await writeJson(path.join(gitPrivateRoot(root), "environments", "observations.json"), {
     schemaVersion: 1,
     observations: [{
       environment: "local",
@@ -265,8 +272,9 @@ test("derives shared-invariant impacts even when implementation paths do not ove
 test("detects changed canonical sources and repairs stale, missing, or invalid indexes", async (t) => {
   const { root, current } = await projectFixture(t);
   const first = await buildGraph(root, { persist: true });
-  const acceptancePath = path.join(root, ".openatdd", "tasks", "current-export", "acceptance.md");
-  await writeFile(acceptancePath, acceptance("current-export", { ...current, title: "Filtered orders export with a visible status" }));
+  const acceptancePath = path.join(root, ".openatdd", "requirements", "current-export.md");
+  const document = await readFile(acceptancePath, "utf8");
+  await writeFile(acceptancePath, replaceRequirementSection(document, "acceptance", acceptance("current-export", { ...current, title: "Filtered orders export with a visible status" })));
 
   const stale = await graphStaleness(root, first);
   assert.equal(stale.stale, true);
@@ -303,7 +311,7 @@ test("builds one scoped context with distinct implementation and verification re
   assert(quick.verification.some((reference) => reference.type === "ProjectTruth"));
   assert(quick.verification.some((reference) => reference.type === "HistoricalAcceptance"));
   assert(!quick.implementation.some((reference) => reference.type === "HistoricalAcceptance"));
-  assert(Object.keys(quick.sourceDigests).every((source) => source.startsWith(".openatdd/")));
+  assert(Object.keys(quick.sourceDigests).every((source) => /^(?:project|git):/.test(source)));
 
   const standard = await buildScopedContext(root, "current-export", { lane: "standard", persist: true });
   assert.equal(JSON.parse(await readFile(files.context, "utf8")).digest, standard.digest);
@@ -356,11 +364,12 @@ test("marks changed scoped sources stale and safely rebuilds missing context", a
   const { root } = await projectFixture(t);
   const context = await buildScopedContext(root, "current-export", { lane: "standard", persist: true });
   const solutionPath = contextFiles(root, "current-export").solution;
-  await writeFile(solutionPath, `${await readFile(solutionPath, "utf8")}\n<!-- clarified -->\n`);
+  const document = await readFile(solutionPath, "utf8");
+  await writeFile(solutionPath, replaceRequirementSection(document, "solution", `${solution("current-export", criterion("AC-01", "Filtered orders can be exported safely"), "src/export/csv")}\n<!-- clarified -->\n`));
 
   const stale = await checkContextStaleness(root, context, { checkGraph: false });
   assert.equal(stale.stale, true);
-  assert(stale.reasons.some((reason) => reason.includes("solution.md")));
+  assert(stale.reasons.some((reason) => reason.includes("current-export.md")));
 
   await rm(contextFiles(root, "current-export").context);
   const rebuilt = await loadScopedContext(root, "current-export", { lane: "standard", persist: false });

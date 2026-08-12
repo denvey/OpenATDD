@@ -7,6 +7,7 @@ import test from "node:test";
 import {
   atomicWriteBatch,
   filesBelow,
+  gitPrivateRoot,
   pathExists,
 } from "../skills/openatdd/scripts/lib.mjs";
 import {
@@ -202,7 +203,7 @@ test("task finalization manifest wins over the project default unless an explici
   await rm(projectPath);
   await beginImplementation(root, taskId);
   const preview = await dryRunFinalization(root, taskId);
-  assert.equal(preview.preview.manifestPath, `.openatdd/tasks/${taskId}/finalization.manifest.json`);
+  assert.equal(preview.preview.manifestPath, `git:tasks/${taskId}/finalization.manifest.json`);
 
   await rm(taskPath);
   await writeManifest(root, projectManifest);
@@ -287,25 +288,25 @@ test("dry-run rejects broken report links without recording a formal pass", asyn
   assert.equal((await loadTask(root, taskId)).state.results["AC-01"], undefined);
 });
 
-test("fingerprints include deliverable changes and exclude credentials and runtime evidence", async (t) => {
+test("fingerprints include deliverable changes and exclude credentials, requirements, and private runtime", async (t) => {
   const root = await temporaryProject(t);
   await mkdir(path.join(root, "src"), { recursive: true });
-  await mkdir(path.join(root, ".openatdd", "tasks", "ignored", "evidence"), { recursive: true });
-  await mkdir(path.join(root, ".openatdd", "knowledge"), { recursive: true });
+  await mkdir(path.join(root, ".openatdd", "requirements"), { recursive: true });
+  const runtimeEvidence = path.join(gitPrivateRoot(root), "tasks", "ignored", "evidence");
+  await mkdir(runtimeEvidence, { recursive: true });
   await writeFile(path.join(root, "src", "feature.mjs"), "export const value = 1;\n");
   await writeFile(path.join(root, "new-file.txt"), "untracked deliverable\n");
   await writeFile(path.join(root, ".env.openatdd.local"), "PASSWORD=local-only\n");
-  await writeFile(path.join(root, ".openatdd", "tasks", "ignored", "evidence", "run.txt"), "runtime\n");
-  await writeFile(path.join(root, ".openatdd", "knowledge", "graph.json"), "{\"rebuilt\":1}\n");
+  await writeFile(path.join(root, ".openatdd", "requirements", "ignored.md"), "# Runtime-neutral requirement\n");
+  await writeFile(path.join(runtimeEvidence, "run.txt"), "runtime\n");
   const first = await fingerprintProject(root, { include: ["**/*"] });
   assert(first.files.some((item) => item.path === "src/feature.mjs"));
   assert(first.files.some((item) => item.path === "new-file.txt"));
   assert(!first.files.some((item) => item.path === ".env.openatdd.local"));
-  assert(!first.files.some((item) => item.path.includes("evidence/run.txt")));
-  assert(!first.files.some((item) => item.path === ".openatdd/knowledge/graph.json"));
+  assert(!first.files.some((item) => item.path.startsWith(".openatdd/requirements/")));
 
   await writeFile(path.join(root, ".env.openatdd.local"), "PASSWORD=changed-local-only\n");
-  await writeFile(path.join(root, ".openatdd", "knowledge", "graph.json"), "{\"rebuilt\":2}\n");
+  await writeFile(path.join(runtimeEvidence, "run.txt"), "runtime changed\n");
   assert.equal((await fingerprintProject(root, { include: ["**/*"] })).fingerprint, first.fingerprint);
   await writeFile(path.join(root, "new-file.txt"), "changed deliverable\n");
   assert.notEqual((await fingerprintProject(root, { include: ["**/*"] })).fingerprint, first.fingerprint);
@@ -381,7 +382,18 @@ test("formal finalization prepares ASSISTED evidence without claiming the human 
   assert.equal(completed.result.metrics.uatJourneyRuns, 0);
   const report = await readFile(files.report, "utf8");
   assert.match(report, /Human attention/);
-  assert.doesNotMatch(report, /Suggested human UAT/);
+  assert.match(report, /Suggested human UAT/);
+  const requirement = await readFile(files.requirement, "utf8");
+  assert.match(requirement, /Status：Waiting for human acceptance/);
+  assert.match(requirement, /Credential variables/);
+  assert.match(requirement, /Ordered steps/);
+  await import("../skills/openatdd/scripts/workflow.mjs").then(({ recordAcceptanceResult }) => recordAcceptanceResult(root, taskId, {
+    acceptanceId: "AC-01",
+    status: "manual",
+    humanConfirmed: true,
+    summary: "A person completed the acceptance chain successfully.",
+  }));
+  assert.match(await readFile(files.requirement, "utf8"), /Status：Accepted/);
 });
 
 test("blocking MANUAL acceptance adds human UAT without adding an approval gate", async (t) => {
@@ -456,7 +468,7 @@ test("loaded local credentials are redacted from preview commands and reports", 
       login: {
         status: "passed",
         summary: "local test login verified",
-        evidence: path.relative(root, loginEvidence),
+        evidence: loginEvidence,
       },
     },
   });
@@ -478,7 +490,7 @@ test("formal preflight accepts reusable assertion evidence from the current repa
     login: {
       status: "passed",
       summary: "authenticated local tester",
-      evidence: path.relative(root, evidence),
+      evidence,
     },
   };
 
@@ -580,7 +592,7 @@ test("a formal run reuses evidence for identical narrower commands and never sub
 });
 
 test("identical commands run independently unless deterministic reuse is explicit", async (t) => {
-  const marker = ".openatdd/tasks/no-implicit-reuse/invocations.txt";
+  const marker = ".openatdd/requirements/.no-implicit-reuse-invocations";
   const script = `const fs = require("node:fs"); const marker = ${JSON.stringify(marker)}; const count = fs.existsSync(marker) ? Number(fs.readFileSync(marker, "utf8")) : 0; fs.writeFileSync(marker, String(count + 1)); if (count > 0) process.exit(9);`;
   const { root, taskId } = await approvedImplementation(t, "no-implicit-reuse", {
     assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
@@ -739,7 +751,7 @@ test("multi-file commits roll back validation failures and recover interrupted j
   );
   assert.equal(await readFile(target, "utf8"), "before\n");
 
-  const directory = path.join(root, ".openatdd", "transactions", "interrupted");
+  const directory = path.join(gitPrivateRoot(root), "transactions", "interrupted");
   await mkdir(directory, { recursive: true });
   const before = path.join(directory, "before-0000");
   const after = path.join(directory, "after-0000");
@@ -775,7 +787,7 @@ test("affected history reuses identical epoch evidence and caches distinct repla
   await writeManifest(root, manifest);
   await dryRunFinalization(root, "historical");
   await finalizeTask(root, "historical");
-  await rm(path.join(root, ".openatdd", "reverification", "index.json"), { force: true });
+  await rm(path.join(gitPrivateRoot(root), "reverification", "index.json"), { force: true });
 
   await prepareApprovedTask(root, "current-one", {
     criteria,
@@ -793,7 +805,7 @@ test("affected history reuses identical epoch evidence and caches distinct repla
   assert.equal(first.result.metrics.historyRuns, 0);
   assert.equal(first.result.metrics.historyEpochReuse, 1);
   assert.equal(first.result.metrics.historyCacheHits, 0);
-  assert.equal(await pathExists(path.join(root, ".openatdd", "reverification", "index.json")), true);
+  assert.equal(await pathExists(path.join(gitPrivateRoot(root), "reverification", "index.json")), true);
   assert.match((await loadTask(root, "historical")).state.results["AC-01"].summary, /Reverified once/);
 
   await prepareApprovedTask(root, "current-two", {

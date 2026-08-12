@@ -1,14 +1,17 @@
 import { mkdir, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import {
+  artifactLocator,
   atomicWrite,
+  gitPrivateRoot,
   normalizeImpactPath,
   pathExists,
+  resolveArtifactPath,
   sha256,
   toPosix,
   tokenize,
 } from "./lib.mjs";
-import { parseAcceptance, parseSolution } from "./contracts.mjs";
+import { acceptanceContract, parseAcceptance, parseSolution, solutionContract } from "./contracts.mjs";
 
 const GRAPH_SCHEMA_VERSION = 1;
 const RELATION_TYPES = new Set([
@@ -56,7 +59,7 @@ function nowIso(clock) {
 }
 
 function relativePath(root, target) {
-  return toPosix(path.relative(path.resolve(root), path.resolve(target)));
+  return artifactLocator(root, target);
 }
 
 function safeIdPart(value) {
@@ -91,19 +94,21 @@ export function graphFiles(root) {
   const projectRoot = path.resolve(root);
   const openatdd = path.join(projectRoot, ".openatdd");
   const knowledge = path.join(openatdd, "knowledge");
+  const runtime = gitPrivateRoot(projectRoot);
   return {
     root: projectRoot,
     openatdd,
-    tasks: path.join(openatdd, "tasks"),
-    memory: path.join(openatdd, "memory"),
-    memoryIndex: path.join(openatdd, "memory", "index.json"),
-    invariants: path.join(openatdd, "memory", "invariants.md"),
-    observations: path.join(openatdd, "environments", "observations.json"),
+    requirements: path.join(openatdd, "requirements"),
+    tasks: path.join(runtime, "tasks"),
+    memory: path.join(runtime, "memory"),
+    memoryIndex: path.join(runtime, "memory", "index.json"),
+    invariants: path.join(knowledge, "invariants.md"),
+    observations: path.join(runtime, "environments", "observations.json"),
     projectTruth: path.join(knowledge, "project.md"),
     standards: path.join(knowledge, "standards"),
     research: path.join(knowledge, "research"),
     knowledge,
-    graph: path.join(knowledge, "graph.json"),
+    graph: path.join(runtime, "knowledge", "graph.json"),
   };
 }
 
@@ -176,11 +181,11 @@ function evidenceItems(value) {
   return Array.isArray(value) ? value.filter((item) => item?.path || item?.sha256) : [];
 }
 
-async function taskDirectoryNames(directory, warnings) {
+async function taskDocumentNames(directory, warnings) {
   try {
     return (await readdir(directory, { withFileTypes: true }))
-      .filter((entry) => entry.isDirectory())
-      .map((entry) => entry.name)
+      .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
+      .map((entry) => entry.name.slice(0, -3))
       .sort();
   } catch (error) {
     if (error?.code !== "ENOENT") warnings.push(`Could not enumerate tasks: ${error.message}`);
@@ -289,8 +294,8 @@ function makeBuilder() {
 function recordedEvidenceNode(builder, root, taskId, ownerId, item, source, relation, warnings) {
   const recordedDigest = item.sha256 ?? sha256(stableJson(item));
   const id = `evidence:${recordedDigest}`;
-  const target = item.path ? path.resolve(root, item.path) : null;
-  const withinRoot = target && (relativePath(root, target) === "" || !relativePath(root, target).startsWith("../"));
+  let target = null;
+  try { if (item.path) target = resolveArtifactPath(root, item.path); } catch { target = null; }
   builder.addNode({
     id,
     type: "Evidence",
@@ -299,11 +304,11 @@ function recordedEvidenceNode(builder, root, taskId, ownerId, item, source, rela
     path: item.path,
     recordedDigest,
     stale: false,
-    source: withinRoot ? { path: relativePath(root, target), sha256: recordedDigest } : source,
+    source: target ? { path: relativePath(root, target), sha256: recordedDigest } : source,
     provenance: provenance("recorded-evidence", ["state.json"]),
   });
   builder.addEdge(ownerId, relation, id, { source, provenance: provenance("state-reference", ["evidence"]) });
-  if (item.path && !withinRoot) warnings.push(`Ignored evidence path outside project: ${item.path}`);
+  if (item.path && !target) warnings.push(`Ignored evidence path outside allowed roots: ${item.path}`);
 }
 
 function pathNode(builder, value, source, ownerId) {
@@ -328,15 +333,14 @@ function explicitRelations(state) {
 }
 
 async function addTask(builder, root, taskId, sources, warnings, deferredEdges) {
-  const directory = path.join(root, ".openatdd", "tasks", taskId);
-  const [stateFile, acceptanceFile, solutionFile] = await Promise.all([
+  const directory = path.join(gitPrivateRoot(root), "tasks", taskId);
+  const [stateFile, requirementFile] = await Promise.all([
     sourceFile(root, path.join(directory, "state.json"), warnings, "task state"),
-    sourceFile(root, path.join(directory, "acceptance.md"), warnings, "acceptance card"),
-    sourceFile(root, path.join(directory, "solution.md"), warnings, "solution card"),
+    sourceFile(root, path.join(root, ".openatdd", "requirements", `${taskId}.md`), warnings, "requirement document"),
   ]);
-  for (const file of [stateFile, acceptanceFile, solutionFile]) if (file) sources.set(file.source.path, file.source);
+  for (const file of [stateFile, requirementFile]) if (file) sources.set(file.source.path, file.source);
   const state = parseJsonSource(stateFile, warnings) ?? {};
-  const taskSource = stateFile?.source ?? acceptanceFile?.source ?? solutionFile?.source;
+  const taskSource = stateFile?.source ?? requirementFile?.source;
   if (!taskSource) return;
 
   const taskNode = `task:${taskId}`;
@@ -353,7 +357,7 @@ async function addTask(builder, root, taskId, sources, warnings, deferredEdges) 
     provenance: provenance("task-state", ["requirement", "phase"]),
   });
 
-  const criteria = acceptanceItems(state, acceptanceFile?.text);
+  const criteria = acceptanceItems(state, requirementFile ? acceptanceContract(requirementFile.text) : undefined);
   for (const criterion of criteria) {
     const id = `acceptance:${taskId}:${criterion.id}`;
     builder.addNode({
@@ -365,11 +369,11 @@ async function addTask(builder, root, taskId, sources, warnings, deferredEdges) 
       acceptanceId: criterion.id,
       classification: criterion.classification,
       blocking: criterion.blocking,
-      source: acceptanceFile?.source ?? taskSource,
+      source: requirementFile?.source ?? taskSource,
       provenance: provenance("acceptance-contract", [criterion.id]),
     });
     builder.addEdge(taskNode, "has-acceptance", id, {
-      source: acceptanceFile?.source ?? taskSource,
+      source: requirementFile?.source ?? taskSource,
       provenance: provenance("acceptance-contract", [criterion.id]),
     });
     const result = state.results?.[criterion.id];
@@ -378,8 +382,8 @@ async function addTask(builder, root, taskId, sources, warnings, deferredEdges) 
     }
   }
 
-  const solution = solutionData(state, solutionFile?.text);
-  if (solutionFile || state.solution?.approvedAt || solution.impactPaths.length > 0) {
+  const solution = solutionData(state, requirementFile ? solutionContract(requirementFile.text) : undefined);
+  if (requirementFile || state.solution?.approvedAt || solution.impactPaths.length > 0) {
     const solutionNode = `solution:${taskId}`;
     builder.addNode({
       id: solutionNode,
@@ -388,17 +392,17 @@ async function addTask(builder, root, taskId, sources, warnings, deferredEdges) 
       text: solution.implementation,
       taskId,
       approvedAt: state.solution?.approvedAt,
-      source: solutionFile?.source ?? taskSource,
+      source: requirementFile?.source ?? taskSource,
       provenance: provenance("solution-contract", ["implementation", "impactPaths", "trace"]),
     });
     builder.addEdge(taskNode, "has-solution", solutionNode, {
-      source: solutionFile?.source ?? taskSource,
+      source: requirementFile?.source ?? taskSource,
       provenance: provenance("solution-contract", ["solution"]),
     });
-    for (const impactPath of solution.impactPaths ?? []) pathNode(builder, impactPath, solutionFile?.source ?? taskSource, solutionNode);
+    for (const impactPath of solution.impactPaths ?? []) pathNode(builder, impactPath, requirementFile?.source ?? taskSource, solutionNode);
     for (const row of solution.trace ?? []) {
       builder.addEdge(solutionNode, "implements", `acceptance:${taskId}:${row.acceptanceId}`, {
-        source: solutionFile?.source ?? taskSource,
+        source: requirementFile?.source ?? taskSource,
         text: [row.implementation, row.verification].filter(Boolean).join(" "),
         provenance: provenance("acceptance-trace", [row.acceptanceId]),
       });
@@ -638,7 +642,7 @@ export async function buildGraph(root, options = {}) {
   const builder = makeBuilder();
   const deferredEdges = [];
   try {
-    const taskIds = await taskDirectoryNames(files.tasks, warnings);
+    const taskIds = await taskDocumentNames(files.requirements, warnings);
     for (const taskId of taskIds) await addTask(builder, files.root, taskId, sources, warnings, deferredEdges);
     await addMemory(builder, files.root, files, sources, warnings, deferredEdges);
     await addObservations(builder, files.root, files, sources, warnings);
@@ -665,7 +669,7 @@ export async function buildGraph(root, options = {}) {
 
   if (options.persist) {
     try {
-      await mkdir(files.knowledge, { recursive: true });
+      await mkdir(path.dirname(files.graph), { recursive: true });
       await atomicWrite(files.graph, `${JSON.stringify(graph, null, 2)}\n`);
     } catch (error) {
       graph.warnings.push(`Graph was rebuilt in memory but could not be persisted: ${error.message}`);
@@ -740,7 +744,7 @@ export async function loadGraph(root, options = {}) {
     const graph = stored ?? await buildGraph(root, { persist: false, clock: options.clock });
     if (options.persist !== false) {
       try {
-        await mkdir(files.knowledge, { recursive: true });
+        await mkdir(path.dirname(files.graph), { recursive: true });
         await atomicWrite(files.graph, `${JSON.stringify(graph, null, 2)}\n`);
       } catch (error) {
         graph.warnings.push(`Rebuilt graph could not be persisted: ${error.message}`);
