@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 3,
+  "deliveryVersion": 3,
+  "taskId": "single-file-task-artifacts",
+  "requirement": "将 OpenATDD 重构为每个需求在工作区只产生一个渐进式披露的 Markdown 文件，机器状态集中存储在 Git 私有运行目录，人工验收入口与完整操作链路置于交付文件第一屏",
+  "phase": "ACCEPTANCE_DRAFT",
+  "createdAt": "2026-08-12T02:40:22.993Z",
+  "updatedAt": "2026-08-12T02:40:22.997Z",
+  "acceptance": {
+    "approvedAt": null,
+    "sha256": null,
+    "items": []
+  },
+  "solution": {
+    "approvedAt": null,
+    "sha256": null,
+    "impactPaths": [],
+    "trace": []
+  },
+  "routing": {
+    "status": "assessed",
+    "assessedAt": "2026-08-12T02:40:22.997Z",
+    "schemaVersion": 1,
+    "lane": "deep",
+    "reasons": [
+      "system-scope",
+      "high-uncertainty"
+    ],
+    "assessment": {
+      "scope": "system",
+      "projectPattern": "partial",
+      "reversibility": "costly",
+      "uncertainty": "high",
+      "riskSignals": [
+        "public-compatibility"
+      ]
+    },
+    "riskOverlays": [
+      "public-compatibility"
+    ],
+    "investigation": {
+      "externalResearch": true
+    },
+    "agents": {
+      "policy": "parallel",
+      "roles": [
+        "local-discovery",
+        "external-research",
+        "independent-review"
+      ]
+    },
+    "interaction": {
+      "approvals": "human",
+      "contract": "full"
+    }
+  },
+  "decisions": [],
+  "reviews": {
+    "solution": null
+  },
+  "agents": {
+    "dispatches": []
+  },
+  "context": {
+    "status": "stale",
+    "path": null,
+    "digest": null,
+    "sourceDigests": {}
+  },
+  "repair": {
+    "attempts": [],
+    "lastProgressFingerprint": null,
+    "lastHypothesis": null,
+    "consecutiveNoProgress": 0
+  },
+  "verificationNotBefore": null,
+  "verification": {
+    "epoch": 0,
+    "startedAt": "2026-08-12T02:40:22.993Z",
+    "clean": true
+  },
+  "results": {},
+  "checks": {},
+  "checkSequence": [],
+  "issues": [],
+  "affectedDependencies": [],
+  "preflight": {
+    "status": "not_run",
+    "environment": "local",
+    "checkedAt": null,
+    "warnings": []
+  },
+  "uat": {
+    "planStatus": "not_planned",
+    "batches": {},
+    "warnings": []
+  },
+  "handoff": {
+    "status": "not_prepared",
+    "preparedAt": null
+  },
+  "finalization": {
+    "status": "not_started",
+    "version": 1
+  },
+  "timing": {
+    "currentPhase": "ACCEPTANCE_DRAFT",
+    "phaseStartedAt": "2026-08-12T02:40:22.993Z",
+    "phases": []
+  },
+  "readyAt": null,
+  "history": [
+    {
+      "event": "TASK_CREATED",
+      "at": "2026-08-12T02:40:22.993Z",
+      "details": {
+        "requirement": "将 OpenATDD 重构为每个需求在工作区只产生一个渐进式披露的 Markdown 文件，机器状态集中存储在 Git 私有运行目录，人工验收入口与完整操作链路置于交付文件第一屏"
+      }
+    },
+    {
+      "event": "TASK_ASSESSED",
+      "at": "2026-08-12T02:40:22.997Z",
+      "details": {
+        "lane": "deep",
+        "reasons": [
+          "system-scope",
+          "high-uncertainty"
+        ]
+      }
+    }
+  ]
+}

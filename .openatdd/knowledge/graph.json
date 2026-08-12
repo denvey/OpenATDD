@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "openatdd-semantic-index",
-  "builtAt": "2026-07-29T16:58:32.425Z",
+  "builtAt": "2026-08-12T02:40:23.045Z",
   "stale": false,
   "sources": [
     {
@@ -258,6 +258,16 @@
       "path": ".openatdd/tasks/optimize-quick-delivery/state.json",
       "sha256": "715d927ddbe5384cc7a2a376cf4f8f1eb2be2312bbddaa40798b49662b1a893c",
       "size": 42119
+    },
+    {
+      "path": ".openatdd/tasks/single-file-task-artifacts/acceptance.md",
+      "sha256": "4f6a04ebc6e8d970bbb2fe0fa25fb1733ea57a95521ee073921d583c1ac02294",
+      "size": 647
+    },
+    {
+      "path": ".openatdd/tasks/single-file-task-artifacts/state.json",
+      "sha256": "f5151bf09f30bd2f577b8ac922862d1d17e4a551543b29898e379714954cb20e",
+      "size": 3078
     },
     {
       "path": ".openatdd/tasks/strategy-visibility/acceptance.md",
@@ -4734,6 +4744,35 @@
         "preflight",
         "finalization",
         "回归测试"
+      ]
+    },
+    {
+      "id": "acceptance:single-file-task-artifacts:AC-01",
+      "type": "Acceptance",
+      "title": "待填写：命名一个可观察结果",
+      "text": "待填写 待填写 待填写 待填写",
+      "taskId": "single-file-task-artifacts",
+      "acceptanceId": "AC-01",
+      "classification": "AUTO",
+      "blocking": true,
+      "source": {
+        "path": ".openatdd/tasks/single-file-task-artifacts/acceptance.md",
+        "sha256": "4f6a04ebc6e8d970bbb2fe0fa25fb1733ea57a95521ee073921d583c1ac02294",
+        "size": 647
+      },
+      "provenance": {
+        "kind": "acceptance-contract",
+        "canonical": true,
+        "fields": [
+          "AC-01"
+        ]
+      },
+      "tokens": [
+        "acceptance",
+        "single-file-task-artifacts",
+        "ac-01",
+        "待填写",
+        "命名一个可观察结果"
       ]
     },
     {
@@ -16287,6 +16326,41 @@
       ]
     },
     {
+      "id": "task:single-file-task-artifacts",
+      "type": "Task",
+      "title": "将 OpenATDD 重构为每个需求在工作区只产生一个渐进式披露的 Markdown 文件，机器状态集中存储在 Git 私有运行目录，人工验收入口与完整操作链路置于交付文件第一屏",
+      "text": "将 OpenATDD 重构为每个需求在工作区只产生一个渐进式披露的 Markdown 文件，机器状态集中存储在 Git 私有运行目录，人工验收入口与完整操作链路置于交付文件第一屏",
+      "taskId": "single-file-task-artifacts",
+      "phase": "ACCEPTANCE_DRAFT",
+      "createdAt": "2026-08-12T02:40:22.993Z",
+      "updatedAt": "2026-08-12T02:40:22.997Z",
+      "source": {
+        "path": ".openatdd/tasks/single-file-task-artifacts/state.json",
+        "sha256": "f5151bf09f30bd2f577b8ac922862d1d17e4a551543b29898e379714954cb20e",
+        "size": 3078
+      },
+      "provenance": {
+        "kind": "task-state",
+        "canonical": true,
+        "fields": [
+          "requirement",
+          "phase"
+        ]
+      },
+      "tokens": [
+        "task",
+        "single-file-task-artifacts",
+        "openatdd",
+        "重构为每个需求在工作区只产生一个渐进式披露的",
+        "markdown",
+        "文件",
+        "机器状态集中存储在",
+        "git",
+        "私有运行目录",
+        "人工验收入口与完整操作链路置于交付文件第一屏"
+      ]
+    },
+    {
       "id": "task:strategy-visibility",
       "type": "Task",
       "title": "增加一个默认关闭的策略可见性开关；打开后在执行过程中显示当前采用的 OpenATDD 能力组合、借鉴来源、启用原因、未启用能力及效果指标，并支持完整、裸 Agent 和能力消融对照评测。",
@@ -18577,6 +18651,24 @@
         "fields": [
           "openatdd-1-0",
           "AC-04"
+        ]
+      }
+    },
+    {
+      "id": "edge:1790d7cbed3414fea3187baa",
+      "from": "task:single-file-task-artifacts",
+      "type": "has-acceptance",
+      "to": "acceptance:single-file-task-artifacts:AC-01",
+      "source": {
+        "path": ".openatdd/tasks/single-file-task-artifacts/acceptance.md",
+        "sha256": "4f6a04ebc6e8d970bbb2fe0fa25fb1733ea57a95521ee073921d583c1ac02294",
+        "size": 647
+      },
+      "provenance": {
+        "kind": "acceptance-contract",
+        "canonical": true,
+        "fields": [
+          "AC-01"
         ]
       }
     },
@@ -38718,5 +38810,5 @@
     }
   ],
   "warnings": [],
-  "contentDigest": "36203cbc90f7ea7e431cc906fd8c973ddd1691cb0b9a38e42bd9373238cc1779"
+  "contentDigest": "1578c37f5b542b1a69118a8303bc62ea07579d9e57f60438a319abbed48d011d"
 }
