@@ -45,27 +45,94 @@ blocking decision before acceptance approval.
   independent solution review. Record unavailable research rather than silently
   treating Deep as Standard.
 
-Controller routing is explicit: Quick/Standard use Sol/high and Deep uses
-Sol/xhigh. The current controller never auto-upgrades from High to xHigh.
+Controller routing is explicit: Quick uses Sol/high and Standard/Deep use
+Sol/xhigh.
 The controller remains workspace-write for direct implementation and final
 integration; read-only applies to scouts and independent reviewers.
 Discovery and external research use Luna/low, read-only; independent review uses
-a fresh Sol/high context for Standard and Sol/xhigh for Deep. Give every role a
+a fresh Sol/xhigh context for Standard and Deep. Give every role a
 bounded context and record a host runtime attestation matching model, reasoning
 effort, sandbox, `forkTurns:none`, and leaf capability. Parent runtime overrides
 remain authoritative, so an unverifiable or mismatched runtime fails closed.
 
+Independent review is bounded by machine state, not only prose. Initial review
+uses 900000 ms. Actionable findings are a successful review result; after the
+solution changes, one targeted recheck round uses 300000 ms. A runtime failure
+(timeout, no response, unattached process, or equivalent) permits one fresh
+Reviewer retry for the same solution fingerprint and round. A passed dispatch
+must record actual duration within budget. A third attempt, duplicate result, or
+over-budget PASS is rejected. After two runtime failures, ordinary Deep may use
+an explicitly labelled main-review fallback; dangerous authorization overlays
+require an explicit human fallback decision recorded with `openatdd
+review-fallback TASK --status approved|denied --rationale "..."
+--human-confirmed` before a main-review fallback may pass.
+
 After solution approval, a Standard/Deep controller may persist a structured
-Git-private execution plan. Route bounded, unambiguous, independently verifiable
-tasks to Luna/max and complex/cross-module or ambiguous implementation to
-Terra/high. Workers are leaves: `canSpawnAgents=false`; they cannot change
-acceptance, solution, authorization, scheduling, or final verdicts. Their PASS
-must match actual in-scope changed paths, every planned verification command,
-fresh evidence, and the current candidate fingerprint. Lifecycle `completed`
-is never a PASS. This release permits one running writable worker per worktree;
-parallel writes require isolated worktrees so scope attribution remains provable.
-Scouts explore or verify; Sol owns contracts, scheduling,
-integration, final validation, and the verdict.
+Git-private execution plan. If the person explicitly approves with language such
+as “批准方案，并行执行”, the host records the one-time
+`approve-solution TASK --begin --parallel` directive against only the current
+solution SHA; it is not configuration. Without that request the controller may
+still choose a safe batch when the contract permits it. With it, the controller
+maximizes only safe parallelism from approved `stage`, `dependsOn`, `writeScope`,
+`doNotTouch`, and verification contracts. Dependencies, authorization,
+ownership, isolation, and verification gates always win; a plan with fewer than
+two safe tasks remains serial and is explained before dispatch.
+
+Route both bounded and complex work to Luna/max only when it is unambiguous,
+scope-owned, and independently verifiable. Workers receive an exact prompt,
+ownership, `writeScope`/`doNotTouch`, verification, evidence, base, and
+fingerprint contract. They are leaves with `forkTurns:none` and
+`canSpawnAgents=false`; they cannot change acceptance, solution, authorization,
+scheduling, shared state, integration, or final verdicts. Their PASS must match
+actual in-scope changed paths, every planned verification command, fresh
+evidence, and the current candidate fingerprint. Lifecycle `completed` is never
+a PASS. Work that cannot be safely bounded, or a worker result that is failed,
+blocked, or materially ambiguous, returns to the Sol/xhigh controller for
+replanning or direct implementation; there is no silent Terra fallback.
+
+The controller is the sole contract/state/session-event/integration/verdict
+writer. The Codex App adapter is host-side and maps, in order,
+`create_thread` (one isolated worktree per subtask, starting from the intended
+working-tree state), `send_message_to_thread`, `wait_threads`, and `read_thread`,
+then invokes controller-only `session-record`, `session-result`, and
+`orchestration-integrate`. The core remains host-agnostic and does not call
+Codex proprietary APIs directly. Before creating a thread, require proven
+capabilities and unique `threadId`, worktree, branch, and base identity; missing,
+duplicate, shared, or mismatched identities fail closed rather than enabling
+shared-directory writes.
+
+For every actual parallel batch, the controller must freeze and execute a shared
+interface contract before `create_thread`. The contract names all participating
+task IDs, identifies controller-owned test files outside every worker
+`writeScope`, and supplies bounded deterministic commands. Its passed output and
+file hashes are copied into every prompt, and the files become `doNotTouch` for
+every worker. Recheck the hashes before accepting a result and before
+integration. Missing coverage, a failed command, worker ownership, or drift
+fails closed before the controller incurs post-hoc API/schema reconciliation.
+
+Budget controller integration separately from worker execution. The default
+soft budget is 900000 ms per ready batch, starting only when the batch has no
+active worker and a verified result is ready. It resets for a later dependency
+batch. Once exceeded, prohibit ordinary integration and new scope; allow only a
+recorded `minimal-contract-repair`, `controller-sequential`, or `replan` action.
+
+Each session is independently terminal: a `failed`, `blocked`, or `needs_input`
+result does not erase passed siblings, but blocks affected dependents and final
+integration until the controller replans. Stale baselines, changed candidate
+fingerprints, out-of-scope paths, missing verification/evidence, and merge
+conflicts are not PASS; preserve the other verified results, mark the affected
+session for conflict/replan, and return to Sol/xhigh. This release permits one
+running writable worker per worktree; parallel writes require isolated worktrees
+so scope attribution remains provable. Quick and the existing single-worker path
+remain unchanged, and orchestration never auto-commits, pushes, opens PRs,
+deploys, or deletes branches. Post-delivery cleanup is separately bounded: only
+task-recorded sessions already marked `integrated` may be considered, and the
+controller must revalidate exact path, Git common-dir, immutable identity, and
+all residual content before ordinary `git worktree remove`. Never use `--force`;
+retain and report ignored, unknown, foreign, drifted, or failed candidates.
+
+Scouts explore or verify; Sol owns contracts, scheduling, integration, final
+validation, and the verdict.
 
 For dynamic Web verification only, follow `browser-verification.md`: a
 browser-only Luna/low executor may perform approved steps without code writes.

@@ -52,6 +52,12 @@ function optionalStringList(value, code, message) {
   return [...new Set(value.map((item) => item.trim()))];
 }
 
+function optionalMetadata(value, code, message) {
+  if (value === undefined) return undefined;
+  assert(isRecord(value), code, message);
+  return { ...value };
+}
+
 function normalizePlanTask(input) {
   assert(isRecord(input), "INVALID_EXECUTION_TASK", "Each execution task must be an object.");
   assert(nonEmpty(input.id), "EXECUTION_TASK_ID_REQUIRED", "Each execution task needs an id.");
@@ -65,7 +71,7 @@ function normalizePlanTask(input) {
   for (const forbidden of doNotTouch) {
     assert(!writeScope.some((allowed) => executionPathsOverlap(allowed, forbidden)), "EXECUTION_SCOPE_CONFLICT", `Execution task ${input.id} writeScope overlaps doNotTouch: ${forbidden}.`);
   }
-  return {
+  const normalized = {
     id: input.id.trim(),
     acceptanceIds: stringList(input.acceptanceIds, "EXECUTION_ACCEPTANCE_REQUIRED", `Execution task ${input.id} needs acceptanceIds.`),
     task: input.task.trim(),
@@ -78,6 +84,11 @@ function normalizePlanTask(input) {
     firstArtifact: input.firstArtifact.trim(),
     route: input.route,
   };
+  const session = optionalMetadata(input.session ?? input.sessionMetadata, "INVALID_EXECUTION_SESSION_METADATA", `Execution task ${input.id} session metadata must be an object.`);
+  const isolation = optionalMetadata(input.isolation ?? input.isolationMetadata, "INVALID_EXECUTION_ISOLATION_METADATA", `Execution task ${input.id} isolation metadata must be an object.`);
+  if (session !== undefined) normalized.session = session;
+  if (isolation !== undefined) normalized.isolation = isolation;
+  return normalized;
 }
 
 export function validateExecutionPlan(acceptanceIds, input) {
@@ -106,10 +117,17 @@ export function validateExecutionPlan(acceptanceIds, input) {
       const left = tasks[index];
       const right = tasks[otherIndex];
       const overlap = left.writeScope.some((a) => right.writeScope.some((b) => executionPathsOverlap(a, b)));
-      assert(!overlap, "EXECUTION_SCOPE_OWNER_CONFLICT", `Execution tasks ${left.id} and ${right.id} have overlapping write scopes.`);
+      assert(left.stage !== right.stage || !overlap, "EXECUTION_SCOPE_OWNER_CONFLICT", `Same-stage execution tasks ${left.id} and ${right.id} have overlapping write scopes.`);
     }
   }
-  return { schemaVersion: 1, tasks };
+  const normalized = { schemaVersion: 1, tasks };
+  for (const key of ["orchestration", "parallel", "isolation", "metadata"]) {
+    if (input[key] !== undefined) {
+      assert(isRecord(input[key]), "INVALID_EXECUTION_PLAN_METADATA", `Execution plan ${key} metadata must be an object.`);
+      normalized[key] = { ...input[key] };
+    }
+  }
+  return normalized;
 }
 
 export function validateRuntimeAttestation(expected, input) {

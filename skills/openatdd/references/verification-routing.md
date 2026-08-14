@@ -57,6 +57,39 @@ evidence must be recaptured in the new verification epoch.
 - approved journey: one complete command-backed journey in the same formal operation;
 - history: one affected-history pass after current acceptance succeeds.
 
+## Multi-session verification and integration
+
+Parallel execution does not create a second verification path. The controller
+freezes the intended working-tree state and candidate fingerprint before
+dispatch, then verifies every session against its own base identity and exact
+`writeScope`/`doNotTouch` contract. A worker PASS requires the declared checks,
+fresh evidence, actual changed paths, and a readable worktree-local diff; a
+worker lifecycle of `completed` alone is not evidence.
+
+The Codex App adapter sequence is `create_thread` with an isolated worktree,
+`send_message_to_thread`, `wait_threads`, and `read_thread`. The controller then
+serially records `session-record`, validates `session-result`, and performs
+`orchestration-integrate` in stage/`dependsOn` order. The core remains
+host-agnostic; these are adapter actions, not direct proprietary API calls from
+OpenATDD.
+
+Keep partial outcomes explicit. `failed`, `blocked`, and `needs_input` sessions
+retain their diagnostics and do not erase passed siblings; affected dependents
+remain pending and the Sol/xhigh controller replans or takes the work directly.
+A stale base, candidate drift, duplicate or missing thread/worktree/branch/base
+identity, out-of-scope change, missing verification/evidence, or integration
+conflict fails closed and cannot be recorded as PASS. Preserve independent
+passed results, mark the affected session `conflict`/replan, and rerun the
+affected checks plus the complete approved journey after integration succeeds.
+
+Quick and single-session verification keep the existing routing and finalization
+order. No orchestration result is `DELIVERED` by itself, and no adapter operation
+automatically commits, pushes, opens a PR, deploys, or deletes branches. After
+formal delivery, `orchestration-cleanup` verifies the task-recorded worktree,
+same Git common-dir, immutable identity, integrated session state, and every
+residual tracked/untracked/ignored path. Only a fully proven candidate is removed
+without `--force`; all other candidates remain as evidence and are reported.
+
 Successful formal verification enters `DELIVERED`. Automatic and API evidence
 is presented without asking the person to repeat it. Blocking `ASSISTED` and
 `MANUAL` criteria remain as human UAT steps; passing requires no reply, while an

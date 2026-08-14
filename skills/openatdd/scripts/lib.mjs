@@ -179,14 +179,15 @@ export async function atomicWriteBatch(root, entries, clock = () => new Date()) 
       const before = path.join(directory, `before-${String(index).padStart(4, "0")}`);
       const after = path.join(directory, `after-${String(index).padStart(4, "0")}`);
       if (existed) await writeFile(before, await readFile(target));
-      await writeFile(after, input.content);
-      journal.entries.push({ target, before, after, existed });
+      if (input.delete !== true) await writeFile(after, input.content);
+      journal.entries.push({ target, before, after, existed, delete: input.delete === true });
     }
     journal.status = "prepared";
     await writeJson(path.join(directory, "journal.json"), journal);
     for (const entry of journal.entries) {
       await mkdir(path.dirname(entry.target), { recursive: true });
-      await rename(entry.after, entry.target);
+      if (entry.delete) await rm(entry.target, { force: true });
+      else await rename(entry.after, entry.target);
     }
     journal.status = "committed";
     await writeJson(path.join(directory, "journal.json"), journal);

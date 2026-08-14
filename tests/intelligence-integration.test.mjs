@@ -11,9 +11,12 @@ import {
   beginImplementation,
   createTask,
   draftSolution,
+  INDEPENDENT_REVIEW_BUDGETS,
+  INDEPENDENT_REVIEW_MAX_ATTEMPTS,
   loadTask,
   recordSolutionReview,
   recordAgentDispatch,
+  recordIndependentReviewFallbackDecision,
   recordRepairAttempt,
   recordTaskDecision,
   reopenAcceptance,
@@ -212,6 +215,251 @@ async function solutionReadyTask(root, taskId, assessment) {
   return criteria;
 }
 
+const reviewRuntime = () => ({
+  verified: true,
+  source: "test-host",
+  profile: "sol-critical-review",
+  model: "gpt-5.6-sol",
+  reasoningEffort: "xhigh",
+  forkTurns: "none",
+  sandbox: "read-only",
+  leaf: true,
+  canSpawnAgents: false,
+});
+
+const reviewRuntimeFailure = (blocker = "Reviewer timed out") => ({
+  verified: false,
+  source: "test-host",
+  failureClass: "runtime",
+  blocker,
+});
+
+async function reviewReadyTask(root, taskId, assessment = {}) {
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, `Review ${taskId}`);
+  await assessTask(root, taskId, {
+    scope: "system",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "medium",
+    ...assessment,
+  });
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId);
+  await draftSolution(root, taskId);
+  await writeSolution(root, taskId, criteria, ["src/review"]);
+  return { criteria, files: taskFiles(root, taskId) };
+}
+
+test("independent review budgets bind attempts to the current solution and stop a third runtime retry", async (t) => {
+  const root = await temporaryProject(t);
+  await reviewReadyTask(root, "bounded-review-attempts");
+
+  await assert.rejects(
+    () => recordAgentDispatch(root, "bounded-review-attempts", {
+      id: "AGENT-WRONG-FAIL",
+      role: "independent-review",
+      status: "failed",
+      durationMs: 100,
+      runtimeAttestation: reviewRuntime(),
+    }),
+    (error) => error.code === "INDEPENDENT_REVIEW_RUNTIME_FAILURE_REQUIRED",
+  );
+
+  const first = await recordAgentDispatch(root, "bounded-review-attempts", {
+    id: "AGENT-R1",
+    role: "independent-review",
+    status: "failed",
+    runtimeAttestation: reviewRuntimeFailure(),
+  });
+  assert.deepEqual(first.dispatch.reviewControl, {
+    solutionSha256: first.state.reviews.independent.initialSolutionSha256,
+    round: "initial",
+    timeoutMs: INDEPENDENT_REVIEW_BUDGETS.initial,
+    attempt: 1,
+    maxAttempts: INDEPENDENT_REVIEW_MAX_ATTEMPTS,
+  });
+
+  const second = await recordAgentDispatch(root, "bounded-review-attempts", {
+    id: "AGENT-R2",
+    role: "independent-review",
+    status: "blocked",
+    runtimeAttestation: reviewRuntimeFailure("Fresh Reviewer failed to attach"),
+  });
+  assert.equal(second.dispatch.reviewControl.attempt, 2);
+  assert.equal(second.state.reviews.independent.unavailable.length, 1);
+  await assert.rejects(
+    () => recordAgentDispatch(root, "bounded-review-attempts", {
+      id: "AGENT-R3",
+      role: "independent-review",
+      status: "planned",
+    }),
+    (error) => error.code === "INDEPENDENT_REVIEW_BUDGET_EXHAUSTED",
+  );
+});
+
+test("independent review rejects over-budget success and only rechecks a changed solution after actionable findings", async (t) => {
+  const root = await temporaryProject(t);
+  const { criteria, files } = await reviewReadyTask(root, "bounded-review-recheck");
+
+  await assert.rejects(
+    () => recordAgentDispatch(root, "bounded-review-recheck", {
+      id: "AGENT-SLOW",
+      role: "independent-review",
+      status: "passed",
+      durationMs: INDEPENDENT_REVIEW_BUDGETS.initial + 1,
+      runtimeAttestation: reviewRuntime(),
+    }),
+    (error) => error.code === "INDEPENDENT_REVIEW_TIMEOUT_EXCEEDED",
+  );
+
+  const initial = await recordAgentDispatch(root, "bounded-review-recheck", {
+    id: "AGENT-INITIAL",
+    role: "independent-review",
+    status: "passed",
+    durationMs: INDEPENDENT_REVIEW_BUDGETS.initial,
+    runtimeAttestation: reviewRuntime(),
+  });
+  await recordSolutionReview(root, "bounded-review-recheck", {
+    status: "failed",
+    reviewer: "independent",
+    summary: "The solution needs one bounded correction.",
+    findings: ["Clarify the failure boundary."],
+    checks: "all",
+    agentId: initial.dispatch.id,
+  });
+  await assert.rejects(
+    () => recordAgentDispatch(root, "bounded-review-recheck", {
+      id: "AGENT-DUPLICATE",
+      role: "independent-review",
+      status: "planned",
+    }),
+    (error) => error.code === "INDEPENDENT_REVIEW_ALREADY_COMPLETED",
+  );
+
+  await writeSolution(root, "bounded-review-recheck", criteria, ["src/review", "src/review-boundary"]);
+  const recheck = await recordAgentDispatch(root, "bounded-review-recheck", {
+    id: "AGENT-RECHECK",
+    role: "independent-review",
+    status: "passed",
+    durationMs: INDEPENDENT_REVIEW_BUDGETS.recheck,
+    runtimeAttestation: reviewRuntime(),
+  });
+  assert.equal(recheck.dispatch.reviewControl.round, "recheck");
+  assert.equal(recheck.dispatch.reviewControl.timeoutMs, 300_000);
+  assert.notEqual(recheck.dispatch.reviewControl.solutionSha256, initial.dispatch.reviewControl.solutionSha256);
+  assert.equal(await readFile(files.requirement, "utf8").then((value) => value.includes("src/review-boundary")), true);
+});
+
+test("a failed targeted recheck cannot open a third review round and falls back explicitly", async (t) => {
+  const root = await temporaryProject(t);
+  const { criteria } = await reviewReadyTask(root, "bounded-review-two-rounds");
+  const initial = await recordAgentDispatch(root, "bounded-review-two-rounds", {
+    id: "AGENT-I",
+    role: "independent-review",
+    status: "passed",
+    durationMs: 100,
+    runtimeAttestation: reviewRuntime(),
+  });
+  await recordSolutionReview(root, "bounded-review-two-rounds", {
+    status: "failed",
+    reviewer: "independent",
+    summary: "Initial review found a bounded issue.",
+    findings: ["Clarify recovery."],
+    checks: "all",
+    agentId: initial.dispatch.id,
+  });
+  await writeSolution(root, "bounded-review-two-rounds", criteria, ["src/review", "src/recovery"]);
+  const recheck = await recordAgentDispatch(root, "bounded-review-two-rounds", {
+    id: "AGENT-R",
+    role: "independent-review",
+    status: "passed",
+    durationMs: 100,
+    runtimeAttestation: reviewRuntime(),
+  });
+  await recordSolutionReview(root, "bounded-review-two-rounds", {
+    status: "failed",
+    reviewer: "independent",
+    summary: "The one targeted recheck still found an issue.",
+    findings: ["Clarify rollback ownership."],
+    checks: "all",
+    agentId: recheck.dispatch.id,
+  });
+  await writeSolution(root, "bounded-review-two-rounds", criteria, ["src/review", "src/recovery", "src/rollback"]);
+  await assert.rejects(
+    () => recordAgentDispatch(root, "bounded-review-two-rounds", {
+      id: "AGENT-THIRD-ROUND",
+      role: "independent-review",
+      status: "planned",
+    }),
+    (error) => error.code === "INDEPENDENT_REVIEW_ROUNDS_EXHAUSTED",
+  );
+  await recordSolutionReview(root, "bounded-review-two-rounds", {
+    status: "passed",
+    reviewer: "main",
+    summary: "Main review resolved the remaining issue after the two-round review budget ended.",
+    fallbackReason: "The initial review and one targeted recheck both returned actionable findings.",
+    checks: "all",
+  });
+  assert.equal((await approveSolution(root, "bounded-review-two-rounds")).state.phase, "CONTRACT_APPROVED");
+});
+
+test("bounded review exhaustion permits ordinary fallback and requires explicit human approval for dangerous Deep", async (t) => {
+  for (const [taskId, riskSignals, expectedError] of [
+    ["review-fallback-ordinary", [], null],
+    ["review-fallback-dangerous", ["deletion"], "INDEPENDENT_REVIEW_HUMAN_DECISION_REQUIRED"],
+  ]) {
+    const root = await temporaryProject(t);
+    await reviewReadyTask(root, taskId, { riskSignals });
+    for (const id of ["AGENT-F1", "AGENT-F2"]) {
+      await recordAgentDispatch(root, taskId, {
+        id,
+        role: "independent-review",
+        status: "blocked",
+        runtimeAttestation: reviewRuntimeFailure(),
+      });
+    }
+    await recordSolutionReview(root, taskId, {
+      status: "passed",
+      reviewer: "main",
+      summary: "Main review completed after the bounded independent runtime was unavailable.",
+      fallbackReason: "Two independent Reviewer runtime attempts failed without a usable verdict.",
+      checks: "all",
+    });
+    if (expectedError) {
+      await assert.rejects(() => approveSolution(root, taskId), (error) => error.code === expectedError);
+      await assert.rejects(
+        () => recordIndependentReviewFallbackDecision(root, taskId, {
+          status: "approved",
+          rationale: "The owner accepts main-review fallback.",
+        }),
+        (error) => error.code === "HUMAN_CONFIRMATION_REQUIRED",
+      );
+      await recordIndependentReviewFallbackDecision(root, taskId, {
+        status: "approved",
+        rationale: "The owner accepts main-review fallback after two bounded runtime failures.",
+        humanConfirmed: true,
+      });
+      await recordTaskDecision(root, taskId, {
+        owner: "authorization",
+        coversOverlays: ["deletion"],
+        question: "May this delivery perform the approved deletion behavior?",
+        options: [
+          { id: "authorize", label: "Authorize deletion", consequence: "The approved deletion path may be implemented." },
+          { id: "defer", label: "Defer deletion", consequence: "No deletion behavior is implemented." },
+        ],
+        recommendation: "defer",
+        recommendationBasis: "Deletion remains blocked unless the owner authorizes it explicitly.",
+        status: "resolved",
+        resolution: { optionId: "authorize", rationale: "The owner separately authorized the deletion behavior." },
+      });
+      assert.equal((await approveSolution(root, taskId)).state.phase, "CONTRACT_APPROVED");
+    } else {
+      assert.equal((await approveSolution(root, taskId)).state.phase, "CONTRACT_APPROVED");
+    }
+  }
+});
+
 test("project configuration extends authorization overlays and rejects unknown ones", async (t) => {
   const root = await temporaryProject(t);
   await solutionReadyTask(root, "configured-payment", {
@@ -330,9 +578,9 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     runtimeAttestation: {
       verified: true,
       source: "test-host",
-      profile: "sol-review",
+      profile: "sol-critical-review",
       model: "gpt-5.6-sol",
-      reasoningEffort: "high",
+      reasoningEffort: "xhigh",
       forkTurns: "none",
       sandbox: "read-only",
       leaf: true,
@@ -344,7 +592,7 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     durationMs: 250,
   });
   assert.equal(reviewed.dispatch.model, "gpt-5.6-sol");
-  assert.equal(reviewed.dispatch.reasoningEffort, "high");
+  assert.equal(reviewed.dispatch.reasoningEffort, "xhigh");
   assert.equal(reviewed.dispatch.durationMs, 250);
 
   await recordRepairAttempt(root, "resume-context", {
@@ -383,16 +631,98 @@ test("schema v3 routing state receives additive controller, Agent policy, and ex
   });
   const files = taskFiles(root, "routing-defaults");
   const persisted = JSON.parse(await readFile(files.state, "utf8"));
-  delete persisted.routing.controller;
+  persisted.routing.controller = {
+    profile: "sol-controller",
+    model: "gpt-5.6-sol",
+    reasoningEffort: "high",
+    forkTurns: "none",
+    sandbox: "workspace-write",
+  };
   persisted.routing.agents = { policy: "optional", roles: ["independent-review"] };
   delete persisted.execution;
   await writeFile(files.state, `${JSON.stringify(persisted, null, 2)}\n`);
 
   const loaded = (await loadTask(root, "routing-defaults")).state;
+  assert.equal(loaded.routing.controller.profile, "sol-critical-controller");
   assert.equal(loaded.routing.controller.model, "gpt-5.6-sol");
-  assert.equal(loaded.routing.controller.reasoningEffort, "high");
+  assert.equal(loaded.routing.controller.reasoningEffort, "xhigh");
   assert.deepEqual(loaded.routing.agents.roles, ["independent-review", "bounded-implementation", "complex-implementation"]);
   assert.deepEqual(loaded.execution, { planStatus: "not_planned", plannedAt: null, plan: null, results: {} });
+});
+
+test("complex implementation requires Luna max and returns failures to the Sol xhigh controller", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "complex-luna-worker";
+  await prepareApprovedTask(root, taskId, {
+    assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
+    impactPaths: ["src/complex"],
+  });
+  await beginImplementation(root, taskId);
+  const files = taskFiles(root, taskId);
+  const planFile = path.join(files.task, "complex-plan.input.json");
+  await writeFile(planFile, `${JSON.stringify({
+    schemaVersion: 1,
+    tasks: [{
+      id: "ST-COMPLEX",
+      acceptanceIds: ["AC-01"],
+      task: "Implement the approved complex change",
+      stage: 1,
+      dependsOn: [],
+      writeScope: ["src/complex"],
+      doNotTouch: [],
+      expectedResult: "The complex change is implemented within its approved scope",
+      verification: ["node --check src/complex/index.mjs"],
+      firstArtifact: "src/complex/index.mjs",
+      route: "complex-implementation",
+    }],
+  }, null, 2)}\n`);
+  await run(root, "plan-execution", taskId, "--input", planFile);
+  await recordAgentDispatch(root, taskId, {
+    id: "AGENT-COMPLEX",
+    role: "complex-implementation",
+    subtaskId: "ST-COMPLEX",
+    status: "planned",
+  });
+  await assert.rejects(
+    () => recordAgentDispatch(root, taskId, {
+      id: "AGENT-COMPLEX",
+      role: "complex-implementation",
+      subtaskId: "ST-COMPLEX",
+      status: "running",
+      runtimeAttestation: {
+        verified: true,
+        source: "legacy-terra-host",
+        profile: "terra-high-worker",
+        model: "gpt-5.6-terra",
+        reasoningEffort: "high",
+        forkTurns: "none",
+        sandbox: "workspace-write",
+        leaf: true,
+        canSpawnAgents: false,
+      },
+    }),
+    (error) => error.code === "RUNTIME_PROFILE_MISMATCH",
+  );
+  const running = await recordAgentDispatch(root, taskId, {
+    id: "AGENT-COMPLEX",
+    role: "complex-implementation",
+    subtaskId: "ST-COMPLEX",
+    status: "running",
+    runtimeAttestation: {
+      verified: true,
+      source: "test-host",
+      profile: "luna-max-complex-worker",
+      model: "gpt-5.6-luna",
+      reasoningEffort: "max",
+      forkTurns: "none",
+      sandbox: "workspace-write",
+      leaf: true,
+      canSpawnAgents: false,
+    },
+  });
+  assert.equal(running.dispatch.model, "gpt-5.6-luna");
+  assert.equal(running.dispatch.reasoningEffort, "max");
+  assert.equal(running.dispatch.escalation, "sol-xhigh-controller");
 });
 
 test("planned workers prove runtime identity, actual scoped changes, verification, evidence, and current candidate", async (t) => {
@@ -509,9 +839,9 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   await writeFile(attestationFile, `${JSON.stringify({
     verified: true,
     source: "cli-test-host",
-    profile: "sol-review",
+    profile: "sol-critical-review",
     model: "gpt-5.6-sol",
-    reasoningEffort: "high",
+    reasoningEffort: "xhigh",
     forkTurns: "none",
     sandbox: "read-only",
     leaf: true,
@@ -530,11 +860,11 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
     "--summary",
     "Review completed",
     "--profile",
-    "sol-review",
+    "sol-critical-review",
     "--model",
     "gpt-5.6-sol",
     "--reasoning-effort",
-    "high",
+    "xhigh",
     "--fork-turns",
     "none",
     "--sandbox",
@@ -599,9 +929,9 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   assert.equal(state.agents.dispatches[0].context.surface, "verification");
   assert(state.agents.dispatches[0].context.digest);
   assert.equal(state.agents.dispatches[0].id, "AGENT-009");
-  assert.equal(state.agents.dispatches[0].profile, "sol-review");
+  assert.equal(state.agents.dispatches[0].profile, "sol-critical-review");
   assert.equal(state.agents.dispatches[0].model, "gpt-5.6-sol");
-  assert.equal(state.agents.dispatches[0].reasoningEffort, "high");
+  assert.equal(state.agents.dispatches[0].reasoningEffort, "xhigh");
   assert.equal(state.agents.dispatches[0].forkTurns, "none");
   assert.equal(state.agents.dispatches[0].sandbox, "read-only");
   assert.equal(state.agents.dispatches[0].inputTokens, 120);

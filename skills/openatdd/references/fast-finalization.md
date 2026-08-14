@@ -264,6 +264,13 @@ the current fingerprint. Legacy tasks require a manifest override:
 Do not add a blanket override without verifying that the referenced evidence
 actually covers every listed historical criterion.
 
+History replay evidence is immutable per frozen source fingerprint. Store it
+under a fingerprint-scoped directory so a repaired task's later formal run can
+never overwrite evidence still referenced by an earlier epoch. If a historical
+check already marked `passed` points to missing or hash-drifted evidence, a
+successful current replay may repair only that invalid reference to the fresh
+evidence; valid unaffected references remain unchanged.
+
 ## Manual fallback
 
 If no valid manifest exists, use the granular sequence documented in

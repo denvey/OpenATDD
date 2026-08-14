@@ -72,9 +72,9 @@ export const CONTROLLER_PROFILES = Object.freeze({
     sandbox: "workspace-write",
   }),
   [LANES.STANDARD]: Object.freeze({
-    profile: "sol-controller",
+    profile: "sol-critical-controller",
     model: "gpt-5.6-sol",
-    reasoningEffort: "high",
+    reasoningEffort: "xhigh",
     forkTurns: "none",
     sandbox: "workspace-write",
   }),

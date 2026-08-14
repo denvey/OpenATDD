@@ -13,9 +13,9 @@ const DEFAULT_SCOUT_PROFILE = Object.freeze({
 });
 
 const STANDARD_REVIEW_PROFILE = Object.freeze({
-  profile: "sol-review",
+  profile: "sol-critical-review",
   model: "gpt-5.6-sol",
-  reasoningEffort: "high",
+  reasoningEffort: "xhigh",
   forkTurns: "none",
   sandbox: "read-only",
   writable: false,
@@ -24,11 +24,7 @@ const STANDARD_REVIEW_PROFILE = Object.freeze({
   authority: "read-only-independent-review",
 });
 
-const DEEP_REVIEW_PROFILE = Object.freeze({
-  ...STANDARD_REVIEW_PROFILE,
-  profile: "sol-critical-review",
-  reasoningEffort: "xhigh",
-});
+const DEEP_REVIEW_PROFILE = STANDARD_REVIEW_PROFILE;
 
 const BOUNDED_IMPLEMENTATION_PROFILE = Object.freeze({
   profile: "luna-max-worker",
@@ -40,18 +36,12 @@ const BOUNDED_IMPLEMENTATION_PROFILE = Object.freeze({
   leaf: true,
   canSpawnAgents: false,
   authority: "approved-subtask-only",
+  escalation: "sol-xhigh-controller",
 });
 
 const COMPLEX_IMPLEMENTATION_PROFILE = Object.freeze({
-  profile: "terra-high-worker",
-  model: "gpt-5.6-terra",
-  reasoningEffort: "high",
-  forkTurns: "none",
-  sandbox: "workspace-write",
-  writable: true,
-  leaf: true,
-  canSpawnAgents: false,
-  authority: "approved-subtask-only",
+  ...BOUNDED_IMPLEMENTATION_PROFILE,
+  profile: "luna-max-complex-worker",
 });
 
 const LOW_BROWSER_PROFILE = Object.freeze({
@@ -96,7 +86,7 @@ export function profileForDispatch(input = {}) {
   return {
     role,
     ...base,
-    escalation: null,
+    escalation: base.escalation ?? null,
   };
 }
 

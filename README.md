@@ -111,6 +111,77 @@ the report and enters `DELIVERED`. Granular `preflight`, `check`, `record`,
 `batch`, `handoff`, and `ready` commands remain available for debugging and
 projects that have not adopted the manifest yet.
 
+### Optional parallel Standard/Deep execution
+
+At solution approval, natural language such as “批准方案，并行执行” maps to
+the one-time command `openatdd approve-solution TASK --begin --parallel` for
+only the current approved solution SHA. It is an execution directive, not a
+project setting, and it expires when the solution is reopened or its fingerprint
+changes. The request asks the controller to maximize safe parallelism; the
+controller still decides from the approved `stage`, `dependsOn`, `writeScope`,
+`doNotTouch`, and verification contracts. Gates and conflicts are never
+overridden, and a plan with fewer than two safe tasks stays serial with an
+explicit explanation.
+
+The controller alone writes contracts, task/session state, integration results,
+and the final verdict. A host adapter performs the following sequence for each
+safe batch:
+
+```text
+capability check
+  -> freeze + run controller-owned shared interface contract
+  -> create_thread (isolated worktree from intended working-tree state)
+  -> send_message_to_thread (exact ownership + verification contract)
+  -> wait_threads
+  -> read_thread
+  -> controller-only session-record
+  -> controller-only session-result
+  -> controller-only orchestration-integrate
+```
+
+The core exposes a host-neutral contract; it does not directly call Codex
+proprietary APIs. The Codex App adapter must prove unique thread, worktree,
+branch, and base identities and fail closed when any capability or identity is
+missing, duplicated, shared, or mismatched. Workers are Luna/max leaves with
+`forkTurns:none` and `canSpawnAgents=false`; each receives an exact prompt,
+ownership, `writeScope`, `doNotTouch`, verification, evidence, base, and
+candidate-fingerprint contract.
+
+```bash
+openatdd orchestration-start TASK --input host-capabilities.json --json
+openatdd session-record TASK --input session-event.json
+openatdd session-result TASK --input session-result.json
+openatdd orchestration-integrate TASK --input integration.json
+openatdd orchestration-cleanup TASK --json
+```
+
+`failed`, `blocked`, and `needs_input` sessions retain their diagnostics and do
+not erase passed siblings. Stale baselines, candidate drift, scope violations,
+missing verification/evidence, or integration conflicts cannot pass; the
+controller preserves independent results and returns the affected work to the
+Sol/xhigh controller for replanning or direct implementation. A session result
+is never `DELIVERED` by itself. Quick, single-session, and hosts without proven
+multi-session/worktree capabilities keep their existing behavior; unsupported
+hosts fail closed rather than writing concurrently in a shared checkout. No
+automatic commit, push, PR, deploy, or branch deletion is performed. After
+`DELIVERED`, the controller automatically requests bounded cleanup of only the
+current task's recorded, integrated worktrees. Git common-dir and immutable
+identity must match, every residual path must be proven safe, and ordinary `git
+worktree remove` must succeed without `--force`; otherwise the worktree is
+retained and reported.
+
+Parallel plans therefore include `orchestration.sharedContract` with
+participating task IDs, controller-owned contract-test files, and bounded argv
+commands. `orchestration-start` runs and hashes that contract before returning
+any host create/send action; each worker receives the frozen result and cannot
+modify its files. Result recording and integration reject contract drift.
+
+The main-controller integration budget defaults to 15 minutes per ready batch.
+It starts after worker execution has finished and a verified result is ready, so
+worker runtime is not charged against it. Once exceeded, normal merging and
+additional hardening stop; the host receives only an explicit
+`minimal-contract-repair`, `controller-sequential`, or `replan` action.
+
 ## Adaptive depth without process ceremony
 
 OpenATDD records one deterministic lane from repository-derived facts:
@@ -126,6 +197,15 @@ OpenATDD records one deterministic lane from repository-derived facts:
   can also be Deep and a small feature can remain Quick or Standard. Relevant
   external research accompanies local discovery; independent read-only review
   is used when it reduces risk.
+
+Independent review has a deterministic stop policy. The initial review has a
+15-minute hard budget. Actionable findings count as a successful review; after
+revision, one targeted 5-minute recheck is allowed. Runtime failure permits one
+fresh Reviewer retry for the same solution fingerprint and round, never a third
+attempt. Over-budget PASS is rejected. If both attempts fail, ordinary Deep can
+record an explicit main-review fallback, while dangerous Deep requires a human
+decision through `openatdd review-fallback TASK --status approved|denied
+--rationale "..." --human-confirmed`.
 
 Depth measures complexity only. Reversibility plus migration, authentication,
 authorization, payment, privacy, security, external-service, production,
@@ -507,9 +587,11 @@ npm run check
 
 OpenATDD does not integrate with or require OpenSpec, Spec Kit, Superpowers,
 Trellis, or another workflow framework. It does not mandate TDD, Gherkin,
-worktrees, multi-agent execution, a particular architecture, a model provider,
-or production deployment. It governs outcomes and evidence while leaving
-implementation choices to the project and the agent.
+worktrees, parallel/multi-agent execution, a particular architecture, a model
+provider, or production deployment. Optional multi-session orchestration is
+host-adapted and opt-in; Quick and single-session delivery remain first-class.
+It governs outcomes and evidence while leaving implementation choices to the
+project and the agent.
 
 ## Project layout
 
@@ -525,23 +607,38 @@ evals/                        deterministic and real-agent scenarios, rubrics, r
 中文定位：**OpenATDD 是面向 AI 编程的开源验收驱动交付框架。描述需求；Quick 直接交付，Standard / Deep 确认验收与方案，其余交给 AI。**
 
 Controller selection is deterministic rather than automatic escalation:
-Quick/Standard use `gpt-5.6-sol/high`; Deep uses `gpt-5.6-sol/xhigh`. A task
-started as High does not silently become xHigh. The Codex host must explicitly
-apply the routed controller and prove the actual runtime; a mismatch blocks the
-run instead of silently falling back.
+Quick uses `gpt-5.6-sol/high`; Standard/Deep use `gpt-5.6-sol/xhigh`. The Codex
+host must explicitly apply the routed controller and prove the actual runtime;
+a mismatch blocks the run instead of silently falling back.
 The controller remains workspace-write because Quick and any unbounded or
 ambiguous implementation stay with Sol; scouts and reviewers remain read-only.
 
 Agent roles are selected separately from the controller. Luna/low handles
 read-only discovery and research. Standard/Deep independent review uses a fresh
-Sol/high or Sol/xhigh context. Only an approved structured execution plan can
-delegate writes: bounded implementation uses Luna/max; complex or ambiguous
-implementation uses Terra/high. Workers are leaf Agents (`canSpawnAgents=false`)
-and cannot change acceptance, solution, authorization, scheduling, or the final
-verdict. PASS requires actual in-scope changed paths, all planned verification,
-fresh evidence, and the current candidate fingerprint.
+Sol/xhigh context. Only an approved structured execution plan can delegate
+writes: bounded and complex implementation both use Luna/max. Work that cannot
+be safely bounded, or that returns failed, blocked, or materially ambiguous,
+returns to the Sol/xhigh controller for replanning or direct implementation; it
+does not silently switch to Terra. Workers are leaf Agents
+(`canSpawnAgents=false`) and cannot change acceptance, solution, authorization,
+scheduling, or the final verdict. PASS requires actual in-scope changed paths,
+all planned verification, fresh evidence, and the current candidate fingerprint.
 Only one writable worker may run in a worktree at a time; parallel writes require
 isolated worktrees so actual path ownership remains provable.
+
+When parallel execution is explicitly requested during solution approval, the
+Codex App host adapter must create one isolated worktree thread per safe subtask,
+send the exact contract, wait/read all results, and let the Sol/xhigh controller
+serially record and integrate them. Unique thread/worktree/branch/base identity,
+capability attestation, stale-baseline checks, and failure-closed behavior are
+mandatory. Partial failures and `needs_input` remain visible for controller
+replanning; they never authorize a worker to alter contracts or declare the
+task delivered.
+
+For independent review, `agent-dispatch --json` returns `reviewControl` with
+`solutionSha256`, `round`, `attempt`, `maxAttempts`, and the required
+`timeoutMs`. The host must enforce that timeout and record the actual
+`--duration-ms`; OpenATDD refuses an over-budget success or an illegal retry.
 
 ```bash
 openatdd plan-execution TASK --input execution-plan.json

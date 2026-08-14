@@ -101,7 +101,7 @@ test("routing classifies ordinary cross-module work as standard", () => {
   assert.equal(routing.lane, "standard");
   assert.equal(routing.investigation.externalResearch, false);
   assert.deepEqual(routing.agents, { policy: "optional", roles: ["independent-review", "bounded-implementation", "complex-implementation"] });
-  assert.equal(routing.controller.reasoningEffort, "high");
+  assert.equal(routing.controller.reasoningEffort, "xhigh");
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.reasons.includes("cross-module-scope"));
 });
@@ -181,18 +181,21 @@ test("Agent roles resolve to deterministic lane-aware model and authority profil
     assert.equal(profile.writable, false);
     assert.equal(profile.canSpawnAgents, false);
   }
-  assert.equal(profileForDispatch({ role: "independent-review", lane: "standard" }).reasoningEffort, "high");
+  assert.equal(profileForDispatch({ role: "independent-review", lane: "standard" }).reasoningEffort, "xhigh");
   assert.equal(profileForDispatch({ role: "independent-review", lane: "deep" }).reasoningEffort, "xhigh");
   const bounded = profileForDispatch({ role: "bounded-implementation", lane: "standard" });
   assert.equal(bounded.model, "gpt-5.6-luna");
   assert.equal(bounded.reasoningEffort, "max");
   assert.equal(bounded.sandbox, "workspace-write");
   assert.equal(bounded.authority, "approved-subtask-only");
+  assert.equal(bounded.escalation, "sol-xhigh-controller");
   const complex = profileForDispatch({ role: "complex-implementation", lane: "deep" });
-  assert.equal(complex.model, "gpt-5.6-terra");
-  assert.equal(complex.reasoningEffort, "high");
+  assert.equal(complex.profile, "luna-max-complex-worker");
+  assert.equal(complex.model, "gpt-5.6-luna");
+  assert.equal(complex.reasoningEffort, "max");
   assert.equal(complex.leaf, true);
   assert.equal(complex.canSpawnAgents, false);
+  assert.equal(complex.escalation, "sol-xhigh-controller");
   assert.throws(
     () => profileForDispatch({ role: "clean-context-execution" }),
     (error) => error.code === "UNKNOWN_AGENT_ROLE",
@@ -213,10 +216,23 @@ test("routing documentation exposes explicit tiers without claiming unmeasured q
   const skill = await readFile(new URL("../skills/openatdd/SKILL.md", import.meta.url), "utf8");
   const governance = await readFile(new URL("../skills/openatdd/references/governance.md", import.meta.url), "utf8");
   const docs = `${readme}\n${skill}\n${governance}`;
-  assert.match(docs, /Quick\/Standard use `gpt-5\.6-sol\/high`/);
-  assert.match(docs, /Deep uses `gpt-5\.6-sol\/xhigh`/);
-  assert.match(docs, /does not silently become xHigh|never\s+auto-upgrades from High to xHigh/);
+  assert.match(docs, /Quick uses `gpt-5\.6-sol\/high`/);
+  assert.match(docs, /Standard\/Deep use `gpt-5\.6-sol\/xhigh`/);
+  assert.match(docs, /complex.*Luna\/max/is);
+  assert.doesNotMatch(docs, /complex(?:\/cross-module| or ambiguous)? implementation uses Terra\/high/i);
   assert.match(readme, /not a claimed cost or quality win until a real\s+project evaluation demonstrates it/);
+});
+
+test("independent review documentation exposes the bounded retry and fallback contract", async () => {
+  const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
+  const skill = await readFile(new URL("../skills/openatdd/SKILL.md", import.meta.url), "utf8");
+  const governance = await readFile(new URL("../skills/openatdd/references/governance.md", import.meta.url), "utf8");
+  const docs = `${readme}\n${skill}\n${governance}`;
+  assert.match(docs, /15-minute hard budget/);
+  assert.match(docs, /5-minute targeted recheck/);
+  assert.match(docs, /never a third\s+attempt|third attempt.*rejected|third attempt.*not allowed/is);
+  assert.match(docs, /Actionable findings.*successful review/is);
+  assert.match(docs, /review-fallback TASK --status approved\|denied/);
 });
 
 test("execution plans cover acceptance and reject ownership, dependency, and path conflicts", () => {

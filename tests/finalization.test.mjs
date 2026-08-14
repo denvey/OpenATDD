@@ -9,6 +9,7 @@ import {
   filesBelow,
   gitPrivateRoot,
   pathExists,
+  resolveArtifactPath,
 } from "../skills/openatdd/scripts/lib.mjs";
 import {
   dryRunFinalization,
@@ -24,6 +25,7 @@ import {
 import {
   beginImplementation,
   loadTask,
+  recordIssue,
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
 import {
@@ -787,6 +789,10 @@ test("affected history reuses identical epoch evidence and caches distinct repla
   await writeManifest(root, manifest);
   await dryRunFinalization(root, "historical");
   await finalizeTask(root, "historical");
+  const historicalBeforeRepair = await loadTask(root, "historical");
+  const originalHistoryEvidence = historicalBeforeRepair.state.checks.broad.evidence[0];
+  const originalHistoryEvidencePath = resolveArtifactPath(root, originalHistoryEvidence.path);
+  await writeFile(originalHistoryEvidencePath, "overwritten by a later failed formal run\n");
   await rm(path.join(gitPrivateRoot(root), "reverification", "index.json"), { force: true });
 
   await prepareApprovedTask(root, "current-one", {
@@ -806,7 +812,10 @@ test("affected history reuses identical epoch evidence and caches distinct repla
   assert.equal(first.result.metrics.historyEpochReuse, 1);
   assert.equal(first.result.metrics.historyCacheHits, 0);
   assert.equal(await pathExists(path.join(gitPrivateRoot(root), "reverification", "index.json")), true);
-  assert.match((await loadTask(root, "historical")).state.results["AC-01"].summary, /Reverified once/);
+  const repairedHistorical = (await loadTask(root, "historical")).state;
+  assert.match(repairedHistorical.results["AC-01"].summary, /Reverified once/);
+  assert.notEqual(repairedHistorical.checks.broad.evidence[0].path, originalHistoryEvidence.path);
+  assert.match(repairedHistorical.checks.broad.evidence[0].path, /tasks\/current-one\/evidence\/finalize/);
 
   await prepareApprovedTask(root, "current-two", {
     criteria,
@@ -823,4 +832,68 @@ test("affected history reuses identical epoch evidence and caches distinct repla
   assert.deepEqual(new Set(second.result.affectedHistory), new Set(["historical", "current-one"]));
 
   await rm(path.join(root, ".openatdd", "transactions"), { recursive: true, force: true });
+});
+
+test("repaired finalization preserves prior fingerprint-scoped history evidence", async (t) => {
+  const root = await temporaryProject(t);
+  const criteria = [criterion("AC-01")];
+  const historicalManifest = finalizationManifest(criteria);
+  historicalManifest.checks.find((group) => group.scope === "broad").commands = [command("historical-broad", 'process.stdout.write("historical")')];
+
+  await prepareApprovedTask(root, "history-source", {
+    criteria,
+    impactPaths: ["src/shared"],
+    createdAt: "2020-01-01T00:00:00.000Z",
+    acceptanceAt: "2020-01-01T00:01:00.000Z",
+    solutionAt: "2020-01-01T00:02:00.000Z",
+  });
+  await beginImplementation(root, "history-source");
+  await writeManifest(root, historicalManifest);
+  await dryRunFinalization(root, "history-source");
+  await finalizeTask(root, "history-source");
+
+  await prepareApprovedTask(root, "repairable-current", {
+    criteria,
+    impactPaths: ["src/shared"],
+    createdAt: "2021-01-01T00:00:00.000Z",
+    acceptanceAt: "2021-01-01T00:01:00.000Z",
+    solutionAt: "2021-01-01T00:02:00.000Z",
+  });
+  await beginImplementation(root, "repairable-current");
+  await writeManifest(root, finalizationManifest(criteria));
+  await dryRunFinalization(root, "repairable-current");
+  await finalizeTask(root, "repairable-current");
+
+  let historyState = (await loadTask(root, "history-source")).state;
+  const firstEvidence = historyState.checks["finalize-repairable-current"].evidence[0];
+  assert.match(firstEvidence.path, /fingerprint-[a-f0-9]{64}/);
+  const firstEvidencePath = resolveArtifactPath(root, firstEvidence.path);
+  const firstEvidenceBytes = await readFile(firstEvidencePath);
+
+  await recordIssue(root, "repairable-current", {
+    acceptanceId: "AC-01",
+    status: "open",
+    symptom: "A repair changes the frozen source fingerprint",
+  });
+  const repairEvidence = path.join(root, ".openatdd", "repair-evidence.txt");
+  await writeFile(repairEvidence, "repair passed\n");
+  await mkdir(path.join(root, "src"), { recursive: true });
+  await writeFile(path.join(root, "src", "repair.txt"), "new fingerprint\n");
+  await recordIssue(root, "repairable-current", {
+    id: "ISSUE-001",
+    status: "resolved",
+    rootCause: "The source changed after the first delivery",
+    regression: "history_evidence_is_fingerprint_scoped",
+    invariant: "Historical evidence from one frozen fingerprint is never overwritten by a later formal run",
+    paths: "skills/openatdd/scripts/finalization.mjs",
+    evidence: repairEvidence,
+  });
+  await dryRunFinalization(root, "repairable-current");
+  await finalizeTask(root, "repairable-current");
+
+  historyState = (await loadTask(root, "history-source")).state;
+  const secondEvidence = historyState.checks["finalize-repairable-current"].evidence[0];
+  assert.match(secondEvidence.path, /fingerprint-[a-f0-9]{64}/);
+  assert.notEqual(secondEvidence.path, firstEvidence.path);
+  assert.deepEqual(await readFile(firstEvidencePath), firstEvidenceBytes);
 });

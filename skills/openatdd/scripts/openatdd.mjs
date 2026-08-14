@@ -41,7 +41,13 @@ import {
   recordCheck,
   recordEnvironmentObservation,
   recordExecutionResult,
+  orchestrationStart,
+  recordOrchestrationSession,
+  recordOrchestrationSessionResult,
+  integrateOrchestration,
+  cleanupOrchestrationWorktrees,
   recordIssue,
+  recordIndependentReviewFallbackDecision,
   recordRepairAttempt,
   recordSolutionReview,
   recordTaskDecision,
@@ -75,8 +81,9 @@ Usage:
   openatdd approve-acceptance TASK
   openatdd draft-solution TASK
   openatdd review-solution TASK --status passed|failed --reviewer main|independent --summary TEXT
-                  --check all [--agent-id AGENT-001]
-  openatdd approve-solution TASK [--begin]
+                  --check all [--agent-id AGENT-001] [--fallback-reason TEXT]
+  openatdd review-fallback TASK --status approved|denied --rationale TEXT --human-confirmed
+  openatdd approve-solution TASK [--begin] [--parallel]
   openatdd reopen-acceptance TASK --reason TEXT
   openatdd reopen-solution TASK --reason TEXT
   openatdd begin TASK
@@ -92,6 +99,11 @@ Usage:
   openatdd plan-uat TASK [--plan FILE] [--execution-mode auto|deterministic|browser-low|human]
   openatdd plan-execution TASK --input FILE
   openatdd agent-result TASK --input FILE
+  openatdd orchestration-start TASK --input FILE
+  openatdd session-record TASK --input FILE
+  openatdd session-result TASK --input FILE
+  openatdd orchestration-integrate TASK --input FILE
+  openatdd orchestration-cleanup TASK [--json]
   openatdd batch TASK --id BATCH --status STATUS --evidence PATH
   openatdd handoff TASK [--estimated-minutes N]
   openatdd record TASK --acceptance AC-01 --status STATUS [--human-confirmed] [--summary TEXT] --evidence PATH
@@ -334,19 +346,34 @@ async function execute(parsed, io) {
         findings: options.finding,
         checks: options.check,
         agentId: options["agent-id"],
+        fallbackReason: options["fallback-reason"],
       });
       if (json) outputJson(io, result.state.reviews.solution);
       else io.stdout.write(`Solution review: ${result.state.reviews.solution.status}\n`);
       return 0;
     }
+    case "review-fallback": {
+      const result = await recordIndependentReviewFallbackDecision(root, taskId(positionals), {
+        status: required(options.status, "--status"),
+        rationale: required(options.rationale, "--rationale"),
+        humanConfirmed: Boolean(options["human-confirmed"]),
+      });
+      if (json) outputJson(io, result.state.reviews.independent.fallbackDecision);
+      else io.stdout.write(`Independent review fallback: ${result.state.reviews.independent.fallbackDecision.status}\n`);
+      return 0;
+    }
     case "approve-solution": {
-      const result = await approveSolution(root, taskId(positionals));
+      const result = await approveSolution(root, taskId(positionals), {
+        parallel: options.parallel === true,
+        source: options.source,
+      });
       const begun = options.begin === true ? await beginImplementation(root, taskId(positionals)) : null;
       const payload = {
         ...summarizeState((begun ?? result).state),
         warnings: result.warnings,
         unchanged: result.unchanged,
         affectedDependencies: result.affectedDependencies,
+        directive: (begun ?? result).state.execution?.directive ?? null,
       };
       if (json) outputJson(io, payload);
       else {
@@ -513,6 +540,74 @@ async function execute(parsed, io) {
       const result = await planExecution(root, taskId(positionals), input);
       if (json) outputJson(io, result.state.execution);
       else io.stdout.write(`Execution planned: ${result.state.taskId} (${result.state.execution.plan.tasks.length} tasks)\n`);
+      return 0;
+    }
+    case "orchestration-start": {
+      const input = await readJsonInput(root, options.input, "--input");
+      const result = await orchestrationStart(root, taskId(positionals), input);
+      if (json) outputJson(io, {
+        ...summarizeState(result.state),
+        orchestration: result.orchestration,
+        actions: result.actions,
+        parallel: result.parallel,
+        explanation: result.explanation ?? null,
+      });
+      else {
+        io.stdout.write(`Orchestration ${result.parallel ? "started" : "not started"}: ${result.state.taskId}\n`);
+        if (result.explanation) io.stdout.write(`Explanation: ${result.explanation}\n`);
+        for (const action of result.actions ?? []) io.stdout.write(`${action.type}: ${action.sessionId ?? action.stage}\n`);
+      }
+      return 0;
+    }
+    case "session-record": {
+      const input = await readJsonInput(root, options.input, "--input");
+      const result = await recordOrchestrationSession(root, taskId(positionals), input);
+      if (json) outputJson(io, {
+        ...summarizeState(result.state),
+        orchestration: result.orchestration,
+        idempotent: result.idempotent,
+      });
+      else io.stdout.write(`Orchestration session event recorded: ${result.event.eventId ?? "unknown"}\n`);
+      return 0;
+    }
+    case "session-result": {
+      const input = await readJsonInput(root, options.input, "--input");
+      const result = await recordOrchestrationSessionResult(root, taskId(positionals), input);
+      if (json) outputJson(io, {
+        ...summarizeState(result.state),
+        result: result.result,
+        orchestration: result.orchestration,
+        idempotent: result.idempotent,
+      });
+      else io.stdout.write(`Orchestration session result ${result.result.sessionId}: ${result.result.status}\n`);
+      return 0;
+    }
+    case "orchestration-integrate": {
+      const input = options.input ? await readJsonInput(root, options.input, "--input") : {};
+      const result = await integrateOrchestration(root, taskId(positionals), input);
+      if (json) outputJson(io, {
+        ...summarizeState(result.state),
+        integrated: result.integrated,
+        conflicts: result.conflicts,
+        orchestration: result.orchestration,
+      });
+      else {
+        io.stdout.write(`Orchestration integration ${result.conflicts.length > 0 ? "completed with conflicts" : "completed"}: ${result.state.taskId}\n`);
+        for (const id of result.integrated) io.stdout.write(`Integrated: ${id}\n`);
+        for (const conflict of result.conflicts) io.stdout.write(`Conflict: ${conflict.sessionId} (${conflict.reason})\n`);
+      }
+      return 0;
+    }
+    case "orchestration-cleanup": {
+      const result = await cleanupOrchestrationWorktrees(root, taskId(positionals), {});
+      if (json) outputJson(io, {
+        ...summarizeState(result.state),
+        cleanup: result.cleanup,
+      });
+      else {
+        io.stdout.write(`Orchestration worktree cleanup: ${result.cleanup.status}\n`);
+        for (const item of result.cleanup.items) io.stdout.write(`${item.status}: ${item.worktree ?? item.sessionId} (${item.reason})\n`);
+      }
       return 0;
     }
     case "agent-result": {

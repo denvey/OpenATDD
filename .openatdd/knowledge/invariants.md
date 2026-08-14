@@ -55,3 +55,15 @@ without a separate language prompt or flag.
 Graph, context, observations, incident indexes, and replay caches are derived
 runtime data. Their absence must never weaken deterministic contract or path
 checks.
+
+## INV-2026-001
+
+No writable parallel session may be created until a controller-owned executable shared contract covers the batch and passes; after a ready batch exceeds 15 minutes of controller integration, ordinary merging and scope expansion stop and only minimal-contract-repair, controller-sequential, or replan may proceed.
+
+Protection: tests/orchestration.test.mjs and tests/orchestration-workflow.test.mjs cover missing/failing/drifting shared contracts, worker prompt protection, and 15-minute integration overrun convergence.
+
+## INV-2026-002
+
+History replay evidence is immutable per frozen source fingerprint; later formal runs never overwrite it, and a successful replay repairs only missing or hash-drifted passed evidence references.
+
+Protection: tests/finalization.test.mjs covers invalid history evidence self-healing and two formal runs with distinct fingerprint-scoped history evidence while preserving the first file byte-for-byte.

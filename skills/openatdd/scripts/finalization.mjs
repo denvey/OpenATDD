@@ -593,7 +593,10 @@ async function projectHistoricalStates(root, state, manifest, referenceEvidence,
     } else {
       const paths = [];
       const credentials = await loadLocalCredentials(root, "");
-      const directory = path.join(taskFiles(root, state.taskId).evidence, "finalize", `history-${dependency.taskId}`);
+      // History evidence is immutable per frozen source fingerprint. A repaired
+      // task may formalize more than once; reusing the old directory would
+      // overwrite evidence still referenced by unaffected historical checks.
+      const directory = path.join(taskFiles(root, state.taskId).evidence, "finalize", `fingerprint-${fingerprint}`, `history-${dependency.taskId}`);
       await mkdir(directory, { recursive: true });
       for (const command of snapshot.replay.commands) {
         const result = await executeCommand(root, command, credentials, path.join(directory, `${command.id}.md`), metrics, clock);
@@ -620,7 +623,11 @@ async function projectHistoricalStates(root, state, manifest, referenceEvidence,
       };
     }
     for (const check of Object.values(projected.checks)) {
-      if (check.status === "affected") Object.assign(check, { status: "passed", evidence, verifiedAt: now, epoch: projected.verification.epoch, sourceFingerprint: fingerprint });
+      const evidenceInvalid = check.status === "passed"
+        && (await verifyCapturedEvidence(root, check.evidence ?? [], dependency.notBefore)).length > 0;
+      if (check.status === "affected" || evidenceInvalid) {
+        Object.assign(check, { status: "passed", evidence, verifiedAt: now, epoch: projected.verification.epoch, sourceFingerprint: fingerprint });
+      }
     }
     projected.checks[`finalize-${state.taskId}`] = {
       id: `finalize-${state.taskId}`,
