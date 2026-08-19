@@ -57,6 +57,7 @@ const session = (overrides = {}) => ({
   branch: "codex/st-001",
   baseRevision: "base-1",
   writeScope: ["src/one"],
+  verification: ["node --check src/one/index.mjs"],
   ...overrides,
 });
 
@@ -219,6 +220,10 @@ test("session result contract enforces ownership, evidence, verification and aut
     baseRevision: "base-1",
   });
   assert.equal(result.status, "passed");
+  assert.throws(
+    () => validateSessionResultContract({ ...identity, verification: [] }, result),
+    (error) => error.code === "SESSION_PLANNED_VERIFICATION_REQUIRED",
+  );
   assert.throws(() => validateSessionResultContract(identity, { ...result, changedPaths: ["src/two/index.mjs"] }), (error) => error.code === "SESSION_RESULT_SCOPE_VIOLATION");
   assert.throws(() => validateSessionResultContract(identity, { ...result, contractMutation: true }), (error) => error.code === "SESSION_RESULT_AUTHORITY_VIOLATION");
   assert.throws(() => validateSessionResultContract(identity, { status: "blocked", summary: "Blocked" }), (error) => error.code === "SESSION_RESULT_BLOCKER_REQUIRED");

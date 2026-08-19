@@ -81,9 +81,9 @@ when a machine summary is needed. Do not repeat persisted approvals.
   solution review. Record unavailable research.
 
 Routing also fixes the controller profile: Quick uses `gpt-5.6-sol` with
-`high`; Standard/Deep use `gpt-5.6-sol` with `xhigh`. The host must explicitly
-select and prove the routed profile; an unproven model, effort, or permission
-blocks a compliant run.
+`high`; Standard and Deep use `gpt-5.6-sol` with `xhigh`. The host must
+explicitly select and prove the routed profile; an
+unproven model, effort, or permission blocks a compliant run.
 The controller retains workspace write access because Quick and unbounded work
 remain direct; read-only applies to scouts and independent reviewers.
 
@@ -153,10 +153,14 @@ openatdd review-solution TASK --status passed --reviewer main \
   --check all --summary "concise finding"
 ```
 
-Deep requires an independent solution review. The initial Reviewer receives a
-15-minute hard budget. A Reviewer that returns actionable findings succeeded;
-revise the solution and run one 5-minute targeted recheck. Runtime failure may
-use one fresh Reviewer retry only. Every dispatch is bound to the solution
+Deep requires an independent solution review. Check the selected model identity
+and leaf permission before dispatch. A permanent `model_identity` or
+`permission` failure records one idempotent unavailable outcome for that
+solution fingerprint and does not consume a second runtime attempt. Otherwise,
+the initial Reviewer receives a 15-minute hard budget. A Reviewer that returns
+actionable findings succeeded; revise the solution and run one 5-minute targeted recheck.
+A transient runtime failure may use one fresh Reviewer retry only.
+Every dispatch is bound to the solution
 fingerprint, round, attempt, host attestation, and actual duration; over-budget
 PASS and a third attempt are rejected. If both runtime attempts fail, ordinary
 Deep may record an explicit main-review fallback; dangerous Deep requires a
@@ -166,102 +170,27 @@ reopen acceptance; other edits invalidate and repeat solution review.
 
 ### Optional multi-session execution
 
-Read-only discovery and research use Luna/low. Independent review uses a fresh
-Sol/xhigh context for Standard and Deep. After solution approval, delegate only
-a structured execution plan: `bounded-implementation` and
-`complex-implementation` both use Luna/max. Both are leaf workers with
-`forkTurns:none` and `canSpawnAgents=false`; they cannot create Agents or change
-acceptance, solution, authorization, scheduling, shared state, integration, or
-final verdicts. Each receives the exact prompt, `writeScope`, `doNotTouch`,
-verification commands, evidence contract, base identity, and candidate
-fingerprint it must honor, then returns only scope-bound changes, verification,
-evidence, and the current candidate fingerprint.
+Quick delivery stays in the controller. After Standard/Deep solution approval,
+`begin` derives a conservative structured execution plan when approved impact
+paths and manifest verification commands safely bound the work; otherwise it
+persists a concrete `controller-sequential` reason. A returned Worker action is
+not advisory: the host dispatches it through the isolated-session adapter.
+Separate sessions are also used for read-only discovery and research (Luna/low),
+independent review (a fresh Sol/xhigh context for Standard and Deep), or an
+explicit `bounded-implementation` / `complex-implementation` plan
+(Luna/max leaf sessions with `forkTurns:none` and `canSpawnAgents=false` that
+cannot change acceptance, solution, authorization, or verdicts). Ambiguous or
+unbounded work stays with the controller. Every writable Worker, including a
+single Worker, uses its own isolated worktree; only a real parallel batch needs
+the frozen shared-interface contract.
 
-If the person says “批准方案，并行执行” (or an unmistakable equivalent while
-approving the solution), the controller records a one-time
-`approve-solution TASK --begin --parallel` directive bound to the current
-approved solution SHA. This is not project configuration and never carries to a
-later solution or task. The controller still decides the actual safe parallel
-batch from the approved `stage`, `dependsOn`, `writeScope`, `doNotTouch`, and
-verification contracts; the request maximizes only safe parallelism and never
-overrides a dependency, authorization, isolation, ownership, or verification
-gate. If fewer than two tasks are safe, explain why and keep the approved
-execution serial.
-
-The controller is the sole contract, task-state, session-event, integration, and
-verdict writer. A Codex App host adapter maps the host actions in this order:
-
-Before any writable session is created, a real parallel batch must also freeze
-one controller-owned executable shared-interface contract. It names every
-participating subtask, lists contract-test files outside all worker
-`writeScope`s, and provides bounded zero-model commands. The controller runs
-those commands before dispatch, hashes the files, sends the frozen result in
-every worker prompt, and adds the files to every worker `doNotTouch`. A missing,
-failing, uncovered, worker-owned, or later-drifting contract blocks dispatch,
-result acceptance, and integration. This prevents individually green workers
-from leaving event, schema, or API reconciliation to the controller.
-
-1. Capability-check `create_thread`, `send_message_to_thread`, `wait_threads`,
-   and `read_thread`, plus isolated-worktree support. Missing, unverifiable, or
-   mismatched capability fails closed; do not fall back to shared-directory
-   writes.
-2. `create_thread` once per subtask, starting each isolated worktree from the
-   intended current working-tree state. Require unique `threadId`, worktree,
-   branch, and base identity, and reject duplicates, missing identities, or a
-   worktree equal to the controller checkout.
-3. `send_message_to_thread` with the exact worker prompt and ownership/
-   verification contract.
-4. `wait_threads` for the batch, preserving results for sessions that finish
-   when another session fails or asks for input.
-5. `read_thread` to obtain the structured terminal result and actual duration.
-6. Only then call the controller-only `session-record`, `session-result`, and
-   `orchestration-integrate` CLI operations. The core defines this adapter
-   contract; it does not call Codex proprietary APIs directly.
-
-Failed, blocked, or `needs_input` sessions remain individually visible. Passed
-sessions may be retained, but affected dependents and final integration wait for
-controller replanning. A stale base, changed candidate fingerprint, range
-violation, missing verification/evidence, or integration conflict is never a
-PASS: keep other verified results, mark the session for conflict/replan, and
-return to the Sol/xhigh controller. Ambiguous or unbounded work also stays with
-that controller; there is no silent worker-model fallback.
-
-Controller integration has a default 15-minute soft budget per ready batch. The
-clock starts only after the batch is terminal and at least one verified result is
-ready—not while workers are implementing—and resets when a later dependency
-batch becomes ready. After the budget is exceeded, normal integration and scope
-expansion stop. The only permitted next actions are
-`minimal-contract-repair`, `controller-sequential`, or `replan`; the selected
-action is persisted and returned to the host instead of continuing an unbounded
-merge/reconciliation loop.
-
-Quick and the existing single-worker path remain unchanged. Parallel writable
-work requires isolated worktrees and proven ownership. Orchestration never
-automatically commits, pushes, opens a PR, deploys, or deletes branches. After a
-task reaches `DELIVERED`, the controller runs `orchestration-cleanup`: it may
-remove only task-recorded, integrated worktrees whose immutable Git identity and
-complete residual content are proven safe. It never uses `git worktree remove
---force`; unsafe or failed candidates are retained and reported.
-
-```bash
-openatdd plan-execution TASK --input execution-plan.json
-openatdd approve-solution TASK --begin --parallel
-openatdd orchestration-start TASK --input host-capabilities.json --json
-openatdd session-record TASK --input session-event.json
-openatdd session-result TASK --input session-result.json
-openatdd orchestration-integrate TASK --input integration.json
-openatdd orchestration-cleanup TASK --json
-openatdd agent-dispatch TASK --id AGENT-001 --role bounded-implementation \
-  --subtask-id ST-001 --status running --attestation runtime.json
-openatdd agent-result TASK --input execution-result.json
-```
-
-The input JSON files are transient caller inputs. OpenATDD persists the accepted
-plan, session events, results, and integration decisions only in Git-private task
-state; do not add a public plan artifact. `session-record`, `session-result`, and
-`orchestration-integrate` are controller-only mutations even when the host adapter
-is driving several Codex App threads. `orchestration-cleanup` is also
-controller-only and is valid only after `DELIVERED`.
+Read [orchestration.md](references/orchestration.md) before delegating a worker,
+before dispatching an independent reviewer, when the person approves the
+solution with “批准方案，并行执行” (or an unmistakable equivalent), or when
+running any `plan-execution`, `orchestration-*`, `session-*`, or `agent-*`
+command. It holds the worker contract, the one-time parallel directive, the
+frozen shared-interface contract, the host adapter order, the 15-minute
+integration budget, and worktree cleanup.
 
 Quick writes both compact cards in one working turn and runs the entire approval
 chain once:
@@ -287,10 +216,10 @@ risk-proportionate coverage, and review the actual diff/call paths.
 Check order:
 
 1. `focused` during edits and repair;
-2. `module` after repairs close;
-3. one manifest-driven rehearsal and formal journey;
-4. one real `broad` group on the frozen source;
-5. one complete approved journey and affected-history pass.
+2. stop manually running manifest-owned `module`, `broad`, or UAT commands once
+   the source is ready for finalization;
+3. one `finalize --fast` invocation performs the rehearsal, one broad
+   satisfaction, one complete approved journey, and affected-history pass.
 
 Do not run a known-failing repository-wide check for ceremony. Keep a real
 passing broad group in the finalization manifest. For a local deterministic

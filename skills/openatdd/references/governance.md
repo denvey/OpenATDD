@@ -55,10 +55,13 @@ bounded context and record a host runtime attestation matching model, reasoning
 effort, sandbox, `forkTurns:none`, and leaf capability. Parent runtime overrides
 remain authoritative, so an unverifiable or mismatched runtime fails closed.
 
-Independent review is bounded by machine state, not only prose. Initial review
-uses 900000 ms. Actionable findings are a successful review result; after the
-solution changes, one targeted recheck round uses 300000 ms. A runtime failure
-(timeout, no response, unattached process, or equivalent) permits one fresh
+Independent review is bounded by machine state, not only prose. A pre-dispatch
+`model_identity` or `permission` failure is permanent for the selected
+fingerprint/round: record one idempotent unavailable outcome and do not create a
+running dispatch or consume a second attempt. Initial review otherwise uses
+900000 ms. Actionable findings are a successful review result; after the
+solution changes, one targeted recheck round uses 300000 ms. A transient runtime
+failure (timeout, no response, unattached process, or equivalent) permits one fresh
 Reviewer retry for the same solution fingerprint and round. A passed dispatch
 must record actual duration within budget. A third attempt, duplicate result, or
 over-budget PASS is rejected. After two runtime failures, ordinary Deep may use
@@ -87,7 +90,7 @@ scheduling, shared state, integration, or final verdicts. Their PASS must match
 actual in-scope changed paths, every planned verification command, fresh
 evidence, and the current candidate fingerprint. Lifecycle `completed` is never
 a PASS. Work that cannot be safely bounded, or a worker result that is failed,
-blocked, or materially ambiguous, returns to the Sol/xhigh controller for
+blocked, or materially ambiguous, returns to the routed Sol controller for
 replanning or direct implementation; there is no silent Terra fallback.
 
 The controller is the sole contract/state/session-event/integration/verdict
@@ -121,10 +124,14 @@ result does not erase passed siblings, but blocks affected dependents and final
 integration until the controller replans. Stale baselines, changed candidate
 fingerprints, out-of-scope paths, missing verification/evidence, and merge
 conflicts are not PASS; preserve the other verified results, mark the affected
-session for conflict/replan, and return to Sol/xhigh. This release permits one
-running writable worker per worktree; parallel writes require isolated worktrees
-so scope attribution remains provable. Quick and the existing single-worker path
-remain unchanged, and orchestration never auto-commits, pushes, opens PRs,
+session for conflict/replan, and return to the routed Sol controller. This
+release permits one running writable Worker per worktree. Standard/Deep `begin`
+derives one bounded Worker plan when approved scope and manifest checks permit
+it; the host must execute the returned create/send/wait/read actions. Single and
+parallel writable Workers both require isolated worktrees so scope attribution
+remains provable, while the frozen shared-interface contract is required only
+for a real parallel batch. Quick remains controller-direct, and orchestration
+never auto-commits, pushes, opens PRs,
 deploys, or deletes branches. Post-delivery cleanup is separately bounded: only
 task-recorded sessions already marked `integrated` may be considered, and the
 controller must revalidate exact path, Git common-dir, immutable identity, and

@@ -29,6 +29,7 @@ import {
   taskFiles,
 } from "../skills/openatdd/scripts/workflow.mjs";
 import {
+  clock,
   criterion,
   prepareApprovedTask,
   temporaryProject,
@@ -640,6 +641,99 @@ test("fast finalization validates, rehearses, and commits one frozen journey in 
     (error) => error.code === "INVALID_FINALIZATION_MANIFEST",
   );
   assert.equal(await pathExists(invalid.files.finalizePreview), false);
+});
+
+test("Quick fast finalization reuses exact deterministic rehearsal evidence without rerunning the broad command", async (t) => {
+  const marker = ".openatdd/requirements/.quick-rehearsal-invocations";
+  const script = `const fs = require("node:fs"); const marker = ${JSON.stringify(marker)}; const count = fs.existsSync(marker) ? Number(fs.readFileSync(marker, "utf8")) : 0; fs.writeFileSync(marker, String(count + 1)); process.stdout.write("broad-ok");`;
+  const { root, taskId } = await approvedImplementation(t, "quick-rehearsal-reuse", {
+    manifest: {
+      dryRun: {
+        commands: [command("rehearsal-broad", script, { deterministic: true })],
+      },
+      checks: [
+        { id: "focused", scope: "focused", commands: [command("focused-check")] },
+        { id: "module", scope: "module", commands: [command("module-check")] },
+        { id: "broad", scope: "broad", commands: [command("formal-broad", script, { deterministic: true })] },
+      ],
+    },
+  });
+
+  const result = await fastFinalize(root, taskId);
+  assert.deepEqual(result.result.metrics.rehearsalEvidenceReuse, ["broad"]);
+  assert.equal(result.result.metrics.rehearsalCommandInvocations, 1);
+  assert.deepEqual(result.result.metrics.checkGroupRuns, { focused: 0, module: 0, broad: 1 });
+  assert.equal(result.result.metrics.commandInvocations, 1);
+  assert.equal(result.result.metrics.uatJourneyRuns, 1);
+  assert.equal(await readFile(path.join(root, marker), "utf8"), "1");
+  assert.equal(result.state.results["AC-01"].status, "passed");
+  assert(result.state.results["AC-01"].evidence.length > 0);
+});
+
+test("Quick rehearsal reuse supports complete deterministic multi-command groups", async (t) => {
+  const marker = ".openatdd/requirements/.quick-multi-rehearsal-invocations";
+  const append = (value) => `const fs = require("node:fs"); fs.appendFileSync(${JSON.stringify(marker)}, ${JSON.stringify(`${value}\n`)}); process.stdout.write(${JSON.stringify(value)});`;
+  const { root, taskId } = await approvedImplementation(t, "quick-multi-rehearsal-reuse", {
+    manifest: {
+      dryRun: {
+        commands: [
+          command("rehearsal-one", append("one"), { deterministic: true }),
+          command("rehearsal-two", append("two"), { deterministic: true }),
+        ],
+      },
+      checks: [
+        { id: "focused", scope: "focused", commands: [command("focused-check")] },
+        { id: "module", scope: "module", commands: [command("module-check")] },
+        { id: "broad", scope: "broad", commands: [
+          command("formal-one", append("one"), { deterministic: true }),
+          command("formal-two", append("two"), { deterministic: true }),
+        ] },
+      ],
+    },
+  });
+
+  const result = await fastFinalize(root, taskId);
+  assert.deepEqual(result.result.metrics.rehearsalEvidenceReuse, ["broad"]);
+  assert.equal(result.result.metrics.rehearsalCommandInvocations, 2);
+  assert.equal(result.result.metrics.commandInvocations, 1);
+  assert.deepEqual((await readFile(path.join(root, marker), "utf8")).trim().split("\n"), ["one", "two"]);
+  assert.equal(result.state.checks.broad.evidence.length, 2);
+});
+
+test("tampered rehearsal evidence is not reused by formal Quick finalization", async (t) => {
+  const marker = ".openatdd/requirements/.quick-tamper-invocations";
+  const script = `const fs = require("node:fs"); const marker = ${JSON.stringify(marker)}; const count = fs.existsSync(marker) ? Number(fs.readFileSync(marker, "utf8")) : 0; fs.writeFileSync(marker, String(count + 1)); process.stdout.write("broad-ok");`;
+  const { root, taskId } = await approvedImplementation(t, "quick-tampered-rehearsal", {
+    manifest: {
+      dryRun: { commands: [command("rehearsal-broad", script, { deterministic: true })] },
+      checks: [
+        { id: "focused", scope: "focused", commands: [command("focused-check")] },
+        { id: "module", scope: "module", commands: [command("module-check")] },
+        { id: "broad", scope: "broad", commands: [command("formal-broad", script, { deterministic: true })] },
+      ],
+    },
+  });
+
+  const preview = await dryRunFinalization(root, taskId);
+  await writeFile(resolveArtifactPath(root, preview.preview.commandResults[0].evidencePath), "tampered evidence\n");
+  const result = await finalizeTask(root, taskId);
+  assert.deepEqual(result.result.metrics.rehearsalEvidenceReuse, []);
+  assert.equal(await readFile(path.join(root, marker), "utf8"), "2");
+  assert.match(result.state.checks.broad.summary, /group passed/);
+});
+
+test("formal verification epochs start at formal time outside Quick rehearsal capture", async (t) => {
+  const { root, taskId } = await approvedImplementation(t, "standard-formal-boundary", {
+    assessment: { scope: "cross-module", projectPattern: "established", reversibility: "reversible", uncertainty: "medium" },
+  });
+  const previewAt = "2026-01-01T00:00:00.000Z";
+  const formalAt = "2026-01-01T00:10:00.000Z";
+  const preview = await dryRunFinalization(root, taskId, {}, clock(previewAt));
+  const result = await finalizeTask(root, taskId, {}, clock(formalAt));
+
+  assert.equal(preview.preview.verificationStartedAt, previewAt);
+  assert.equal(result.state.verification.startedAt, formalAt);
+  assert.equal(result.state.verificationNotBefore, formalAt);
 });
 
 test("project-scoped finalization preflight skips live assertions without fabricated evidence", async (t) => {

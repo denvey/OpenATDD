@@ -21,8 +21,10 @@ import {
   recordOrchestrationSessionResult,
   recordSolutionReview,
   taskFiles,
+  validateTask,
 } from "../skills/openatdd/scripts/workflow.mjs";
 import { replaceRequirementSection } from "../skills/openatdd/scripts/contracts.mjs";
+import { resolveArtifactPath } from "../skills/openatdd/scripts/lib.mjs";
 import {
   acceptanceMarkdown,
   criterion,
@@ -154,6 +156,20 @@ const runtimeAttestation = {
   canSpawnAgents: false,
 };
 
+async function writeDefaultWorkerManifest(root, options = {}) {
+  await writeFile(path.join(root, ".openatdd", "finalization.json"), `${JSON.stringify({
+    checks: [{
+      id: "focused",
+      scope: "focused",
+      commands: [{
+        id: "worker-check",
+        argv: options.argv ?? [process.execPath, "--check", "src/one/index.mjs"],
+        ...(options.cwd ? { cwd: options.cwd } : {}),
+      }],
+    }],
+  }, null, 2)}\n`);
+}
+
 test("parallel approval is solution-bound and orchestration-start returns host actions", async (t) => {
   const root = await temporaryProject(t);
   await prepareParallelTask(root, "parallel-start");
@@ -175,6 +191,182 @@ test("parallel approval is solution-bound and orchestration-start returns host a
   const send = started.actions.find((item) => item.type === "send");
   assert.equal(send.prompt.sharedContract.status, "passed");
   assert(send.prompt.doNotTouch.includes("tests/orchestration-shared-contract.test.mjs"));
+});
+
+test("Standard begin derives a default plan and dispatches one isolated Worker without a parallel directive", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "default-single-worker";
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, "Deliver one bounded change", clock("2026-01-01T00:00:00.000Z"));
+  await assessTask(root, taskId, {
+    scope: "cross-module",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "medium",
+  }, clock("2026-01-01T00:00:01.000Z"));
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId, clock("2026-01-01T00:00:02.000Z"));
+  await draftSolution(root, taskId, clock("2026-01-01T00:00:03.000Z"));
+  await writeSolution(root, taskId, criteria, ["src/one"]);
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The bounded change is independently verifiable.",
+    checks: "all",
+  }, clock("2026-01-01T00:00:04.000Z"));
+  await approveSolution(root, taskId, {}, clock("2026-01-01T00:00:05.000Z"));
+  await writeDefaultWorkerManifest(root);
+  const begunCli = await execFileAsync(process.execPath, [cli, "begin", taskId, "--json", "--root", root]);
+  const begunPayload = JSON.parse(begunCli.stdout);
+  const begun = (await loadTask(root, taskId)).state;
+
+  assert.equal(begunPayload.execution.planStatus, "planned");
+  assert.equal(begun.execution.planStatus, "planned");
+  assert.equal(begun.execution.plan.tasks.length, 1);
+  assert.deepEqual(begun.execution.nextActions, ["dispatch-worker"]);
+  assert.equal(begun.execution.directive, null);
+
+  const capabilitiesInput = path.join(root, "single-worker-capabilities.json");
+  await writeFile(capabilitiesInput, `${JSON.stringify({ capabilities, controller }, null, 2)}\n`);
+  const startedCli = await execFileAsync(process.execPath, [cli, "orchestration-start", taskId, "--input", "single-worker-capabilities.json", "--json", "--root", root]);
+  const started = JSON.parse(startedCli.stdout);
+  assert.equal(started.parallel, false);
+  assert.equal(started.orchestration.aggregate.total, 1);
+  assert.equal(started.orchestration.contract, null);
+  assert.deepEqual(started.actions.map((item) => item.type), ["create", "send", "wait", "read"]);
+  assert.equal(started.actions.find((item) => item.type === "send").prompt.sharedContract, null);
+  const plannedVerification = begun.execution.plan.tasks[0].verification[0];
+
+  const worktree = path.join(root, "single-worker");
+  await mkdir(path.join(worktree, "src", "one"), { recursive: true });
+  await recordOrchestrationSession(root, taskId, {
+    eventId: "single-worker-created",
+    expectedRevision: started.orchestration.revision,
+    sessionId: "session-ST-001",
+    status: "created",
+    worktree,
+    branch: "codex/single-worker",
+    threadId: "thread-single-worker",
+    hostId: "host-1",
+    runtimeAttestation,
+  });
+  await writeFile(path.join(worktree, "src", "one", "index.mjs"), "export const one = true;\n");
+  await assert.rejects(
+    () => recordOrchestrationSessionResult(root, taskId, {
+      sessionId: "session-ST-001",
+      status: "passed",
+      summary: "The Worker claimed an unrelated verification command.",
+      verification: [{ command: "node --check src/unrelated.mjs", status: "passed", summary: "unrelated syntax valid" }],
+      evidence: ["test-evidence.txt"],
+      durationMs: 250,
+    }),
+    (error) => error.code === "SESSION_RESULT_VERIFICATION_INCOMPLETE",
+  );
+  const result = await recordOrchestrationSessionResult(root, taskId, {
+    sessionId: "session-ST-001",
+    status: "passed",
+    summary: "The isolated Worker completed its bounded change.",
+    verification: [{ command: plannedVerification, status: "passed", summary: "syntax valid" }],
+    evidence: ["test-evidence.txt"],
+    durationMs: 250,
+  });
+  assert.equal(result.result.status, "passed");
+  assert.equal(result.result.reportedEvidence[0], "test-evidence.txt");
+  assert.equal(result.result.evidence.length, 1);
+  assert.match(result.result.evidence[0].path, /^git:tasks\/default-single-worker\/evidence\/orchestration\//);
+  const integrated = await integrateOrchestration(root, taskId);
+  assert.deepEqual(integrated.integrated, ["session-ST-001"]);
+  assert.equal(await readFile(path.join(root, "src", "one", "index.mjs"), "utf8"), "export const one = true;\n");
+  assert.equal(integrated.state.execution.results["ST-001"].status, "passed");
+  assert.equal(integrated.state.execution.results["ST-001"].integrationStatus, "integrated");
+
+  const stateBeforeStatus = await readFile(taskFiles(root, taskId).state, "utf8");
+  const firstStatus = JSON.parse((await execFileAsync(process.execPath, [cli, "status", taskId, "--json", "--root", root])).stdout);
+  const secondStatus = JSON.parse((await execFileAsync(process.execPath, [cli, "status", taskId, "--json", "--root", root])).stdout);
+  assert(firstStatus.stageTiming.stages.contract.durationMs >= 0);
+  assert(firstStatus.stageTiming.stages.implementation.durationMs >= 0);
+  assert.equal(secondStatus.stageTiming.attribution.workerDurationMs, 250);
+  assert.equal(await readFile(taskFiles(root, taskId).state, "utf8"), stateBeforeStatus);
+
+  const receipt = resolveArtifactPath(root, result.result.evidence[0].path);
+  await writeFile(receipt, "tampered receipt\n");
+  const invalid = await validateTask(root, taskId);
+  assert(invalid.errors.some((item) => item.includes("Execution ST-001") && item.includes("changed after it was recorded")));
+});
+
+test("default Worker commands preserve argv literally when rendered for the host shell", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "default-worker-shell-quoting";
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, "Preserve verification argv literally");
+  await assessTask(root, taskId, {
+    scope: "cross-module",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "medium",
+  });
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId);
+  await draftSolution(root, taskId);
+  await writeSolution(root, taskId, criteria, ["src/one"]);
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The bounded change is independently verifiable.",
+    checks: "all",
+  });
+  await approveSolution(root, taskId);
+  const cwd = "verification dir's";
+  await mkdir(path.join(root, cwd), { recursive: true });
+  await writeDefaultWorkerManifest(root, {
+    cwd,
+    argv: [
+      process.execPath,
+      "-e",
+      "process.stdout.write(process.argv.slice(1).join('|'))",
+      "$HOME",
+      "`printf injected`",
+      "it's literal",
+    ],
+  });
+
+  const begun = await beginImplementation(root, taskId);
+  const verification = begun.state.execution.plan.tasks[0].verification[0];
+  const executed = await execFileAsync("/bin/sh", ["-c", verification], {
+    cwd: root,
+    env: { ...process.env, HOME: "expanded-home" },
+  });
+  assert.equal(executed.stdout, "$HOME|`printf injected`|it's literal");
+});
+
+test("Standard begin records a stable controller-sequential reason when verification routing is unavailable", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "default-worker-fallback";
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, "Deliver one bounded change");
+  await assessTask(root, taskId, {
+    scope: "cross-module",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "medium",
+  });
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId);
+  await draftSolution(root, taskId);
+  await writeSolution(root, taskId, criteria, ["src/one"]);
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The bounded change is independently verifiable.",
+    checks: "all",
+  });
+  await approveSolution(root, taskId);
+
+  const begun = await beginImplementation(root, taskId);
+  assert.equal(begun.state.execution.planStatus, "controller-sequential");
+  assert.equal(begun.state.execution.fallbackReason.code, "verification-unavailable");
+  assert.deepEqual(begun.state.execution.nextActions, ["controller-sequential"]);
+  assert(begun.state.execution.fallbackReason.details.some((item) => item.includes("FINALIZATION_MANIFEST_NOT_FOUND")));
 });
 
 test("parallel planning fails before dispatch without a frozen shared contract", async (t) => {

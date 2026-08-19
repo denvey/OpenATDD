@@ -101,9 +101,12 @@ approval, solution draft, main review, solution approval, and implementation
 start — into one `advance` invocation; every persisted gate keeps its own
 validation, and a blocking or authorization decision still stops the chain.
 Standard and Deep keep the two human confirmations and combine the
-post-confirmation approval with `approve-solution --begin`. Within one formal
-finalization, a narrower check group whose commands are argv-identical to an
-already executed group reuses that evidence; the broad group always executes.
+post-confirmation approval with `approve-solution --begin`. That begin step
+derives one bounded Worker plan from approved impact paths and manifest checks,
+or records a concrete controller-sequential reason. A single Worker still uses
+an isolated worktree. Within `finalize --fast`, exact deterministic Quick
+rehearsal evidence may satisfy the one broad group without spawning the same
+command again; the real approved journey and affected-history pass still run.
 
 These workflow commands are normally executed by the agent, not by a person.
 They use `.openatdd/finalization.json`; the successful formal command prepares
@@ -159,10 +162,12 @@ openatdd orchestration-cleanup TASK --json
 not erase passed siblings. Stale baselines, candidate drift, scope violations,
 missing verification/evidence, or integration conflicts cannot pass; the
 controller preserves independent results and returns the affected work to the
-Sol/xhigh controller for replanning or direct implementation. A session result
-is never `DELIVERED` by itself. Quick, single-session, and hosts without proven
-multi-session/worktree capabilities keep their existing behavior; unsupported
-hosts fail closed rather than writing concurrently in a shared checkout. No
+routed Sol controller for replanning or direct implementation. A session result
+is never `DELIVERED` by itself. Quick stays controller-direct. Standard/Deep
+dispatch every returned Worker action through an isolated worktree, even when
+there is only one task; hosts without proven session/worktree capabilities fail
+closed to a recorded controller-sequential path rather than writing through an
+unattested shared checkout. No
 automatic commit, push, PR, deploy, or branch deletion is performed. After
 `DELIVERED`, the controller automatically requests bounded cleanup of only the
 current task's recorded, integrated worktrees. Git common-dir and immutable
@@ -198,9 +203,12 @@ OpenATDD records one deterministic lane from repository-derived facts:
   external research accompanies local discovery; independent read-only review
   is used when it reduces risk.
 
-Independent review has a deterministic stop policy. The initial review has a
-15-minute hard budget. Actionable findings count as a successful review; after
-revision, one targeted 5-minute recheck is allowed. Runtime failure permits one
+Independent review has a deterministic stop policy. A pre-dispatch
+`model_identity` or `permission` failure records one idempotent unavailable
+outcome and does not create a running dispatch or consume a retry. Otherwise the
+initial review has a 15-minute hard budget. Actionable findings count as a
+successful review; after revision, one targeted 5-minute recheck is allowed. A
+transient runtime failure permits one
 fresh Reviewer retry for the same solution fingerprint and round, never a third
 attempt. Over-budget PASS is rejected. If both attempts fail, ordinary Deep can
 record an explicit main-review fallback, while dangerous Deep requires a human
@@ -446,14 +454,13 @@ The default order is:
 
 ```text
 focused implementation and repair
-→ openatdd finalize <task> --fast   (or the explicit ladder below)
-→ openatdd validate-finalization <task>
-→ openatdd finalize <task> --dry-run
-→ repair all rehearsal findings
-→ freeze the complete source fingerprint
-→ openatdd finalize <task>
+→ stop manually repeating manifest-owned module, broad, and UAT commands
+→ openatdd finalize <task> --fast
 → delivery report; perform only listed manual UAT and object only on failure
 ```
+
+Use the split `validate-finalization → finalize --dry-run → repair → finalize`
+ladder only when an intermediate rehearsal result is needed for diagnosis.
 
 The rehearsal invokes real configured entry points and validates preflight,
 coverage, report rendering, links, redaction, and source stability. It does not
@@ -521,7 +528,8 @@ OpenATDD optimizes the order without weakening the final journey:
 1. focused checks while code changes;
 2. module checks after repairs close;
 3. one non-formal rehearsal against real entry points;
-4. one broad check after the complete source fingerprint freezes;
+4. one broad satisfaction after the complete source fingerprint freezes (Quick
+   may reuse exact deterministic rehearsal evidence for that same boundary);
 5. one complete approved journey and affected-history pass in the current
    clean verification epoch.
 
@@ -607,28 +615,31 @@ evals/                        deterministic and real-agent scenarios, rubrics, r
 中文定位：**OpenATDD 是面向 AI 编程的开源验收驱动交付框架。描述需求；Quick 直接交付，Standard / Deep 确认验收与方案，其余交给 AI。**
 
 Controller selection is deterministic rather than automatic escalation:
-Quick uses `gpt-5.6-sol/high`; Standard/Deep use `gpt-5.6-sol/xhigh`. The Codex
-host must explicitly apply the routed controller and prove the actual runtime;
-a mismatch blocks the run instead of silently falling back.
+Quick uses `gpt-5.6-sol/high`; Standard and Deep use `gpt-5.6-sol/xhigh`. The
+Codex host must explicitly apply the routed controller and prove the actual
+runtime; a mismatch blocks the run instead of silently falling back.
 The controller remains workspace-write because Quick and any unbounded or
 ambiguous implementation stay with Sol; scouts and reviewers remain read-only.
-
 Agent roles are selected separately from the controller. Luna/low handles
-read-only discovery and research. Standard/Deep independent review uses a fresh
-Sol/xhigh context. Only an approved structured execution plan can delegate
+read-only discovery and research. Independent review uses a fresh Sol context
+matching the lane controller: Sol/xhigh for Standard and Deep.
+Only an approved structured execution plan can delegate
 writes: bounded and complex implementation both use Luna/max. Work that cannot
 be safely bounded, or that returns failed, blocked, or materially ambiguous,
-returns to the Sol/xhigh controller for replanning or direct implementation; it
+returns to the routed Sol controller for replanning or direct implementation; it
 does not silently switch to Terra. Workers are leaf Agents
 (`canSpawnAgents=false`) and cannot change acceptance, solution, authorization,
 scheduling, or the final verdict. PASS requires actual in-scope changed paths,
 all planned verification, fresh evidence, and the current candidate fingerprint.
-Only one writable worker may run in a worktree at a time; parallel writes require
-isolated worktrees so actual path ownership remains provable.
+Only one writable Worker may run in a worktree at a time. Single and parallel
+Workers both require isolated worktrees so actual path ownership remains
+provable; only a real parallel batch requires the frozen shared-interface
+contract.
 
-When parallel execution is explicitly requested during solution approval, the
-Codex App host adapter must create one isolated worktree thread per safe subtask,
-send the exact contract, wait/read all results, and let the Sol/xhigh controller
+When Standard/Deep `begin` returns Worker actions—or parallel execution is
+explicitly requested during solution approval—the Codex App host adapter must
+create one isolated worktree thread per safe subtask,
+send the exact contract, wait/read all results, and let the routed Sol controller
 serially record and integrate them. Unique thread/worktree/branch/base identity,
 capability attestation, stale-baseline checks, and failure-closed behavior are
 mandatory. Partial failures and `needs_input` remain visible for controller

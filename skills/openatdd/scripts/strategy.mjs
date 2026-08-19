@@ -9,6 +9,7 @@ import {
   readJson,
   resolveInside,
 } from "./lib.mjs";
+import { projectStageTiming, recordDurationMs } from "./timing.mjs";
 
 const SOURCES = Object.freeze({
   openatdd: { name: "OpenATDD / ATDD", url: "https://github.com/denvey/OpenATDD" },
@@ -151,6 +152,7 @@ function deliveryTiming(state, clock) {
     taskWallTimeMs: elapsedMs(state.createdAt, end),
     deliveryActiveMs,
     contractElapsedMs,
+    stages: projectStageTiming(state, now),
     phases,
     largestGaps,
   };
@@ -162,10 +164,14 @@ function executionMetrics(state, clock) {
   const resolvedIssues = (state.issues ?? []).filter((item) => item.status === "resolved");
   const dispatches = state.agents?.dispatches ?? [];
   const executionDispatches = dispatches.filter((item) => /execution|implementation/i.test(item.role ?? ""));
-  const durations = executionDispatches.map((item) => elapsedMs(item.startedAt, item.updatedAt ?? item.completedAt));
+  const dispatchedSubtasks = new Set(executionDispatches.map((item) => item.subtaskId).filter(Boolean));
+  const orchestrationSessions = Object.values(state.execution?.orchestration?.sessions ?? {})
+    .filter((item) => !item.subtaskId || !dispatchedSubtasks.has(item.subtaskId));
+  const executionRecords = [...executionDispatches, ...orchestrationSessions];
+  const durations = executionRecords.map(recordDurationMs);
   const implementationPhases = (state.timing?.phases ?? []).filter((item) => item.phase === "IMPLEMENTING");
   const lastImplementationEnd = implementationPhases.map((item) => item.endedAt).filter(Boolean).sort().at(-1);
-  const lastAgentEnd = executionDispatches.map((item) => item.updatedAt ?? item.completedAt).filter(Boolean).sort().at(-1);
+  const lastAgentEnd = executionRecords.map((item) => item.updatedAt ?? item.completedAt ?? item.integratedAt).filter(Boolean).sort().at(-1);
   const integrationTailMs = lastImplementationEnd && lastAgentEnd && new Date(lastImplementationEnd) >= new Date(lastAgentEnd)
     ? elapsedMs(lastAgentEnd, lastImplementationEnd)
     : 0;

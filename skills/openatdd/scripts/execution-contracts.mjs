@@ -130,6 +130,78 @@ export function validateExecutionPlan(acceptanceIds, input) {
   return normalized;
 }
 
+function fallback(code, message, details = []) {
+  return {
+    status: "controller-sequential",
+    plan: null,
+    reason: { code, message, details: [...details] },
+  };
+}
+
+/**
+ * Build the smallest safe delegated implementation contract from already
+ * approved facts. Normal inability to delegate is data, not an exception: the
+ * controller persists the reason and continues sequentially.
+ */
+export function deriveDefaultExecutionPlan(input = {}) {
+  const acceptanceIds = Array.isArray(input.acceptanceIds)
+    ? [...new Set(input.acceptanceIds.filter(nonEmpty).map((item) => item.trim()))]
+    : [];
+  if (acceptanceIds.length === 0) {
+    return fallback("acceptance-unavailable", "Approved acceptance criteria are required before default Worker planning.");
+  }
+
+  let writeScope;
+  let protectedPaths;
+  try {
+    writeScope = [...new Set((input.impactPaths ?? []).filter(nonEmpty).map(normalizeExecutionPath))];
+    protectedPaths = [...new Set((input.protectedPaths ?? [".git", ".openatdd/requirements", ".env.openatdd.local"])
+      .filter(nonEmpty)
+      .map(normalizeExecutionPath))];
+  } catch (error) {
+    return fallback(error.code ?? "invalid-write-scope", error.message);
+  }
+  if (writeScope.length === 0) {
+    return fallback("write-scope-unavailable", "Approved solution impact paths are required before default Worker planning.");
+  }
+  const protectedOverlap = writeScope.filter((owned) => protectedPaths.some((forbidden) => executionPathsOverlap(owned, forbidden)));
+  if (protectedOverlap.length > 0) {
+    return fallback("protected-write-scope", "Approved impact paths overlap controller-owned contract or repository state.", protectedOverlap);
+  }
+
+  const verification = Array.isArray(input.verification)
+    ? [...new Set(input.verification.filter(nonEmpty).map((item) => item.trim()))]
+    : [];
+  if (verification.length === 0) {
+    return fallback("verification-unavailable", "No bounded project verification command is available for a default Worker.");
+  }
+
+  const lane = String(input.lane ?? "standard").trim();
+  const route = lane === "deep" ? "complex-implementation" : "bounded-implementation";
+  const planInput = {
+    schemaVersion: 1,
+    tasks: [{
+      id: "ST-001",
+      acceptanceIds,
+      task: String(input.task ?? input.requirement ?? "Implement the approved solution.").trim(),
+      stage: 1,
+      dependsOn: [],
+      writeScope,
+      doNotTouch: protectedPaths,
+      expectedResult: String(input.expectedResult ?? input.requirement ?? "The approved acceptance journey is implemented.").trim(),
+      verification,
+      firstArtifact: String(input.firstArtifact ?? writeScope[0]).trim(),
+      route,
+    }],
+    metadata: { source: "approved-solution-default", lane },
+  };
+  try {
+    return { status: "planned", plan: validateExecutionPlan(acceptanceIds, planInput), reason: null };
+  } catch (error) {
+    return fallback(error.code ?? "execution-contract-invalid", error.message, error?.details?.errors ?? []);
+  }
+}
+
 export function validateRuntimeAttestation(expected, input) {
   assert(isRecord(input), "RUNTIME_ATTESTATION_REQUIRED", "A host runtime attestation is required.");
   assert(input.verified === true, "RUNTIME_ATTESTATION_UNVERIFIED", "The host must verify the actual Agent runtime.");

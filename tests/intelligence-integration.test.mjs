@@ -298,6 +298,68 @@ test("independent review budgets bind attempts to the current solution and stop 
   );
 });
 
+test("permanent Reviewer capability failure becomes unavailable after one pre-dispatch check", async (t) => {
+  const root = await temporaryProject(t);
+  await reviewReadyTask(root, "reviewer-capability-fast-fail");
+  const attestation = path.join(root, "reviewer-capability.json");
+  await writeFile(attestation, `${JSON.stringify({
+    verified: false,
+    source: "test-host-capability-check",
+    failureClass: "permission",
+    blocker: "The host cannot provide a leaf Reviewer runtime.",
+  }, null, 2)}\n`);
+  const dispatched = await run(
+    root,
+    "agent-dispatch",
+    "reviewer-capability-fast-fail",
+    "--id",
+    "AGENT-CAPABILITY",
+    "--role",
+    "independent-review",
+    "--status",
+    "blocked",
+    "--duration-ms",
+    "0",
+    "--attestation",
+    "reviewer-capability.json",
+    "--json",
+  );
+  assert.equal(JSON.parse(dispatched.stdout).runtimeFailure.failureClass, "permission");
+  const failed = (await loadTask(root, "reviewer-capability-fast-fail")).state;
+  assert.equal(failed.reviews.independent.unavailable.length, 1);
+  assert.equal(failed.reviews.independent.unavailable[0].reason, "permission");
+  assert.equal(failed.agents.dispatches.length, 1);
+  assert.equal(failed.agents.dispatches.some((item) => item.status === "running"), false);
+
+  await assert.rejects(
+    () => run(
+      root,
+      "agent-dispatch",
+      "reviewer-capability-fast-fail",
+      "--id",
+      "AGENT-CAPABILITY-RETRY",
+      "--role",
+      "independent-review",
+      "--status",
+      "planned",
+      "--json",
+    ),
+    (error) => error.stderr.includes("INDEPENDENT_REVIEW_CAPABILITY_UNAVAILABLE"),
+  );
+  const after = (await loadTask(root, "reviewer-capability-fast-fail")).state;
+  assert.equal(after.reviews.independent.unavailable.length, 1);
+  assert.equal(after.agents.dispatches.length, 1);
+
+  const fallback = await recordSolutionReview(root, "reviewer-capability-fast-fail", {
+    status: "passed",
+    reviewer: "main",
+    summary: "Main review passed after the host capability check failed closed.",
+    checks: "all",
+    fallbackReason: "The host cannot provide the required leaf Reviewer runtime.",
+  });
+  assert.equal(fallback.state.reviews.solution.status, "passed");
+});
+
 test("independent review rejects over-budget success and only rechecks a changed solution after actionable findings", async (t) => {
   const root = await temporaryProject(t);
   const { criteria, files } = await reviewReadyTask(root, "bounded-review-recheck");
@@ -632,9 +694,9 @@ test("schema v3 routing state receives additive controller, Agent policy, and ex
   const files = taskFiles(root, "routing-defaults");
   const persisted = JSON.parse(await readFile(files.state, "utf8"));
   persisted.routing.controller = {
-    profile: "sol-controller",
+    profile: "sol-critical-controller",
     model: "gpt-5.6-sol",
-    reasoningEffort: "high",
+    reasoningEffort: "xhigh",
     forkTurns: "none",
     sandbox: "workspace-write",
   };
@@ -647,10 +709,10 @@ test("schema v3 routing state receives additive controller, Agent policy, and ex
   assert.equal(loaded.routing.controller.model, "gpt-5.6-sol");
   assert.equal(loaded.routing.controller.reasoningEffort, "xhigh");
   assert.deepEqual(loaded.routing.agents.roles, ["independent-review", "bounded-implementation", "complex-implementation"]);
-  assert.deepEqual(loaded.execution, { planStatus: "not_planned", plannedAt: null, plan: null, results: {} });
+  assert.deepEqual(loaded.execution, { planStatus: "not_planned", plannedAt: null, plan: null, results: {}, fallbackReason: null, nextActions: [] });
 });
 
-test("complex implementation requires Luna max and returns failures to the Sol xhigh controller", async (t) => {
+test("complex implementation requires Luna max and returns failures to the Sol/xhigh controller", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "complex-luna-worker";
   await prepareApprovedTask(root, taskId, {
