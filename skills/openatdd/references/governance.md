@@ -38,19 +38,21 @@ blocking decision before acceptance approval.
 
 ## Investigation and Agents
 
-- Quick: direct local work; no routine Agent or external research.
+- Quick: compact local work with one bounded Luna/max Worker; no routine scouts
+  or external research.
 - Standard: local discovery and optional independent read-only review when it
   materially reduces risk.
 - Deep: parallel local discovery and relevant external research; add an
   independent solution review. Record unavailable research rather than silently
   treating Deep as Standard.
 
-Controller routing is explicit: Quick uses Sol/high and Standard/Deep use
-Sol/xhigh.
-The controller remains workspace-write for direct implementation and final
+Design routing is explicit: Quick/Standard use GPT-6/medium, Deep uses
+GPT-6/high. Acceptance uses medium by default, high for sensitive risk overlays
+or explicit evidence/correctness concerns; complexity alone does not raise it.
+The controller remains workspace-write for contracts and final
 integration; read-only applies to scouts and independent reviewers.
 Discovery and external research use Luna/low, read-only; independent review uses
-a fresh Sol/xhigh context for Standard and Deep. Give every role a
+a fresh GPT-6 context at the lane's design effort. Give every role a
 bounded context and record a host runtime attestation matching model, reasoning
 effort, sandbox, `forkTurns:none`, and leaf capability. Parent runtime overrides
 remain authoritative, so an unverifiable or mismatched runtime fails closed.
@@ -70,7 +72,7 @@ require an explicit human fallback decision recorded with `openatdd
 review-fallback TASK --status approved|denied --rationale "..."
 --human-confirmed` before a main-review fallback may pass.
 
-After solution approval, a Standard/Deep controller may persist a structured
+After solution approval, the controller in any lane may persist a structured
 Git-private execution plan. If the person explicitly approves with language such
 as “批准方案，并行执行”, the host records the one-time
 `approve-solution TASK --begin --parallel` directive against only the current
@@ -90,22 +92,25 @@ scheduling, shared state, integration, or final verdicts. Their PASS must match
 actual in-scope changed paths, every planned verification command, fresh
 evidence, and the current candidate fingerprint. Lifecycle `completed` is never
 a PASS. Work that cannot be safely bounded, or a worker result that is failed,
-blocked, or materially ambiguous, returns to the routed Sol controller for
-replanning or direct implementation; there is no silent Terra fallback.
+blocked, or materially ambiguous, returns to GPT-6 for diagnosis and replanning,
+then Luna for implementation; there is no silent model fallback. After two
+no-progress repairs, the Worker returns the failing assertion, relevant diff,
+and rejected hypotheses. Direct GPT-6 implementation needs user authorization.
 
 The controller is the sole contract/state/session-event/integration/verdict
-writer. The Codex App adapter is host-side and maps, in order,
-`create_thread` (one isolated worktree per subtask, starting from the intended
-working-tree state), `send_message_to_thread`, `wait_threads`, and `read_thread`,
+writer. The adapter maps authorized isolated-session creation, messaging,
+waiting, and result reading,
 then invokes controller-only `session-record`, `session-result`, and
 `orchestration-integrate`. The core remains host-agnostic and does not call
-Codex proprietary APIs directly. Before creating a thread, require proven
+Codex proprietary APIs directly. Follow the host-specific tool and permission
+rules in `orchestration.md`; user-visible task creation is not automatically
+authorized by a Worker plan. Before creating a session, require proven
 capabilities and unique `threadId`, worktree, branch, and base identity; missing,
 duplicate, shared, or mismatched identities fail closed rather than enabling
 shared-directory writes.
 
 For every actual parallel batch, the controller must freeze and execute a shared
-interface contract before `create_thread`. The contract names all participating
+interface contract before session creation. The contract names all participating
 task IDs, identifies controller-owned test files outside every worker
 `writeScope`, and supplies bounded deterministic commands. Its passed output and
 file hashes are copied into every prompt, and the files become `doNotTouch` for
@@ -124,13 +129,14 @@ result does not erase passed siblings, but blocks affected dependents and final
 integration until the controller replans. Stale baselines, changed candidate
 fingerprints, out-of-scope paths, missing verification/evidence, and merge
 conflicts are not PASS; preserve the other verified results, mark the affected
-session for conflict/replan, and return to the routed Sol controller. This
-release permits one running writable Worker per worktree. Standard/Deep `begin`
+session for conflict/replan, and return to GPT-6 for diagnosis. This
+release permits one running writable Worker per worktree and at most two
+allocated implementation Workers until the current batch is integrated. `begin`
 derives one bounded Worker plan when approved scope and manifest checks permit
 it; the host must execute the returned create/send/wait/read actions. Single and
 parallel writable Workers both require isolated worktrees so scope attribution
 remains provable, while the frozen shared-interface contract is required only
-for a real parallel batch. Quick remains controller-direct, and orchestration
+for a real parallel batch. Quick permits bounded delegation, and orchestration
 never auto-commits, pushes, opens PRs,
 deploys, or deletes branches. Post-delivery cleanup is separately bounded: only
 task-recorded sessions already marked `integrated` may be considered, and the
@@ -138,7 +144,7 @@ controller must revalidate exact path, Git common-dir, immutable identity, and
 all residual content before ordinary `git worktree remove`. Never use `--force`;
 retain and report ignored, unknown, foreign, drifted, or failed candidates.
 
-Scouts explore or verify; Sol owns contracts, scheduling, integration, final
+Scouts explore or verify; GPT-6 owns contracts, scheduling, integration, final
 validation, and the verdict.
 
 For dynamic Web verification only, follow `browser-verification.md`: a

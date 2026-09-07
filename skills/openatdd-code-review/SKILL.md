@@ -1,6 +1,6 @@
 ---
 name: openatdd-code-review
-description: Review a local diff, branch, PR, or work in progress read-only against approved OpenATDD acceptance/solution contracts and repository standards. Use when asked to review code, a PR, branch, diff, or current changes. Report evidence-backed findings without modifying code; send explicitly requested fixes to OpenATDD.
+description: Review read-only against approved contracts and repository standards. Use when asked to review code, a PR, branch, diff, or current changes. Send explicitly requested fixes to OpenATDD.
 ---
 
 # OpenATDD code review
@@ -8,14 +8,16 @@ description: Review a local diff, branch, PR, or work in progress read-only agai
 Review is a read-only intent, not a fourth Quick/Standard/Deep lane. Prefer
 OpenATDD artifacts as the specification; do not create a task merely to review.
 
+Use GPT-6/medium; high for sensitive risks or concrete correctness concerns.
+`openatdd model-policy TASK --json [--concern "reason"]` resolves policy, not a
+runtime switch. The host verifies the runtime; Luna/max implements repairs.
+
 ## 1. Freeze the review boundary
 
 - Follow repository instructions and preserve unrelated user changes.
-- Use the base, task, PR, commit, or paths supplied by the user. For a branch or
-  PR, resolve the base and review the merge-base diff. For current work, include
+- Use the requested boundary. For branches/PRs, review the merge-base diff; include
   staged, unstaged, and relevant untracked files.
-- Verify that refs resolve and the diff is non-empty. State an invalid or empty
-  boundary instead of inventing work.
+- Report invalid refs or an empty diff honestly.
 - Read enough changed code, callers, tests, and invariants to prove behavior.
 
 ## 2. Resolve specification and standards
@@ -33,9 +35,8 @@ Read applicable repository and module rules; they override generic preferences.
 
 ## 3. Review two independent axes
 
-**Spec:** find missing or partial requirements, behavior that contradicts the
-approved journey, and unrequested scope. Trace each conclusion to the governing
-contract text.
+**Spec:** trace missing requirements, contradicted behavior, and unrequested
+scope to the approved contract.
 
 **Correctness:** inspect introduced logic, boundary/error behavior, call-path
 regressions, authorization and data effects, compatibility, material
@@ -43,6 +44,8 @@ performance/concurrency risks, and whether tests observe the changed behavior.
 Run only proportionate non-mutating checks. Do not run formatters, fix modes,
 dependency installation, generators, or commands likely to rewrite the tree.
 Do not report formatting, import order, or lint findings that tooling owns.
+Read actual evidence, not Worker summaries. Repeat passing checks only for new
+changes, failures, or unresolved concerns.
 
 Use an independent read-only pass only for large/high-risk changes or on request.
 
@@ -73,10 +76,9 @@ Evidence: relevant code, contract, or check
 Direction: smallest repair or validation
 ```
 
-Use host inline-review annotations when available. Do not add praise or a long
-walkthrough before findings. If there are no actionable findings, say
+Use host inline annotations. Without actionable findings, say
 `No blocking findings.` Then list residual risks, missing specification, and
-checks not run. Never manufacture comments to make a review look useful.
+checks not run. Never manufacture comments.
 
 ## Fix handoff
 

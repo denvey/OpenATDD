@@ -22,6 +22,9 @@ when its stated trigger applies.
   unless the person finds an objection; only residual `MANUAL` criteria get UAT steps.
 - Keep human-facing cards to one screen when practical. Do not expose routing,
   graph, context, Agent, or finalization machinery as extra confirmations.
+- Within approved scope, continue without extra dispatch, test, or repair
+  approvals. If an instruction blocks progress, identify its exact source and
+  the concrete conflict; never invent host capabilities or model attestations.
 
 ## Non-negotiable rules
 
@@ -72,20 +75,31 @@ when a machine summary is needed. Do not repeat persisted approvals.
 
 ## Route effort, overlay risk
 
-- **Quick:** local, established, low uncertainty. Work directly with compact
-  autonomous contracts; no routine research or Agent.
+- **Quick:** local, established, low uncertainty. Use compact autonomous
+  contracts and one bounded Luna/max implementation Worker; no routine research.
 - **Standard:** cross-module or moderately uncertain. Use local discovery and
   optional read-only review only when useful.
 - **Deep:** system-wide, novel cross-cutting, or high uncertainty. Perform
   parallel local discovery, relevant external research, and independent
   solution review. Record unavailable research.
 
-Routing also fixes the controller profile: Quick uses `gpt-5.6-sol` with
-`high`; Standard and Deep use `gpt-5.6-sol` with `xhigh`. The host must
+For design, Quick and Standard use `gpt-6-astra/medium`;
+Deep uses `gpt-6-astra/high`. Parallelism alone never raises design effort.
+Luna/max performs implementation, tests, and ordinary repairs. The host must
 explicitly select and prove the routed profile; an
 unproven model, effort, or permission blocks a compliant run.
-The controller retains workspace write access because Quick and unbounded work
-remain direct; read-only applies to scouts and independent reviewers.
+The controller retains workspace write access for contracts and integration,
+not routine product implementation. Unbounded work returns for diagnosis and
+decomposition, then to Luna; direct GPT-6 implementation needs explicit user
+authorization. Read-only applies to scouts and independent reviewers.
+
+`status --json` and assessed `new` include `modelPolicy`. Before technical
+acceptance, use that policy or `openatdd model-policy TASK --json`; concrete
+unresolved concerns may be supplied with `--concern "reason"`. Acceptance uses
+GPT-6/medium by default, high for sensitive risk overlays or explicit concerns,
+even when design used high. This command resolves policy only: the host must
+apply the model/effort; it does not switch the current runtime. A separate
+`acceptance-review` dispatch enforces its recorded runtime attestation.
 
 Risk never changes the complexity lane by itself. It strengthens authorization,
 denial-path, rollback, compatibility, redaction, preflight, and evidence. The
@@ -170,19 +184,27 @@ reopen acceptance; other edits invalidate and repeat solution review.
 
 ### Optional multi-session execution
 
-Quick delivery stays in the controller. After Standard/Deep solution approval,
+After solution approval in every lane,
 `begin` derives a conservative structured execution plan when approved impact
 paths and manifest verification commands safely bound the work; otherwise it
 persists a concrete `controller-sequential` reason. A returned Worker action is
 not advisory: the host dispatches it through the isolated-session adapter.
 Separate sessions are also used for read-only discovery and research (Luna/low),
-independent review (a fresh Sol/xhigh context for Standard and Deep), or an
+independent solution review (GPT-6/medium for Standard, high for Deep), or an
 explicit `bounded-implementation` / `complex-implementation` plan
 (Luna/max leaf sessions with `forkTurns:none` and `canSpawnAgents=false` that
 cannot change acceptance, solution, authorization, or verdicts). Ambiguous or
-unbounded work stays with the controller. Every writable Worker, including a
+unbounded work returns for controller diagnosis and a narrower plan. Every writable Worker, including a
 single Worker, uses its own isolated worktree; only a real parallel batch needs
 the frozen shared-interface contract.
+
+Evaluate parallelism during design. Use at most two implementation Workers at
+once, with disjoint ownership and frozen shared interfaces. Integrate the
+current batch before dispatching the next; use one Worker when dependencies
+prevent parallelism. Workers return compact results and evidence locators, not
+complete transcripts. After two no-progress repair attempts, return the failed
+assertion, diff, and rejected hypotheses for GPT-6 diagnosis; Luna implements
+the resulting repair. Do not add recursive delegation or routine GPT-6 polling.
 
 Read [orchestration.md](references/orchestration.md) before delegating a worker,
 before dispatching an independent reviewer, when the person approves the
@@ -212,6 +234,11 @@ Report any affected historical tasks before implementation.
 Use existing architecture and conventions. Establish affected baselines, run
 automatic preflight, implement the smallest complete change, add
 risk-proportionate coverage, and review the actual diff/call paths.
+Luna executes checks; GPT-6 judges the final diff against approved acceptance,
+key call paths, actual evidence, and unresolved risks. A Worker summary alone
+is not proof. Read linked source/evidence when needed rather than loading full
+logs by default. Report only blocking findings, evidence gaps, and residual
+risks. Technical acceptance is not a substitute for human authorization or UAT.
 
 Check order:
 
@@ -220,6 +247,10 @@ Check order:
    the source is ready for finalization;
 3. one `finalize --fast` invocation performs the rehearsal, one broad
    satisfaction, one complete approved journey, and affected-history pass.
+
+Once required checks and technical review pass, broaden or repeat only for new
+changes, failures, or concrete unresolved concerns. Keep the final journey and
+fingerprint rules; do not add implementation-mirroring tests for trivial edits.
 
 Do not run a known-failing repository-wide check for ceremony. Keep a real
 passing broad group in the finalization manifest. For a local deterministic
@@ -270,7 +301,8 @@ targeted batch read, one assessed `new`, both cards written together, one
 `finalize --fast` — about six working turns. This is an optimization budget,
 not a correctness cap. Exceed it only for a concrete risk or failed hypothesis.
 Do not add unrelated foundational reading, repeated equivalent searches,
-routine Agents, or reference files the CLI already validates.
+extra scouts/reviewers, or reference files the CLI already validates. A bounded
+implementation Worker is part of this budget, not an extra research phase.
 
 ## Repair and handoff
 

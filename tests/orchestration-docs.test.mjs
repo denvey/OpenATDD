@@ -46,7 +46,7 @@ test("orchestration docs describe the one-time parallel directive and adapter co
     "needs_input",
     "stale",
     "conflict",
-    "Sol/xhigh",
+    "GPT-6/high",
     "Quick",
     "single-session",
     "fail closed",
@@ -64,4 +64,8 @@ test("orchestration docs describe the one-time parallel directive and adapter co
   assert.match(governance, /The core remains host-agnostic and does not call\nCodex proprietary APIs directly/);
   assert.match(verification, /worker lifecycle of `completed` alone is not evidence/);
   assert.match(readme, /ordinary `git\nworktree remove` must succeed without `--force`/);
+  assert.match(orchestration, /at most two implementation Workers/);
+  assert.match(orchestration, /Never create sidebar tasks/);
+  assert.match(skill, /two no-progress repair attempts/);
+  assert.match(skill, /does not switch the current runtime/);
 });

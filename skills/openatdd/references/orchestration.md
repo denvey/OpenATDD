@@ -2,12 +2,14 @@
 
 Read this reference only when delegating work to a separate session: a bounded
 or complex implementation worker, an independent reviewer, or a real parallel
-batch. Quick and controller-sequential delivery never loads it.
+batch. A Quick task with a bounded implementation Worker also loads it.
 
 ## Roles and profiles
 
-Read-only discovery and research use Luna/low. Independent review uses a fresh
-Sol/xhigh context for Standard and Deep. After solution approval, delegate only a structured
+Read-only discovery and research use Luna/low. Independent solution review uses
+GPT-6/medium for Standard and GPT-6/high for Deep. Technical acceptance uses
+GPT-6/medium, or high for sensitive risks or explicit concerns from `model-policy`.
+After solution approval, delegate only a structured
 execution plan: `bounded-implementation` and `complex-implementation` both use
 Luna/max. Both are leaf workers with `forkTurns:none` and
 `canSpawnAgents=false`; they cannot create Agents or change acceptance,
@@ -16,6 +18,14 @@ verdicts. Each receives the exact prompt, `writeScope`, `doNotTouch`,
 verification commands, evidence contract, base identity, and candidate
 fingerprint it must honor, then returns only scope-bound changes, verification,
 evidence, and the current candidate fingerprint.
+
+The runtime allocates at most two implementation Workers before integration.
+Larger stages run in bounded batches; dependencies and stage order are preserved.
+Do not split work just to fill slots. Send the approved interface/error contract,
+existing implementation examples, and exact acceptance assertions in the task.
+After two no-progress repairs, return failure evidence for GPT-6 diagnosis;
+Luna resumes implementation after the plan is clarified. This repair limit is
+a Worker instruction, not a timer or an automatic model invocation by the CLI.
 
 ## The one-time parallel directive
 
@@ -47,32 +57,41 @@ from leaving event, schema, or API reconciliation to the controller.
 
 ## Host adapter order
 
-A Codex App host adapter maps the host actions in this order:
+A host adapter maps the core's create/send/wait/read actions to available,
+authorized isolated-session tools in this order:
 
-1. Capability-check `create_thread`, `send_message_to_thread`, `wait_threads`,
-   and `read_thread`, plus isolated-worktree support. Missing, unverifiable, or
+1. Capability-check session creation, messaging, waiting, result reading,
+   and isolated-worktree support. Missing, unverifiable, or
    mismatched capability fails closed; do not fall back to shared-directory
    writes.
-2. `create_thread` once per subtask, starting each isolated worktree from the
+2. Create one isolated execution session per scheduled subtask, from the
    intended current working-tree state. Require unique `threadId`, worktree,
    branch, and base identity, and reject duplicates, missing identities, or a
    worktree equal to the controller checkout.
-3. `send_message_to_thread` with the exact worker prompt and ownership/
+3. Send the exact worker prompt and ownership/
    verification contract.
-4. `wait_threads` for the batch, preserving results for sessions that finish
+4. Wait for the batch, preserving results for sessions that finish
    when another session fails or asks for input.
-5. `read_thread` to obtain the structured terminal result and actual duration.
+5. Read the structured terminal result and actual duration.
 6. Only then call the controller-only `session-record`, `session-result`, and
    `orchestration-integrate` CLI operations. The core defines this adapter
    contract; it does not call Codex proprietary APIs directly.
+
+Use `create_thread`, `send_message_to_thread`, `wait_threads`, and `read_thread`
+only when the host permits task creation for this request. A host that reserves
+user-visible tasks for explicit user requests must use authorized subagent or
+CLI-session facilities instead. Never create sidebar tasks merely because this
+reference names those APIs. Shared-directory subagents do not prove worktree
+isolation. Unavailable model, effort, permissions, or isolation must be reported;
+do not silently substitute GPT-6 implementation.
 
 Failed, blocked, or `needs_input` sessions remain individually visible. Passed
 sessions may be retained, but affected dependents and final integration wait for
 controller replanning. A stale base, changed candidate fingerprint, range
 violation, missing verification/evidence, or integration conflict is never a
 PASS: keep other verified results, mark the session for conflict/replan, and
-return to the routed Sol controller. Ambiguous or unbounded work also stays with
-that controller; there is no silent worker-model fallback.
+return to GPT-6 for diagnosis and decomposition, then Luna for implementation;
+there is no silent worker-model fallback.
 
 ## Integration budget
 
@@ -87,10 +106,13 @@ merge/reconciliation loop.
 
 ## Isolation and cleanup
 
-Quick remains controller-direct. Standard/Deep `begin` may return one default
+In every lane, `begin` may return one default
 Worker action when approved impact paths and manifest verification form a safe
 bounded contract; the host must dispatch it rather than silently continuing in
-the controller. Single and parallel writable work both require isolated
+the controller. The legacy `controller-sequential` fallback means controller
+diagnosis/replanning, not permission to spend GPT-6 quota on product code.
+Direct GPT-6 implementation needs explicit user authorization.
+Single and parallel writable work both require isolated
 worktrees and proven ownership. The frozen shared-interface contract is required
 only when a batch actually runs two or more Workers concurrently. Orchestration never
 automatically commits, pushes, opens a PR, deploys, or deletes branches. After a

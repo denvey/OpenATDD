@@ -135,6 +135,17 @@ test("parallel preparation freezes controller-owned executable interface contrac
   );
 });
 
+test("large stages are capped at two Workers and unsafe same-stage plans are rejected", () => {
+  const tasks = Array.from({ length: 5 }, (_, index) => task({
+    id: `ST-${index}`, writeScope: [`src/part-${index}`],
+  }));
+  const result = planOrchestrationBatches({ schemaVersion: 1, tasks });
+  assert.deepEqual(result.batches.map((batch) => batch.tasks.length), [2, 2, 1]);
+  assert.deepEqual(result.tasks.map((item) => item.id), tasks.map((item) => item.id));
+  assert.throws(() => planOrchestrationBatches({ schemaVersion: 1, tasks: [task(), task({ id: "ST-002" })] }),
+    (error) => error.code === "EXECUTION_SCOPE_OWNER_CONFLICT");
+});
+
 test("integration budget stops scope expansion after fifteen minutes", () => {
   const within = evaluateIntegrationBudget({ budgetMs: 900_000, budgetStartedAt: "2026-01-01T00:00:00.000Z" }, new Date("2026-01-01T00:14:59.000Z"));
   assert.equal(within.exceeded, false);

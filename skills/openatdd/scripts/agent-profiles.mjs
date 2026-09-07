@@ -13,9 +13,9 @@ const DEFAULT_SCOUT_PROFILE = Object.freeze({
 });
 
 const STANDARD_REVIEW_PROFILE = Object.freeze({
-  profile: "sol-critical-review",
-  model: "gpt-5.6-sol",
-  reasoningEffort: "xhigh",
+  profile: "astra-review",
+  model: "gpt-6-astra",
+  reasoningEffort: "medium",
   forkTurns: "none",
   sandbox: "read-only",
   writable: false,
@@ -24,7 +24,29 @@ const STANDARD_REVIEW_PROFILE = Object.freeze({
   authority: "read-only-independent-review",
 });
 
-const DEEP_REVIEW_PROFILE = STANDARD_REVIEW_PROFILE;
+const DEEP_REVIEW_PROFILE = Object.freeze({
+  ...STANDARD_REVIEW_PROFILE,
+  profile: "astra-critical-review",
+  reasoningEffort: "high",
+});
+
+const HIGH_REVIEW_RISKS = new Set([
+  "authentication", "authorization", "payment", "privacy", "security",
+  "migration", "shared-data-migration", "production", "deletion",
+  "irreversible", "sensitive-boundary-change", "external-side-effect",
+]);
+
+export function acceptanceReviewProfile(input = {}) {
+  assert(input.concerns === undefined || (Array.isArray(input.concerns)
+    && input.concerns.every((item) => typeof item === "string" && item.trim())),
+  "INVALID_REVIEW_CONCERNS", "Review concerns must contain non-empty reasons.");
+  const high = (input.riskSignals ?? []).some((risk) => HIGH_REVIEW_RISKS.has(risk))
+    || (input.concerns ?? []).some((concern) => typeof concern === "string" && concern.trim());
+  return {
+    ...(high ? DEEP_REVIEW_PROFILE : STANDARD_REVIEW_PROFILE),
+    authority: "read-only-acceptance-review",
+  };
+}
 
 const BOUNDED_IMPLEMENTATION_PROFILE = Object.freeze({
   profile: "luna-max-worker",
@@ -36,7 +58,7 @@ const BOUNDED_IMPLEMENTATION_PROFILE = Object.freeze({
   leaf: true,
   canSpawnAgents: false,
   authority: "approved-subtask-only",
-  escalation: "sol-xhigh-controller",
+  escalation: "astra-design-diagnosis",
 });
 
 const COMPLEX_IMPLEMENTATION_PROFILE = Object.freeze({
@@ -78,7 +100,9 @@ export function profileForDispatch(input = {}) {
   const role = String(input.role ?? "").trim();
   const lane = String(input.lane ?? "standard").trim();
   const deliveryVersion = Number(input.deliveryVersion ?? 3);
-  const base = role === "independent-review"
+  const base = role === "acceptance-review"
+    ? acceptanceReviewProfile(input)
+    : role === "independent-review"
     ? (lane === "deep" ? DEEP_REVIEW_PROFILE : STANDARD_REVIEW_PROFILE)
     : AGENT_PROFILE_DEFAULTS[role]
     ?? (deliveryVersion < 3 ? LEGACY_AGENT_PROFILE_DEFAULTS[role] : undefined);

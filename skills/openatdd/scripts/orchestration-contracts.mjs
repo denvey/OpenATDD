@@ -1,4 +1,5 @@
 import { assert } from "./lib.mjs";
+import { MAX_IMPLEMENTATION_WORKERS } from "./routing.mjs";
 import {
   executionPathsOverlap,
   normalizeExecutionPath,
@@ -130,20 +131,22 @@ export function planOrchestrationBatches(executionPlan, options = {}) {
   assert(isRecord(executionPlan), "INVALID_ORCHESTRATION_PLAN", "Execution plan must be an object.");
   const tasks = executionPlan.tasks ?? [];
   assert(Array.isArray(tasks) && tasks.length > 0, "ORCHESTRATION_TASKS_REQUIRED", "Execution plan needs tasks to form orchestration batches.");
-  const normalizedPlan = options.acceptanceIds
-    ? validateExecutionPlan(options.acceptanceIds, executionPlan)
-    : executionPlan;
+  const normalizedPlan = validateExecutionPlan(options.acceptanceIds
+    ?? [...new Set(tasks.flatMap((task) => task.acceptanceIds ?? []))], executionPlan);
   const ordered = [...normalizedPlan.tasks].sort((a, b) => a.stage - b.stage || a.id.localeCompare(b.id));
   const byStage = new Map();
   for (const task of ordered) {
     if (!byStage.has(task.stage)) byStage.set(task.stage, []);
     byStage.get(task.stage).push(task);
   }
-  const batches = [...byStage.entries()].map(([stage, stageTasks]) => ({
-    stage,
-    tasks: stageTasks,
-    parallel: stageTasks.length >= 2,
-  }));
+  const batches = [...byStage.entries()].flatMap(([stage, stageTasks]) => {
+    const chunks = [];
+    for (let index = 0; index < stageTasks.length; index += MAX_IMPLEMENTATION_WORKERS) {
+      const tasks = stageTasks.slice(index, index + MAX_IMPLEMENTATION_WORKERS);
+      chunks.push({ stage, tasks, parallel: tasks.length >= 2 });
+    }
+    return chunks;
+  });
   const serial = [];
   const reasons = [];
   const parallel = batches.filter((batch) => batch.tasks.length >= 2).map((batch) => ({ stage: batch.stage, taskIds: batch.tasks.map((task) => task.id) }));

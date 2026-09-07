@@ -38,7 +38,7 @@ import {
   validateAcceptance,
   validateSolution,
 } from "./contracts.mjs";
-import { RISK_OVERLAYS, agentPolicyForLane, authorizationOverlays, classifyTask, controllerProfileForLane, interactionPolicyForLane } from "./routing.mjs";
+import { MAX_IMPLEMENTATION_WORKERS, RISK_OVERLAYS, agentPolicyForLane, authorizationOverlays, classifyTask, controllerProfileForLane, interactionPolicyForLane, modelPolicyForRouting } from "./routing.mjs";
 import { profileForDispatch, verificationExecutionProfile } from "./agent-profiles.mjs";
 import {
   IMPLEMENTATION_ROUTES,
@@ -632,7 +632,7 @@ function normalizedReviewChecks(value) {
 }
 
 function contextSurfaceForRole(role) {
-  return role === "independent-review" ? "verification" : "implementation";
+  return ["independent-review", "acceptance-review"].includes(role) ? "verification" : "implementation";
 }
 
 function independentReviewDispatches(state, solutionSha256, round) {
@@ -822,7 +822,7 @@ export async function recordSolutionReview(root, taskId, input, clock = () => ne
     );
     assert(independentDispatch.runtimeAttestation?.verified === true, "INDEPENDENT_REVIEW_ATTESTATION_REQUIRED", "The independent reviewer must have a verified runtime attestation.");
     const expected = profileForDispatch({ role: "independent-review", lane: state.routing?.lane, deliveryVersion: state.deliveryVersion });
-    assert(independentDispatch.profile === expected.profile && independentDispatch.model === expected.model && independentDispatch.reasoningEffort === expected.reasoningEffort, "INDEPENDENT_REVIEW_PROFILE_REQUIRED", "The independent reviewer must use the authoritative lane-aware Sol profile.");
+    assert(independentDispatch.profile === expected.profile && independentDispatch.model === expected.model && independentDispatch.reasoningEffort === expected.reasoningEffort, "INDEPENDENT_REVIEW_PROFILE_REQUIRED", "The independent reviewer must use the authoritative lane-aware Astra profile.");
     assert(independentDispatch.context?.digest, "INDEPENDENT_REVIEW_CONTEXT_REQUIRED", "The independent reviewer must receive recorded scoped context.");
     assert(independentDispatch.reviewControl?.solutionSha256 === solutionFingerprint(await readUtf8(files.requirement)), "INDEPENDENT_REVIEW_CURRENT_SOLUTION_REQUIRED", "The independent reviewer result must be bound to the current solution fingerprint.");
   }
@@ -894,8 +894,11 @@ export async function planExecution(root, taskId, input, clock = () => new Date(
   const { state, files } = await loadTask(root, taskId);
   assertPhase(state, [PHASES.CONTRACT_APPROVED, PHASES.IMPLEMENTING], "Execution planning");
   await assertContractIntegrity(files, state);
-  assert(state.routing?.lane !== "quick", "QUICK_EXECUTION_DELEGATION_DISABLED", "Quick tasks remain direct by default and cannot create a routine delegated execution plan.");
   const plan = validateExecutionPlan(state.acceptance.items.map((item) => item.id), input);
+  if (state.routing?.lane === "quick") {
+    assert(plan.tasks.length === 1 && plan.tasks[0].route === "bounded-implementation",
+      "QUICK_EXECUTION_SCOPE", "Quick uses one bounded Luna Worker; reassess cross-module or parallel work.");
+  }
   if (state.execution?.directive?.mode === "parallel") {
     const contracts = await orchestrationContracts();
     if (contracts.validateOrchestrationPreparation) {
@@ -1040,6 +1043,23 @@ function executionBatchesFallback(plan) {
   }));
 }
 
+function runnableOrchestrationBatch(batches, orchestration, results = {}) {
+  const sessions = Object.values(orchestration.sessions ?? {});
+  // Complete and integrate the current batch before allocating another pair.
+  if (sessions.some((session) => !["planned", "integrated"].includes(sessionStatus(session)))) return [];
+  for (const batch of batches) {
+    const pending = batch.tasks.filter((task) => {
+      const session = sessions.find((item) => item.subtaskId === task.id);
+      return (!session || sessionStatus(session) === "planned") && results[task.id]?.status !== "passed";
+    });
+    if (!pending.length) continue;
+    const tasks = pending.filter((task) => task.dependsOn.every((id) => results[id]?.status === "passed"))
+      .slice(0, MAX_IMPLEMENTATION_WORKERS);
+    return tasks.length ? [{ ...batch, tasks }] : [];
+  }
+  return [];
+}
+
 function orchestrationActions(batches, controller = null, sharedContract = null, lane = "standard") {
   const sessions = batches.flatMap((batch) => batch.tasks ?? []).map((task) => {
     const profile = profileForDispatch({ role: task.route, deliveryVersion: 3, lane });
@@ -1054,6 +1074,8 @@ function orchestrationActions(batches, controller = null, sharedContract = null,
       kind: "openatdd-orchestration-session",
       controller,
       subtaskId: task.id,
+      task: task.task,
+      acceptanceIds: task.acceptanceIds,
       writeScope: task.writeScope,
       doNotTouch: [...new Set([...(task.doNotTouch ?? []), ...contractFiles])],
       expectedResult: task.expectedResult,
@@ -1063,6 +1085,8 @@ function orchestrationActions(batches, controller = null, sharedContract = null,
       canSpawnAgents: false,
       runtime: profile,
       sharedContract,
+      repairPolicy: { maxNoProgressAttempts: 2, escalation: "astra-design-diagnosis", implementAfterDiagnosis: "gpt-5.6-luna" },
+      outputPolicy: "Return changed paths, verification results, evidence locators, and blockers; do not return the full execution transcript.",
     },
     worktree: { required: true, unique: true, sharedCheckout: false },
   });
@@ -1278,9 +1302,6 @@ export async function orchestrationStart(root, taskId, input = {}, clock = () =>
     elapsedMs: 0,
     budgetStatus: "not_started",
   };
-  const runnable = new Set(plan.tasks
-    .filter((task) => task.dependsOn.every((dependencyId) => state.execution.results?.[dependencyId]?.status === "passed"))
-    .map((task) => task.id));
   const allSessionPlan = orchestrationActions(
     safeBatches,
     controller,
@@ -1288,9 +1309,7 @@ export async function orchestrationStart(root, taskId, input = {}, clock = () =>
     state.routing?.lane,
   );
   const actionPlan = orchestrationActions(
-    safeBatches
-      .map((batch) => ({ ...batch, tasks: (batch.tasks ?? []).filter((task) => runnable.has(task.id)) }))
-      .filter((batch) => batch.tasks.length > 0),
+    runnableOrchestrationBatch(safeBatches, orchestration, state.execution.results),
     controller,
     frozenContract,
     state.routing?.lane,
@@ -1360,6 +1379,11 @@ export async function recordOrchestrationSession(root, taskId, input, clock = ()
     return { state, files, orchestration, event, idempotent: true };
   }
   const targetStatus = event.status ?? event.state ?? event.session?.status ?? event.session?.state;
+  const targetId = orchestrationSessionId(event);
+  if (["creating", "created"].includes(targetStatus) && sessionStatus(orchestration.sessions?.[targetId] ?? {}) === "planned") {
+    assert(orchestration.nextActions.some((action) => action.type === "create" && action.sessionId === targetId),
+      "ORCHESTRATION_SESSION_NOT_SCHEDULED", "Only the current bounded batch may create sessions.");
+  }
   const normalizedEvent = event.type
     ? event
     : {
@@ -1461,6 +1485,9 @@ export async function recordOrchestrationSession(root, taskId, input, clock = ()
     ensureOrchestration(state).sessions[sessionId] = session;
   }
   validateRecordedSessionIdentities(ensureOrchestration(state), root, state.routing?.lane);
+  const allocated = Object.values(ensureOrchestration(state).sessions)
+    .filter((session) => ["creating", "created", "running", "waiting", "passed", "integrating"].includes(sessionStatus(session)));
+  assert(allocated.length <= MAX_IMPLEMENTATION_WORKERS, "ORCHESTRATION_WORKER_LIMIT", "At most two implementation sessions may be allocated before integration.");
   refreshOrchestrationAggregate(ensureOrchestration(state));
   const now = isoNow(clock);
   appendHistory(state, "ORCHESTRATION_SESSION_RECORDED", now, { eventId: orchestrationEventId(event), sessionId, status: event.status ?? null, idempotent: applied.idempotent === true });
@@ -1768,16 +1795,7 @@ export async function integrateOrchestration(root, taskId, input = {}, clock = (
   orchestration.integration.status = conflicts.length > 0 ? (integrated.length > 0 ? "partial" : "conflict") : "integrated";
   orchestration.integration.candidateFingerprint = (await fingerprintProject(root, { include: ["**/*"] })).fingerprint;
   orchestration.integration.completedAt = isoNow(clock);
-  const nextBatches = (orchestration.batches ?? [])
-    .map((batch) => ({
-      ...batch,
-      tasks: (batch.tasks ?? []).filter((task) => {
-        const session = Object.values(orchestration.sessions ?? {}).find((item) => item.subtaskId === task.id);
-        if (!session || sessionStatus(session) !== "planned") return false;
-        return (task.dependsOn ?? []).every((dependencyId) => integratedSubtasks.has(dependencyId) || state.execution.results?.[dependencyId]?.status === "passed");
-      }),
-    }))
-    .filter((batch) => batch.tasks.length > 0);
+  const nextBatches = runnableOrchestrationBatch(orchestration.batches ?? [], orchestration, state.execution.results);
   const nextActionPlan = orchestrationActions(nextBatches, orchestration.controller, orchestration.contract, state.routing?.lane);
   orchestration.nextActions = nextActionPlan.actions;
   if (nextActionPlan.actions.length > 0) {
@@ -2014,6 +2032,10 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
   assert(["planned", "running", "passed", "failed", "blocked"].includes(input.status), "INVALID_AGENT_STATUS", "Agent status is invalid.");
   const role = input.role.trim();
   const implementationRole = IMPLEMENTATION_ROUTES.includes(role);
+  if (role === "acceptance-review") {
+    assertPhase(state, [PHASES.IMPLEMENTING, PHASES.PRE_UAT, PHASES.REPAIRING], "Acceptance review");
+    await assertContractIntegrity(files, state);
+  }
   if (implementationRole) {
     assertPhase(state, [PHASES.IMPLEMENTING, PHASES.REPAIRING, PHASES.BLOCKED], "Implementation Agent dispatch recording");
     assert(input.subtaskId?.trim(), "AGENT_SUBTASK_REQUIRED", "Implementation Agent dispatches must reference a planned subtask.");
@@ -2034,12 +2056,18 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
   assert(!previous || previous.role === role, "AGENT_DISPATCH_ROLE_MISMATCH", `Agent dispatch ${id} is already bound to role ${previous?.role}.`);
   assert(!previous || previous.subtaskId === (input.subtaskId?.trim() || null), "AGENT_DISPATCH_SUBTASK_MISMATCH", `Agent dispatch ${id} is already bound to subtask ${previous?.subtaskId}.`);
   assert(!previous || !["passed", "failed", "blocked"].includes(previous.status), "AGENT_DISPATCH_TERMINAL", `Agent dispatch ${id} is already terminal with status ${previous?.status}.`);
+  const concerns = input.concerns?.length ? input.concerns : previous?.concerns ?? [];
+  if (role === "acceptance-review" && previous) {
+    assert(JSON.stringify(concerns) === JSON.stringify(previous.concerns ?? []),
+      "ACCEPTANCE_REVIEW_CONCERNS_CHANGED", "Changed acceptance concerns require a fresh review dispatch.");
+  }
   const recommended = profileForDispatch({
     role,
     deliveryVersion: state.deliveryVersion,
     lane: state.routing?.lane,
     riskSignals: state.routing?.assessment?.riskSignals ?? [],
     repairAttempts: state.repair?.attempts ?? [],
+    concerns,
   });
   const configured = previous?.profile ? previous : recommended;
   const reviewControl = role === "independent-review"
@@ -2075,6 +2103,17 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     })
     : null;
   const now = isoNow(clock);
+  let acceptanceReviewBoundary = previous?.acceptanceReviewBoundary ?? null;
+  if (role === "acceptance-review" && ["running", "passed"].includes(input.status)) {
+    const candidate = await fingerprintProject(root, { include: ["**/*"] });
+    const boundary = { sourceFingerprint: candidate.fingerprint, acceptanceSha256: state.acceptance.sha256, solutionSha256: state.solution.sha256 };
+    if (input.status === "passed") {
+      assert(previous?.status === "running", "ACCEPTANCE_REVIEW_MUST_RUN", "Acceptance review must run before recording completion.");
+    }
+    assert(!acceptanceReviewBoundary || JSON.stringify(acceptanceReviewBoundary) === JSON.stringify(boundary),
+      "ACCEPTANCE_REVIEW_STALE", "Source or approved contracts changed during acceptance review; start a fresh dispatch.");
+    acceptanceReviewBoundary = boundary;
+  }
   if (implementationRole && input.status === "passed") {
     assert(previous?.status === "running", "IMPLEMENTATION_AGENT_MUST_RUN", `Implementation Agent ${id} must enter running before passed.`);
   }
@@ -2121,6 +2160,8 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     leaf: configured.leaf ?? true,
     canSpawnAgents: configured.canSpawnAgents ?? false,
     authority: configured.authority ?? null,
+    concerns,
+    acceptanceReviewBoundary,
     runtimeAttestation,
     runtimeFailure,
     reviewControl,
@@ -2418,7 +2459,7 @@ export async function approveSolution(root, taskId, inputOrClock = {}, maybeCloc
     assert(state.solution?.approvedAt && state.solution.sha256 === digest, "PARALLEL_DIRECTIVE_STALE", "The implementing task solution no longer matches its approved solution.");
   }
   if (input.parallel === true) {
-    assert(state.routing?.lane !== "quick", "PARALLEL_QUICK_UNSUPPORTED", "Quick tasks remain direct and cannot request multi-session orchestration.");
+    assert(state.routing?.lane !== "quick", "PARALLEL_QUICK_UNSUPPORTED", "Quick uses one bounded Worker; reassess parallel implementation as Standard or Deep.");
   }
   if (state.deliveryVersion >= 3) {
     const pending = blockingDecisions(state.decisions);
@@ -2540,7 +2581,7 @@ function workerVerificationCommand(command) {
 }
 
 async function prepareDefaultExecutionRouting(root, state, clock) {
-  if (state.routing?.lane === "quick" || ["planned", "controller-sequential"].includes(state.execution?.planStatus)) return;
+  if (["planned", "controller-sequential"].includes(state.execution?.planStatus)) return;
   let verification = [];
   let manifestError = null;
   try {
@@ -4203,6 +4244,7 @@ export function summarizeState(state) {
     acceptanceApproved: Boolean(state.acceptance.approvedAt),
     solutionApproved: Boolean(state.solution.approvedAt),
     routing: state.routing,
+    modelPolicy: state.routing?.lane ? modelPolicyForRouting(state.routing) : null,
     decisions: state.decisions,
     solutionReview: state.reviews?.solution ?? null,
     independentReview: state.reviews?.independent ?? null,
