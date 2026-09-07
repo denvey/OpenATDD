@@ -1,4 +1,5 @@
 import { assert } from "./lib.mjs";
+import { MAX_IMPLEMENTATION_WORKERS } from "./routing.mjs";
 import {
   executionPathsOverlap,
   normalizeExecutionPath,
@@ -130,20 +131,22 @@ export function planOrchestrationBatches(executionPlan, options = {}) {
   assert(isRecord(executionPlan), "INVALID_ORCHESTRATION_PLAN", "Execution plan must be an object.");
   const tasks = executionPlan.tasks ?? [];
   assert(Array.isArray(tasks) && tasks.length > 0, "ORCHESTRATION_TASKS_REQUIRED", "Execution plan needs tasks to form orchestration batches.");
-  const normalizedPlan = options.acceptanceIds
-    ? validateExecutionPlan(options.acceptanceIds, executionPlan)
-    : executionPlan;
+  const normalizedPlan = validateExecutionPlan(options.acceptanceIds
+    ?? [...new Set(tasks.flatMap((task) => task.acceptanceIds ?? []))], executionPlan);
   const ordered = [...normalizedPlan.tasks].sort((a, b) => a.stage - b.stage || a.id.localeCompare(b.id));
   const byStage = new Map();
   for (const task of ordered) {
     if (!byStage.has(task.stage)) byStage.set(task.stage, []);
     byStage.get(task.stage).push(task);
   }
-  const batches = [...byStage.entries()].map(([stage, stageTasks]) => ({
-    stage,
-    tasks: stageTasks,
-    parallel: stageTasks.length >= 2,
-  }));
+  const batches = [...byStage.entries()].flatMap(([stage, stageTasks]) => {
+    const chunks = [];
+    for (let index = 0; index < stageTasks.length; index += MAX_IMPLEMENTATION_WORKERS) {
+      const tasks = stageTasks.slice(index, index + MAX_IMPLEMENTATION_WORKERS);
+      chunks.push({ stage, tasks, parallel: tasks.length >= 2 });
+    }
+    return chunks;
+  });
   const serial = [];
   const reasons = [];
   const parallel = batches.filter((batch) => batch.tasks.length >= 2).map((batch) => ({ stage: batch.stage, taskIds: batch.tasks.map((task) => task.id) }));
@@ -445,11 +448,14 @@ export function validateSessionResultContract(session, input) {
   assert(changedPaths.every((changed) => session.writeScope.some((allowed) => executionPathsOverlap(changed, allowed))), "SESSION_RESULT_SCOPE_VIOLATION", "Session result changed paths exceed writeScope.");
   const verification = input.verification ?? [];
   assert(Array.isArray(verification) && verification.every((item) => isRecord(item) && nonEmpty(item.command) && ["passed", "failed"].includes(item.status)), "SESSION_RESULT_VERIFICATION_INVALID", "Session result verification entries need command and passed/failed status.");
+  const plannedVerification = stringArray(session.verification ?? [], "SESSION_PLANNED_VERIFICATION_INVALID", "Session planned verification must be an array.", true);
   const evidence = stringArray(input.evidence ?? [], "SESSION_RESULT_EVIDENCE_INVALID", "Session result evidence must be an array.", true);
   assert(input.baseRevision === undefined || input.baseRevision === session.baseRevision, "SESSION_RESULT_BASE_STALE", "Session result base revision does not match the session baseline.");
   if (input.status === "passed") {
     assert(changedPaths.length > 0, "SESSION_RESULT_CHANGED_PATHS_REQUIRED", "Passed session results need changedPaths.");
+    assert(plannedVerification.length > 0, "SESSION_PLANNED_VERIFICATION_REQUIRED", "Passed session results require a non-empty planned verification contract.");
     assert(verification.every((item) => item.status === "passed"), "SESSION_RESULT_VERIFICATION_INCOMPLETE", "Passed session results cannot contain failed verification.");
+    assert(plannedVerification.every((command) => verification.some((item) => item.command.trim() === command && item.status === "passed")), "SESSION_RESULT_VERIFICATION_INCOMPLETE", "Passed session results must cover every planned verification command.");
     assert(evidence.length > 0, "SESSION_RESULT_EVIDENCE_REQUIRED", "Passed session results need evidence.");
   } else assert(nonEmpty(input.blocker), "SESSION_RESULT_BLOCKER_REQUIRED", "Non-passed session results need a blocker.");
   assert(input.contractMutation !== true && input.authorizationMutation !== true && input.acceptanceMutation !== true && input.orchestrationMutation !== true, "SESSION_RESULT_AUTHORITY_VIOLATION", "Session results cannot mutate shared contracts.");

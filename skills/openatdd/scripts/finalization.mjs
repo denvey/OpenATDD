@@ -165,6 +165,8 @@ async function executeCommand(root, commandInput, credentials, outputPath, metri
   return {
     id: command.id,
     argv: command.argv,
+    contractSignature: commandSignature([commandInput]),
+    evidenceSha256: sha256(log),
     durationMs,
     exitCode,
     evidencePath: artifactLocator(root, outputPath),
@@ -340,6 +342,8 @@ function initialMetrics(mode, clock) {
     historyEpochReuse: 0,
     skippedCheckGroups: [],
     checkGroupSignatureReuse: [],
+    rehearsalEvidenceReuse: [],
+    rehearsalCommandInvocations: 0,
     evidenceWrites: 0,
     evidenceWritesByPhase: {},
     phaseDurationsMs: {},
@@ -433,6 +437,7 @@ export async function dryRunFinalization(root, taskId, input = {}, clock = () =>
   const previewDirectory = path.join(files.task, "preview");
   await mkdir(previewDirectory, { recursive: true });
   const commandResults = [];
+  const verificationStartedAt = input.verificationStartedAt ?? isoNow(clock);
   let status = "passed";
   const errors = [];
   try {
@@ -508,6 +513,7 @@ export async function dryRunFinalization(root, taskId, input = {}, clock = () =>
     manifestPath: manifestInfo.relativePath,
     manifestDigest: manifestInfo.digest,
     profileDigest: profileInfo.digest,
+    verificationStartedAt,
     commandResults,
     metrics,
     errors,
@@ -538,6 +544,34 @@ function commandSignature(commands = []) {
     timeoutMs: command.timeoutMs ?? null,
     expectedExitCodes: [...(command.expectedExitCodes ?? [0])].sort((a, b) => a - b),
   })));
+}
+
+function reusableRehearsalEvidence(preview, commands) {
+  const signature = commandSignature(commands);
+  if (!signature || !preview?.verificationStartedAt) return null;
+  const available = [...(preview.commandResults ?? [])];
+  const results = [];
+  for (const command of commands) {
+    const commandContract = commandSignature([command]);
+    const index = available.findIndex((item) => item.contractSignature === commandContract
+      && item.evidencePath
+      && item.evidenceSha256);
+    if (index === -1) return null;
+    results.push(available.splice(index, 1)[0]);
+  }
+  return { signature, results };
+}
+
+async function captureReusableRehearsalEvidence(root, reuse, boundary, clock) {
+  try {
+    const evidence = await capturePaths(root, reuse.results.map((item) => item.evidencePath), boundary, clock);
+    if (evidence.length !== reuse.results.length) return null;
+    if (evidence.some((item, index) => item.sha256 !== reuse.results[index].evidenceSha256)) return null;
+    return evidence;
+  } catch (error) {
+    if (["EVIDENCE_NOT_FOUND", "INVALID_EVIDENCE", "STALE_EVIDENCE"].includes(error?.code)) return null;
+    throw error;
+  }
 }
 
 /**
@@ -691,6 +725,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
 
   const metrics = initialMetrics("final", clock);
   metrics.dryRunRuns = Number(preview.metrics?.dryRunRuns ?? 1);
+  metrics.rehearsalCommandInvocations = Number(preview.metrics?.commandInvocations ?? 0);
   const previousBoundary = evidenceBoundary(state);
   const now = isoNow(clock);
   const draft = structuredClone(state);
@@ -743,6 +778,33 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     // only repeats what the single broad group already covers.
     if (draft.routing?.lane === "quick" && group.scope !== "broad" && !requiredReferences.has(`check:${group.id}`)) {
       metrics.skippedCheckGroups.push(group.id);
+      continue;
+    }
+    const rehearsalReuse = draft.routing?.lane === "quick"
+      ? reusableRehearsalEvidence(preview, group.commands)
+      : null;
+    const rehearsalEvidence = rehearsalReuse
+      ? await captureReusableRehearsalEvidence(root, rehearsalReuse, preview.verificationStartedAt, clock)
+      : null;
+    if (rehearsalEvidence) {
+      const verifiedAt = isoNow(clock);
+      metrics.rehearsalEvidenceReuse.push(group.id);
+      metrics.checkGroupRuns[group.scope] += 1;
+      referenceEvidence.set(`check:${group.id}`, rehearsalEvidence);
+      draft.checks[group.id] = {
+        id: group.id,
+        name: group.name || group.id,
+        command: group.commands.map((item) => item.argv.join(" ")).join(" && "),
+        status: "passed",
+        scope: group.scope,
+        sourceFingerprint: inventory.fingerprint,
+        durationMs: rehearsalReuse.results.reduce((sum, item) => sum + Number(item.durationMs ?? 0), 0),
+        summary: `Final ${group.scope} group reused exact deterministic rehearsal evidence.`,
+        evidence: rehearsalEvidence,
+        verifiedAt,
+        epoch: draft.verification.epoch,
+      };
+      draft.checkSequence.push({ id: group.id, scope: group.scope, status: "passed", sourceFingerprint: inventory.fingerprint, verifiedAt, epoch: draft.verification.epoch });
       continue;
     }
     const signature = commandSignature(group.commands);

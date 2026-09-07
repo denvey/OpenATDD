@@ -4,11 +4,13 @@ import test from "node:test";
 import {
   RISK_OVERLAYS,
   classifyTask,
+  modelPolicyForRouting,
   validateAssessment,
   validateRouting,
 } from "../skills/openatdd/scripts/routing.mjs";
 import { profileForDispatch, verificationExecutionProfile } from "../skills/openatdd/scripts/agent-profiles.mjs";
 import {
+  deriveDefaultExecutionPlan,
   validateExecutionPlan,
   validateExecutionResult,
   validateRuntimeAttestation,
@@ -71,13 +73,13 @@ test("routing classifies a local established low-risk task as quick", () => {
   assert.equal(routing.lane, "quick");
   assert.equal(routing.investigation.externalResearch, false);
   assert.deepEqual(routing.controller, {
-    profile: "sol-controller",
-    model: "gpt-5.6-sol",
-    reasoningEffort: "high",
+    profile: "astra-controller",
+    model: "gpt-6-astra",
+    reasoningEffort: "medium",
     forkTurns: "none",
     sandbox: "workspace-write",
   });
-  assert.deepEqual(routing.agents, { policy: "none", roles: [] });
+  assert.deepEqual(routing.agents, { policy: "bounded", roles: ["bounded-implementation", "acceptance-review"] });
   assert.deepEqual(routing.interaction, { approvals: "autonomous", contract: "compact" });
   assert.equal(validateRouting(routing).valid, true);
 });
@@ -100,8 +102,9 @@ test("routing classifies ordinary cross-module work as standard", () => {
   const routing = classifyTask(assessment({ scope: "cross-module", uncertainty: "medium" }));
   assert.equal(routing.lane, "standard");
   assert.equal(routing.investigation.externalResearch, false);
-  assert.deepEqual(routing.agents, { policy: "optional", roles: ["independent-review", "bounded-implementation", "complex-implementation"] });
-  assert.equal(routing.controller.reasoningEffort, "xhigh");
+  assert.deepEqual(routing.agents, { policy: "optional", roles: ["independent-review", "acceptance-review", "bounded-implementation", "complex-implementation"] });
+  assert.equal(routing.controller.profile, "astra-controller");
+  assert.equal(routing.controller.reasoningEffort, "medium");
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.reasons.includes("cross-module-scope"));
 });
@@ -110,7 +113,8 @@ test("routing classifies novel cross-cutting work as deep", () => {
   const routing = classifyTask(assessment({ scope: "cross-module", projectPattern: "none" }));
   assert.equal(routing.lane, "deep");
   assert.equal(routing.investigation.externalResearch, true);
-  assert.equal(routing.controller.reasoningEffort, "xhigh");
+  assert.equal(routing.controller.profile, "astra-critical-controller");
+  assert.equal(routing.controller.reasoningEffort, "high");
   assert.equal(routing.agents.policy, "parallel");
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.agents.roles.includes("external-research"));
@@ -181,21 +185,25 @@ test("Agent roles resolve to deterministic lane-aware model and authority profil
     assert.equal(profile.writable, false);
     assert.equal(profile.canSpawnAgents, false);
   }
-  assert.equal(profileForDispatch({ role: "independent-review", lane: "standard" }).reasoningEffort, "xhigh");
-  assert.equal(profileForDispatch({ role: "independent-review", lane: "deep" }).reasoningEffort, "xhigh");
+  const standardReview = profileForDispatch({ role: "independent-review", lane: "standard" });
+  assert.equal(standardReview.profile, "astra-review");
+  assert.equal(standardReview.reasoningEffort, "medium");
+  const deepReview = profileForDispatch({ role: "independent-review", lane: "deep" });
+  assert.equal(deepReview.profile, "astra-critical-review");
+  assert.equal(deepReview.reasoningEffort, "high");
   const bounded = profileForDispatch({ role: "bounded-implementation", lane: "standard" });
   assert.equal(bounded.model, "gpt-5.6-luna");
   assert.equal(bounded.reasoningEffort, "max");
   assert.equal(bounded.sandbox, "workspace-write");
   assert.equal(bounded.authority, "approved-subtask-only");
-  assert.equal(bounded.escalation, "sol-xhigh-controller");
+  assert.equal(bounded.escalation, "astra-design-diagnosis");
   const complex = profileForDispatch({ role: "complex-implementation", lane: "deep" });
   assert.equal(complex.profile, "luna-max-complex-worker");
   assert.equal(complex.model, "gpt-5.6-luna");
   assert.equal(complex.reasoningEffort, "max");
   assert.equal(complex.leaf, true);
   assert.equal(complex.canSpawnAgents, false);
-  assert.equal(complex.escalation, "sol-xhigh-controller");
+  assert.equal(complex.escalation, "astra-design-diagnosis");
   assert.throws(
     () => profileForDispatch({ role: "clean-context-execution" }),
     (error) => error.code === "UNKNOWN_AGENT_ROLE",
@@ -216,11 +224,35 @@ test("routing documentation exposes explicit tiers without claiming unmeasured q
   const skill = await readFile(new URL("../skills/openatdd/SKILL.md", import.meta.url), "utf8");
   const governance = await readFile(new URL("../skills/openatdd/references/governance.md", import.meta.url), "utf8");
   const docs = `${readme}\n${skill}\n${governance}`;
-  assert.match(docs, /Quick uses `gpt-5\.6-sol\/high`/);
-  assert.match(docs, /Standard\/Deep use `gpt-5\.6-sol\/xhigh`/);
+  assert.match(docs, /Quick and Standard use `gpt-6-astra\/medium`/);
+  assert.match(docs, /Deep uses `gpt-6-astra\/high`/);
   assert.match(docs, /complex.*Luna\/max/is);
   assert.doesNotMatch(docs, /complex(?:\/cross-module| or ambiguous)? implementation uses Terra\/high/i);
   assert.match(readme, /not a claimed cost or quality win until a real\s+project evaluation demonstrates it/);
+});
+
+test("design effort follows complexity while acceptance effort follows risk and concrete concerns", () => {
+  const ordinary = modelPolicyForRouting(classifyTask(assessment()));
+  assert.equal(ordinary.design.reasoningEffort, "medium");
+  assert.equal(ordinary.implementation.model, "gpt-5.6-luna");
+  assert.equal(ordinary.implementation.reasoningEffort, "max");
+  assert.equal(ordinary.acceptance.model, "gpt-6-astra");
+  assert.equal(ordinary.acceptance.reasoningEffort, "medium");
+  assert.equal(ordinary.acceptance.sandbox, "read-only");
+  assert.equal(ordinary.maxImplementationWorkers, 2);
+  const complex = modelPolicyForRouting(classifyTask(assessment({ scope: "system" })));
+  assert.equal(complex.design.reasoningEffort, "high");
+  assert.equal(complex.acceptance.reasoningEffort, "medium");
+  const sensitive = modelPolicyForRouting(classifyTask(assessment({ riskSignals: ["authorization"] })));
+  assert.equal(sensitive.design.reasoningEffort, "medium");
+  assert.equal(sensitive.acceptance.reasoningEffort, "high");
+  const uncertain = modelPolicyForRouting(classifyTask(assessment()), { concerns: ["Concurrent updates may overwrite each other"] });
+  assert.equal(uncertain.acceptance.reasoningEffort, "high");
+  assert.throws(() => modelPolicyForRouting(classifyTask(assessment()), { concerns: [""] }), /non-empty reasons/);
+  const review = profileForDispatch({ role: "acceptance-review", lane: "deep" });
+  assert.equal(review.reasoningEffort, "medium");
+  assert.throws(() => validateRuntimeAttestation(review, { ...review, verified: true, source: "test", model: "gpt-5.6-luna" }),
+    (error) => error.code === "RUNTIME_PROFILE_MISMATCH");
 });
 
 test("independent review documentation exposes the bounded retry and fallback contract", async () => {
@@ -250,6 +282,38 @@ test("execution plans cover acceptance and reject ownership, dependency, and pat
     () => validateExecutionPlan(["AC-01"], { schemaVersion: 1, tasks: [planTask({ writeScope: ["../outside"] })] }),
     (error) => error.code === "EXECUTION_PATH_ESCAPE",
   );
+});
+
+test("default execution planning returns a bounded Worker contract or a concrete sequential reason", () => {
+  const planned = deriveDefaultExecutionPlan({
+    acceptanceIds: ["AC-01", "AC-02"],
+    impactPaths: ["src/feature", "tests/feature.test.mjs"],
+    lane: "standard",
+    requirement: "Implement the approved feature",
+    verification: ["\"node\" \"--test\" \"tests/feature.test.mjs\""],
+  });
+  assert.equal(planned.status, "planned");
+  assert.equal(planned.plan.tasks[0].route, "bounded-implementation");
+  assert.deepEqual(planned.plan.tasks[0].acceptanceIds, ["AC-01", "AC-02"]);
+
+  const unsafe = deriveDefaultExecutionPlan({
+    acceptanceIds: ["AC-01"],
+    impactPaths: [".openatdd"],
+    lane: "deep",
+    requirement: "Rewrite controller state",
+    verification: ["npm test"],
+  });
+  assert.equal(unsafe.status, "controller-sequential");
+  assert.equal(unsafe.reason.code, "protected-write-scope");
+
+  const unverifiable = deriveDefaultExecutionPlan({
+    acceptanceIds: ["AC-01"],
+    impactPaths: ["src/feature"],
+    lane: "deep",
+    verification: [],
+  });
+  assert.equal(unverifiable.status, "controller-sequential");
+  assert.equal(unverifiable.reason.code, "verification-unavailable");
 });
 
 test("runtime attestation proves the authoritative profile and leaf capability", () => {

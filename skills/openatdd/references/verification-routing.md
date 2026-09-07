@@ -6,6 +6,15 @@ direct local path, Standard adds cross-module boundaries, and Deep adds
 independent and risk-specific verification. Load the `verification` view from
 the task's scoped context; do not reuse implementation assumptions as proof.
 
+Luna and deterministic commands execute verification. GPT-6 performs technical
+acceptance using the final diff, approved criteria, relevant call paths, and
+actual evidence. Resolve its profile from `model-policy`: medium by default,
+high for sensitive risk overlays or a concrete `--concern`. A high-effort design
+does not require high-effort acceptance. The host applies this policy; the CLI
+does not invoke a model or treat a profile selection as an acceptance verdict.
+An `acceptance-review` Agent dispatch can record and validate the actual profile
+in a fresh read-only context. Its lifecycle is not a formal evidence pass.
+
 | Surface | Primary verifier | Typical evidence |
 |---|---|---|
 | Business rule | Unit or domain test | Test output and focused assertions |
@@ -66,8 +75,8 @@ dispatch, then verifies every session against its own base identity and exact
 fresh evidence, actual changed paths, and a readable worktree-local diff; a
 worker lifecycle of `completed` alone is not evidence.
 
-The Codex App adapter sequence is `create_thread` with an isolated worktree,
-`send_message_to_thread`, `wait_threads`, and `read_thread`. The controller then
+The host adapter uses authorized isolated-session create/send/wait/read tools
+as described in `orchestration.md`. The controller then
 serially records `session-record`, validates `session-result`, and performs
 `orchestration-integrate` in stage/`dependsOn` order. The core remains
 host-agnostic; these are adapter actions, not direct proprietary API calls from
@@ -75,7 +84,7 @@ OpenATDD.
 
 Keep partial outcomes explicit. `failed`, `blocked`, and `needs_input` sessions
 retain their diagnostics and do not erase passed siblings; affected dependents
-remain pending and the Sol/xhigh controller replans or takes the work directly.
+remain pending and GPT-6 diagnoses/replans before Luna implements the repair.
 A stale base, candidate drift, duplicate or missing thread/worktree/branch/base
 identity, out-of-scope change, missing verification/evidence, or integration
 conflict fails closed and cannot be recorded as PASS. Preserve independent

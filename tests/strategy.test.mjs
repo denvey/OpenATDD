@@ -5,6 +5,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { createMockAdapter, runAgentEvaluation } from "../skills/openatdd/scripts/agent-eval.mjs";
+import { projectStageTiming } from "../skills/openatdd/scripts/timing.mjs";
 import {
   buildStrategyRetrospective,
   capabilityProfile,
@@ -15,6 +16,53 @@ import { beginImplementation, loadTask, taskFiles } from "../skills/openatdd/scr
 import { prepareApprovedTask, temporaryProject } from "./helpers.mjs";
 
 const execFileAsync = promisify(execFile);
+
+test("stage timing is deterministic, non-negative, attributable, and read-only", () => {
+  const state = {
+    timing: {
+      currentPhase: "PRE_UAT",
+      phaseStartedAt: "2026-07-24T10:30:00.000Z",
+      phases: [
+        { phase: "ACCEPTANCE_DRAFT", startedAt: "2026-07-24T09:00:00.000Z", endedAt: "2026-07-24T09:10:00.000Z", durationMs: 600_000 },
+        { phase: "SOLUTION_DRAFT", startedAt: "2026-07-24T09:10:00.000Z", endedAt: "2026-07-24T09:30:00.000Z", durationMs: 1_200_000 },
+        { phase: "IMPLEMENTING", startedAt: "2026-07-24T09:30:00.000Z", endedAt: "2026-07-24T10:20:00.000Z", durationMs: 3_000_000 },
+        { phase: "REPAIRING", startedAt: "2026-07-24T10:20:00.000Z", endedAt: "2026-07-24T10:30:00.000Z", durationMs: 600_000 },
+      ],
+    },
+    agents: {
+      dispatches: [
+        { role: "independent-review", durationMs: 120_000 },
+        { role: "bounded-implementation", startedAt: "2026-07-24T09:35:00.000Z", updatedAt: "2026-07-24T10:05:00.000Z" },
+        { role: "bounded-implementation", updatedAt: "2026-07-24T10:05:00.000Z" },
+      ],
+    },
+    execution: {
+      orchestration: {
+        sessions: {
+          "session-ST-002": { subtaskId: "ST-002", durationMs: 300_000 },
+        },
+      },
+    },
+    finalization: { metrics: { wallTimeMs: 45_000 } },
+  };
+  const before = structuredClone(state);
+  const now = new Date("2026-07-24T10:40:00.000Z");
+  const first = projectStageTiming(state, now);
+  const repeated = projectStageTiming(state, now);
+
+  assert.deepEqual(first, repeated);
+  assert.deepEqual(state, before);
+  assert.equal(first.stages.contract.durationMs, 1_800_000);
+  assert.equal(first.stages.implementation.durationMs, 3_000_000);
+  assert.equal(first.stages.repair.durationMs, 600_000);
+  assert.equal(first.stages.verification.durationMs, 600_000);
+  assert(Object.values(first.stages).every((item) => item.durationMs >= 0));
+  assert.deepEqual(first.attribution, {
+    reviewerDurationMs: 120_000,
+    workerDurationMs: 2_100_000,
+    finalizationDurationMs: 45_000,
+  });
+});
 
 async function simplicityScenario() {
   const target = path.resolve("evals", "agent", "scenarios", "simplicity.v1.json");
@@ -108,6 +156,7 @@ test("retrospective exposes delivery critical path, retries, integration tail, a
     status: "passed",
     startedAt: "2026-07-24T10:00:00.000Z",
     updatedAt: "2026-07-24T10:20:00.000Z",
+    durationMs: 240_000,
   }];
   state.issues = [{
     id: "ISSUE-001",
@@ -132,8 +181,10 @@ test("retrospective exposes delivery critical path, retries, integration tail, a
   assert.equal(result.metrics.preflight.failed, 1);
   assert.equal(result.metrics.repairs, 1);
   assert.equal(result.metrics.repairAttempts, 0);
-  assert.equal(result.metrics.agents.criticalPathMs, 1_200_000);
+  assert.equal(result.metrics.agents.criticalPathMs, 240_000);
   assert.equal(result.metrics.agents.integrationTailMs, 300_000);
+  assert.equal(result.metrics.timing.stages.stages.contract.durationMs, 3_600_000);
+  assert.equal(result.metrics.timing.stages.stages.verification.durationMs, 600_000);
   assert.deepEqual(result.bottlenecks[0], { phase: "ACCEPTANCE_DRAFT", durationMs: 1_800_000 });
   assert.deepEqual(result.metrics.timing.largestGaps[0], {
     fromEvent: "TASK_CREATED",

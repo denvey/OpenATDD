@@ -1,4 +1,7 @@
 import { assert } from "./lib.mjs";
+import { acceptanceReviewProfile, profileForDispatch } from "./agent-profiles.mjs";
+
+export const MAX_IMPLEMENTATION_WORKERS = 2;
 
 export const LANES = Object.freeze({
   QUICK: "quick",
@@ -40,13 +43,14 @@ export const AUTHORIZATION_OVERLAYS = Object.freeze([
 
 export const AGENT_POLICIES = Object.freeze({
   [LANES.QUICK]: Object.freeze({
-    policy: "none",
-    roles: Object.freeze([]),
+    policy: "bounded",
+    roles: Object.freeze(["bounded-implementation", "acceptance-review"]),
   }),
   [LANES.STANDARD]: Object.freeze({
     policy: "optional",
     roles: Object.freeze([
       "independent-review",
+      "acceptance-review",
       "bounded-implementation",
       "complex-implementation",
     ]),
@@ -57,6 +61,7 @@ export const AGENT_POLICIES = Object.freeze({
       "local-discovery",
       "external-research",
       "independent-review",
+      "acceptance-review",
       "bounded-implementation",
       "complex-implementation",
     ]),
@@ -65,23 +70,23 @@ export const AGENT_POLICIES = Object.freeze({
 
 export const CONTROLLER_PROFILES = Object.freeze({
   [LANES.QUICK]: Object.freeze({
-    profile: "sol-controller",
-    model: "gpt-5.6-sol",
-    reasoningEffort: "high",
+    profile: "astra-controller",
+    model: "gpt-6-astra",
+    reasoningEffort: "medium",
     forkTurns: "none",
     sandbox: "workspace-write",
   }),
   [LANES.STANDARD]: Object.freeze({
-    profile: "sol-critical-controller",
-    model: "gpt-5.6-sol",
-    reasoningEffort: "xhigh",
+    profile: "astra-controller",
+    model: "gpt-6-astra",
+    reasoningEffort: "medium",
     forkTurns: "none",
     sandbox: "workspace-write",
   }),
   [LANES.DEEP]: Object.freeze({
-    profile: "sol-critical-controller",
-    model: "gpt-5.6-sol",
-    reasoningEffort: "xhigh",
+    profile: "astra-critical-controller",
+    model: "gpt-6-astra",
+    reasoningEffort: "high",
     forkTurns: "none",
     sandbox: "workspace-write",
   }),
@@ -224,6 +229,23 @@ export function interactionPolicyForLane(lane) {
 export function controllerProfileForLane(lane) {
   assert(LANE_VALUES.has(lane), "INVALID_ROUTING_LANE", `Unknown routing lane: ${lane}`);
   return cloneControllerProfile(lane);
+}
+
+export function modelPolicyForRouting(routing, options = {}) {
+  const lane = routing?.lane;
+  const design = controllerProfileForLane(lane);
+  const concerns = options.concerns ?? [];
+  assert(Array.isArray(concerns) && concerns.every((item) => typeof item === "string" && item.trim()),
+    "INVALID_REVIEW_CONCERNS", "Review concerns must contain non-empty reasons.");
+  return {
+    design,
+    implementation: profileForDispatch({ role: lane === LANES.DEEP ? "complex-implementation" : "bounded-implementation", lane }),
+    acceptance: acceptanceReviewProfile({ riskSignals: routing.riskOverlays ?? routing.assessment?.riskSignals ?? [], concerns }),
+    concerns,
+    maxImplementationWorkers: MAX_IMPLEMENTATION_WORKERS,
+    stalledRepairLimit: 2,
+    hostSelectionRequired: true,
+  };
 }
 
 /**

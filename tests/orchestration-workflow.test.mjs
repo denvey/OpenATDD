@@ -8,6 +8,7 @@ import test from "node:test";
 import {
   approveAcceptance,
   approveSolution,
+  advanceQuickTask,
   assessTask,
   beginImplementation,
   cleanupOrchestrationWorktrees,
@@ -21,8 +22,10 @@ import {
   recordOrchestrationSessionResult,
   recordSolutionReview,
   taskFiles,
+  validateTask,
 } from "../skills/openatdd/scripts/workflow.mjs";
 import { replaceRequirementSection } from "../skills/openatdd/scripts/contracts.mjs";
+import { resolveArtifactPath } from "../skills/openatdd/scripts/lib.mjs";
 import {
   acceptanceMarkdown,
   criterion,
@@ -48,7 +51,7 @@ async function prepareParallelTask(root, taskId, options = {}) {
   await writeAcceptance(root, taskId, criteria);
   await approveAcceptance(root, taskId, clock("2026-01-01T00:00:02.000Z"));
   await draftSolution(root, taskId, clock("2026-01-01T00:00:03.000Z"));
-  await writeSolution(root, taskId, criteria, ["src/one", "src/two"]);
+  await writeSolution(root, taskId, criteria, ["src/one", "src/two", ...(options.extraTasks ?? []).flatMap((task) => task.writeScope)]);
   await recordSolutionReview(root, taskId, {
     status: "passed",
     reviewer: "main",
@@ -77,7 +80,7 @@ async function prepareParallelTask(root, taskId, options = {}) {
         integrationBudgetMs: options.integrationBudgetMs ?? 15 * 60 * 1000,
         sharedContract: {
           schemaVersion: 1,
-          taskIds: ["ST-01", "ST-02"],
+          taskIds: ["ST-01", "ST-02", ...(options.extraTasks ?? []).map((task) => task.id)],
           files: [contractFile],
           commands: [{ id: "shared-contract", argv: options.contractCommand ?? [process.execPath, "--test", contractFile], timeoutMs: 30_000 }],
         },
@@ -110,6 +113,7 @@ async function prepareParallelTask(root, taskId, options = {}) {
         firstArtifact: "src/two/index.mjs",
         route: "bounded-implementation",
       },
+      ...(options.extraTasks ?? []),
     ],
   }, clock("2026-01-01T00:00:07.000Z"));
 }
@@ -154,6 +158,20 @@ const runtimeAttestation = {
   canSpawnAgents: false,
 };
 
+async function writeDefaultWorkerManifest(root, options = {}) {
+  await writeFile(path.join(root, ".openatdd", "finalization.json"), `${JSON.stringify({
+    checks: [{
+      id: "focused",
+      scope: "focused",
+      commands: [{
+        id: "worker-check",
+        argv: options.argv ?? [process.execPath, "--check", "src/one/index.mjs"],
+        ...(options.cwd ? { cwd: options.cwd } : {}),
+      }],
+    }],
+  }, null, 2)}\n`);
+}
+
 test("parallel approval is solution-bound and orchestration-start returns host actions", async (t) => {
   const root = await temporaryProject(t);
   await prepareParallelTask(root, "parallel-start");
@@ -175,6 +193,253 @@ test("parallel approval is solution-bound and orchestration-start returns host a
   const send = started.actions.find((item) => item.type === "send");
   assert.equal(send.prompt.sharedContract.status, "passed");
   assert(send.prompt.doNotTouch.includes("tests/orchestration-shared-contract.test.mjs"));
+});
+
+test("Standard begin derives a default plan and dispatches one isolated Worker without a parallel directive", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "default-single-worker";
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, "Deliver one bounded change", clock("2026-01-01T00:00:00.000Z"));
+  await assessTask(root, taskId, {
+    scope: "cross-module",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "medium",
+  }, clock("2026-01-01T00:00:01.000Z"));
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId, clock("2026-01-01T00:00:02.000Z"));
+  await draftSolution(root, taskId, clock("2026-01-01T00:00:03.000Z"));
+  await writeSolution(root, taskId, criteria, ["src/one"]);
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The bounded change is independently verifiable.",
+    checks: "all",
+  }, clock("2026-01-01T00:00:04.000Z"));
+  await approveSolution(root, taskId, {}, clock("2026-01-01T00:00:05.000Z"));
+  await writeDefaultWorkerManifest(root);
+  const begunCli = await execFileAsync(process.execPath, [cli, "begin", taskId, "--json", "--root", root]);
+  const begunPayload = JSON.parse(begunCli.stdout);
+  const begun = (await loadTask(root, taskId)).state;
+
+  assert.equal(begunPayload.execution.planStatus, "planned");
+  assert.equal(begun.execution.planStatus, "planned");
+  assert.equal(begun.execution.plan.tasks.length, 1);
+  assert.deepEqual(begun.execution.nextActions, ["dispatch-worker"]);
+  assert.equal(begun.execution.directive, null);
+
+  const capabilitiesInput = path.join(root, "single-worker-capabilities.json");
+  await writeFile(capabilitiesInput, `${JSON.stringify({ capabilities, controller }, null, 2)}\n`);
+  const startedCli = await execFileAsync(process.execPath, [cli, "orchestration-start", taskId, "--input", "single-worker-capabilities.json", "--json", "--root", root]);
+  const started = JSON.parse(startedCli.stdout);
+  assert.equal(started.parallel, false);
+  assert.equal(started.orchestration.aggregate.total, 1);
+  assert.equal(started.orchestration.contract, null);
+  assert.deepEqual(started.actions.map((item) => item.type), ["create", "send", "wait", "read"]);
+  assert.equal(started.actions.find((item) => item.type === "send").prompt.sharedContract, null);
+  const plannedVerification = begun.execution.plan.tasks[0].verification[0];
+
+  const worktree = path.join(root, "single-worker");
+  await mkdir(path.join(worktree, "src", "one"), { recursive: true });
+  await recordOrchestrationSession(root, taskId, {
+    eventId: "single-worker-created",
+    expectedRevision: started.orchestration.revision,
+    sessionId: "session-ST-001",
+    status: "created",
+    worktree,
+    branch: "codex/single-worker",
+    threadId: "thread-single-worker",
+    hostId: "host-1",
+    runtimeAttestation,
+  });
+  await writeFile(path.join(worktree, "src", "one", "index.mjs"), "export const one = true;\n");
+  await assert.rejects(
+    () => recordOrchestrationSessionResult(root, taskId, {
+      sessionId: "session-ST-001",
+      status: "passed",
+      summary: "The Worker claimed an unrelated verification command.",
+      verification: [{ command: "node --check src/unrelated.mjs", status: "passed", summary: "unrelated syntax valid" }],
+      evidence: ["test-evidence.txt"],
+      durationMs: 250,
+    }),
+    (error) => error.code === "SESSION_RESULT_VERIFICATION_INCOMPLETE",
+  );
+  const result = await recordOrchestrationSessionResult(root, taskId, {
+    sessionId: "session-ST-001",
+    status: "passed",
+    summary: "The isolated Worker completed its bounded change.",
+    verification: [{ command: plannedVerification, status: "passed", summary: "syntax valid" }],
+    evidence: ["test-evidence.txt"],
+    durationMs: 250,
+  });
+  assert.equal(result.result.status, "passed");
+  assert.equal(result.result.reportedEvidence[0], "test-evidence.txt");
+  assert.equal(result.result.evidence.length, 1);
+  assert.match(result.result.evidence[0].path, /^git:tasks\/default-single-worker\/evidence\/orchestration\//);
+  const integrated = await integrateOrchestration(root, taskId);
+  assert.deepEqual(integrated.integrated, ["session-ST-001"]);
+  assert.equal(await readFile(path.join(root, "src", "one", "index.mjs"), "utf8"), "export const one = true;\n");
+  assert.equal(integrated.state.execution.results["ST-001"].status, "passed");
+  assert.equal(integrated.state.execution.results["ST-001"].integrationStatus, "integrated");
+
+  const stateBeforeStatus = await readFile(taskFiles(root, taskId).state, "utf8");
+  const firstStatus = JSON.parse((await execFileAsync(process.execPath, [cli, "status", taskId, "--json", "--root", root])).stdout);
+  const secondStatus = JSON.parse((await execFileAsync(process.execPath, [cli, "status", taskId, "--json", "--root", root])).stdout);
+  assert(firstStatus.stageTiming.stages.contract.durationMs >= 0);
+  assert(firstStatus.stageTiming.stages.implementation.durationMs >= 0);
+  assert.equal(secondStatus.stageTiming.attribution.workerDurationMs, 250);
+  assert.equal(await readFile(taskFiles(root, taskId).state, "utf8"), stateBeforeStatus);
+
+  const receipt = resolveArtifactPath(root, result.result.evidence[0].path);
+  await writeFile(receipt, "tampered receipt\n");
+  const invalid = await validateTask(root, taskId);
+  assert(invalid.errors.some((item) => item.includes("Execution ST-001") && item.includes("changed after it was recorded")));
+});
+
+test("Quick autonomous approval delegates bounded code to Luna and exposes a read-only model policy", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "quick-luna";
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, "Implement a bounded local change");
+  await assessTask(root, taskId, { scope: "local", projectPattern: "established", reversibility: "reversible", uncertainty: "low" });
+  await writeAcceptance(root, taskId, criteria);
+  await writeSolution(root, taskId, criteria, ["src/one"]);
+  await writeDefaultWorkerManifest(root);
+  const advanced = await advanceQuickTask(root, taskId, { summary: "Reuse the local pattern" });
+  assert.equal(advanced.state.phase, "IMPLEMENTING");
+  assert.equal(advanced.state.execution.planStatus, "planned");
+  const before = await readFile(taskFiles(root, taskId).state, "utf8");
+  const run = (...args) => execFileAsync(process.execPath, [cli, ...args, "--root", root]);
+  const policy = JSON.parse((await run("model-policy", taskId, "--json")).stdout);
+  assert.equal(policy.design.reasoningEffort, "medium");
+  assert.equal(policy.implementation.model, "gpt-5.6-luna");
+  assert.equal(policy.implementation.reasoningEffort, "max");
+  assert.equal(policy.acceptance.reasoningEffort, "medium");
+  const concerned = JSON.parse((await run("model-policy", taskId, "--concern", "Lost update risk", "--json")).stdout);
+  assert.equal(concerned.acceptance.reasoningEffort, "high");
+  assert.equal(concerned.design.reasoningEffort, "medium");
+  assert.equal(await readFile(taskFiles(root, taskId).state, "utf8"), before);
+  const started = await orchestrationStart(root, taskId, { capabilities, controller });
+  assert.equal(started.actions.filter((action) => action.type === "create").length, 1);
+  assert.equal(started.actions[0].profile.model, "gpt-5.6-luna");
+  assert.equal(started.actions[0].profile.reasoningEffort, "max");
+  assert.deepEqual(started.actions[0].prompt.acceptanceIds, ["AC-01"]);
+});
+
+test("three independent Workers run as two then one and later stages wait for integration", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "bounded-batches";
+  const extra = (id, scope, stage = 1) => ({
+    id, acceptanceIds: ["AC-01"], task: `Implement ${id}`, stage, dependsOn: [],
+    writeScope: [scope], doNotTouch: [], expectedResult: `${id} exists`,
+    verification: [`node --check ${scope}/index.mjs`], firstArtifact: `${scope}/index.mjs`, route: "bounded-implementation",
+  });
+  await prepareParallelTask(root, taskId, { extraTasks: [extra("ST-03", "src/three"), extra("ST-04", "src/one", 2)] });
+  let current = await orchestrationStart(root, taskId, { capabilities, controller });
+  const creates = (result) => result.actions.filter((action) => action.type === "create").map((action) => action.subtaskId);
+  assert.deepEqual(creates(current), ["ST-01", "ST-02"]);
+  await assert.rejects(() => recordOrchestrationSession(root, taskId, {
+    eventId: "early-third", expectedRevision: current.orchestration.revision,
+    sessionId: "session-ST-03", status: "creating",
+  }), (error) => error.code === "ORCHESTRATION_SESSION_NOT_SCHEDULED");
+  for (const ids of [["ST-01", "ST-02"], ["ST-03"], ["ST-04"]]) {
+    assert.deepEqual(creates(current), ids);
+    for (const id of ids) {
+      const action = current.actions.find((item) => item.type === "create" && item.subtaskId === id);
+      const worktree = path.join(root, `worker-${id}`);
+      await mkdir(path.join(worktree, action.task.writeScope[0]), { recursive: true });
+      const loaded = await loadTask(root, taskId);
+      await recordOrchestrationSession(root, taskId, {
+        eventId: `created-${id}`, expectedRevision: loaded.state.execution.orchestration.revision,
+        sessionId: `session-${id}`, status: "created", worktree, branch: `codex/${id}`, threadId: `thread-${id}`, runtimeAttestation,
+      });
+      await writeFile(path.join(worktree, action.task.firstArtifact), `export const value = "${id}";\n`);
+      await recordOrchestrationSessionResult(root, taskId, {
+        sessionId: `session-${id}`, status: "passed", summary: "Fixture implementation",
+        verification: [{ command: action.task.verification[0], status: "passed", summary: "Fixture verification" }],
+        evidence: ["fixture-receipt"], durationMs: 10,
+      });
+    }
+    current = await integrateOrchestration(root, taskId);
+    assert.deepEqual(current.conflicts, []);
+  }
+  assert.deepEqual(creates(current), []);
+  assert.equal(current.orchestration.aggregate.integrated, 4);
+});
+
+test("default Worker commands preserve argv literally when rendered for the host shell", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "default-worker-shell-quoting";
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, "Preserve verification argv literally");
+  await assessTask(root, taskId, {
+    scope: "cross-module",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "medium",
+  });
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId);
+  await draftSolution(root, taskId);
+  await writeSolution(root, taskId, criteria, ["src/one"]);
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The bounded change is independently verifiable.",
+    checks: "all",
+  });
+  await approveSolution(root, taskId);
+  const cwd = "verification dir's";
+  await mkdir(path.join(root, cwd), { recursive: true });
+  await writeDefaultWorkerManifest(root, {
+    cwd,
+    argv: [
+      process.execPath,
+      "-e",
+      "process.stdout.write(process.argv.slice(1).join('|'))",
+      "$HOME",
+      "`printf injected`",
+      "it's literal",
+    ],
+  });
+
+  const begun = await beginImplementation(root, taskId);
+  const verification = begun.state.execution.plan.tasks[0].verification[0];
+  const executed = await execFileAsync("/bin/sh", ["-c", verification], {
+    cwd: root,
+    env: { ...process.env, HOME: "expanded-home" },
+  });
+  assert.equal(executed.stdout, "$HOME|`printf injected`|it's literal");
+});
+
+test("Standard begin records a stable controller-sequential reason when verification routing is unavailable", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "default-worker-fallback";
+  const criteria = [criterion("AC-01")];
+  await createTask(root, taskId, "Deliver one bounded change");
+  await assessTask(root, taskId, {
+    scope: "cross-module",
+    projectPattern: "established",
+    reversibility: "reversible",
+    uncertainty: "medium",
+  });
+  await writeAcceptance(root, taskId, criteria);
+  await approveAcceptance(root, taskId);
+  await draftSolution(root, taskId);
+  await writeSolution(root, taskId, criteria, ["src/one"]);
+  await recordSolutionReview(root, taskId, {
+    status: "passed",
+    reviewer: "main",
+    summary: "The bounded change is independently verifiable.",
+    checks: "all",
+  });
+  await approveSolution(root, taskId);
+
+  const begun = await beginImplementation(root, taskId);
+  assert.equal(begun.state.execution.planStatus, "controller-sequential");
+  assert.equal(begun.state.execution.fallbackReason.code, "verification-unavailable");
+  assert.deepEqual(begun.state.execution.nextActions, ["controller-sequential"]);
+  assert(begun.state.execution.fallbackReason.details.some((item) => item.includes("FINALIZATION_MANIFEST_NOT_FOUND")));
 });
 
 test("parallel planning fails before dispatch without a frozen shared contract", async (t) => {

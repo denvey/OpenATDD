@@ -16,6 +16,7 @@ import {
   verifyAgentEvaluationReport,
 } from "./agent-eval.mjs";
 import { capabilityProfile, writeStrategyRetrospective } from "./strategy.mjs";
+import { modelPolicyForRouting } from "./routing.mjs";
 import {
   adoptTask,
   advanceQuickTask,
@@ -72,6 +73,7 @@ Usage:
   openatdd new TASK --requirement TEXT [assessment flags] [--root PATH]
   openatdd adopt TASK --requirement TEXT [--root PATH]
   openatdd status TASK [--json]
+  openatdd model-policy TASK [--concern TEXT] [--json]
   openatdd assess TASK --scope SCOPE --project-pattern PATTERN
                   --reversibility LEVEL --uncertainty LEVEL [--risk SIGNAL]
                   (new accepts the same flags to create, assess, and return
@@ -117,6 +119,7 @@ Usage:
                   [--profile NAME] [--model MODEL] [--reasoning-effort LEVEL]
                   [--fork-turns none] [--sandbox MODE] [--input-tokens N]
                   [--cached-input-tokens N] [--output-tokens N] [--duration-ms N]
+                  [--concern TEXT] (acceptance-review only)
   openatdd repair-attempt TASK --hypothesis TEXT --outcome OUTCOME [--progress-fingerprint HASH]
   openatdd graph-rebuild
   openatdd graph-query QUERY [--limit N]
@@ -283,6 +286,14 @@ async function execute(parsed, io) {
       const { state } = await loadTask(root, taskId(positionals));
       if (json) outputJson(io, summarizeState(state));
       else outputState(io, state);
+      return 0;
+    }
+    case "model-policy": {
+      const { state } = await loadTask(root, taskId(positionals));
+      const policy = modelPolicyForRouting(state.routing, {
+        concerns: asArray(options.concern).map((value) => required(value, "--concern")),
+      });
+      outputJson(io, policy);
       return 0;
     }
     case "assess":
@@ -687,6 +698,7 @@ async function execute(parsed, io) {
       const result = await recordAgentDispatch(root, taskId(positionals), {
         id: options.id,
         role: required(options.role, "--role"),
+        concerns: asArray(options.concern).map((value) => required(value, "--concern")),
         status: required(options.status, "--status"),
         summary: options.summary,
         surface: options.surface,

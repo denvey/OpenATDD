@@ -218,9 +218,9 @@ async function solutionReadyTask(root, taskId, assessment) {
 const reviewRuntime = () => ({
   verified: true,
   source: "test-host",
-  profile: "sol-critical-review",
-  model: "gpt-5.6-sol",
-  reasoningEffort: "xhigh",
+  profile: "astra-critical-review",
+  model: "gpt-6-astra",
+  reasoningEffort: "high",
   forkTurns: "none",
   sandbox: "read-only",
   leaf: true,
@@ -232,6 +232,55 @@ const reviewRuntimeFailure = (blocker = "Reviewer timed out") => ({
   source: "test-host",
   failureClass: "runtime",
   blocker,
+});
+
+test("acceptance dispatch binds runtime, concerns and candidate without granting formal acceptance", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "acceptance-runtime";
+  await prepareApprovedTask(root, taskId);
+  await beginImplementation(root, taskId);
+  const before = (await loadTask(root, taskId)).state;
+  const concerns = ["Concurrent updates may be lost"];
+  const input = { id: "AC-REVIEW", role: "acceptance-review", status: "running", concerns };
+  await assert.rejects(() => recordAgentDispatch(root, taskId, input),
+    (error) => error.code === "RUNTIME_ATTESTATION_REQUIRED");
+  await assert.rejects(() => recordAgentDispatch(root, taskId, {
+    ...input, runtimeAttestation: { ...reviewRuntime(), model: "gpt-5.6-luna" },
+  }));
+  await assert.rejects(() => recordAgentDispatch(root, taskId, {
+    ...input, status: "passed", runtimeAttestation: reviewRuntime(),
+  }), (error) => error.code === "ACCEPTANCE_REVIEW_MUST_RUN");
+  const started = await recordAgentDispatch(root, taskId, { ...input, runtimeAttestation: reviewRuntime() });
+  const dispatch = started.state.agents.dispatches.find((item) => item.id === input.id);
+  assert.equal(dispatch.reasoningEffort, "high");
+  assert.equal(dispatch.context.surface, "verification");
+  assert(dispatch.acceptanceReviewBoundary.sourceFingerprint);
+  await assert.rejects(() => recordAgentDispatch(root, taskId, {
+    ...input, concerns: ["A different concern"], runtimeAttestation: reviewRuntime(),
+  }), (error) => error.code === "ACCEPTANCE_REVIEW_CONCERNS_CHANGED");
+  await recordAgentDispatch(root, taskId, { ...input, status: "passed", runtimeAttestation: reviewRuntime() });
+  const after = (await loadTask(root, taskId)).state;
+  assert.equal(after.phase, before.phase);
+  assert.deepEqual(after.acceptance, before.acceptance);
+  assert.deepEqual(after.verification, before.verification);
+
+  await recordAgentDispatch(root, taskId, { ...input, id: "AC-STALE", runtimeAttestation: reviewRuntime() });
+  await writeFile(path.join(root, "changed-source.js"), "export const changed = true;\n");
+  await assert.rejects(() => recordAgentDispatch(root, taskId, {
+    ...input, id: "AC-STALE", status: "passed", runtimeAttestation: reviewRuntime(),
+  }), (error) => error.code === "ACCEPTANCE_REVIEW_STALE");
+});
+
+test("CLI acceptance dispatch uses medium by default and explicit concerns select high", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "acceptance-cli";
+  await prepareApprovedTask(root, taskId);
+  await beginImplementation(root, taskId);
+  await run(root, "agent-dispatch", taskId, "--role", "acceptance-review", "--status", "planned", "--id", "DEFAULT");
+  await run(root, "agent-dispatch", taskId, "--role", "acceptance-review", "--status", "planned", "--id", "CONCERN", "--concern", "Race condition");
+  const { state } = await loadTask(root, taskId);
+  assert.equal(state.agents.dispatches.find((item) => item.id === "DEFAULT").reasoningEffort, "medium");
+  assert.equal(state.agents.dispatches.find((item) => item.id === "CONCERN").reasoningEffort, "high");
 });
 
 async function reviewReadyTask(root, taskId, assessment = {}) {
@@ -296,6 +345,68 @@ test("independent review budgets bind attempts to the current solution and stop 
     }),
     (error) => error.code === "INDEPENDENT_REVIEW_BUDGET_EXHAUSTED",
   );
+});
+
+test("permanent Reviewer capability failure becomes unavailable after one pre-dispatch check", async (t) => {
+  const root = await temporaryProject(t);
+  await reviewReadyTask(root, "reviewer-capability-fast-fail");
+  const attestation = path.join(root, "reviewer-capability.json");
+  await writeFile(attestation, `${JSON.stringify({
+    verified: false,
+    source: "test-host-capability-check",
+    failureClass: "permission",
+    blocker: "The host cannot provide a leaf Reviewer runtime.",
+  }, null, 2)}\n`);
+  const dispatched = await run(
+    root,
+    "agent-dispatch",
+    "reviewer-capability-fast-fail",
+    "--id",
+    "AGENT-CAPABILITY",
+    "--role",
+    "independent-review",
+    "--status",
+    "blocked",
+    "--duration-ms",
+    "0",
+    "--attestation",
+    "reviewer-capability.json",
+    "--json",
+  );
+  assert.equal(JSON.parse(dispatched.stdout).runtimeFailure.failureClass, "permission");
+  const failed = (await loadTask(root, "reviewer-capability-fast-fail")).state;
+  assert.equal(failed.reviews.independent.unavailable.length, 1);
+  assert.equal(failed.reviews.independent.unavailable[0].reason, "permission");
+  assert.equal(failed.agents.dispatches.length, 1);
+  assert.equal(failed.agents.dispatches.some((item) => item.status === "running"), false);
+
+  await assert.rejects(
+    () => run(
+      root,
+      "agent-dispatch",
+      "reviewer-capability-fast-fail",
+      "--id",
+      "AGENT-CAPABILITY-RETRY",
+      "--role",
+      "independent-review",
+      "--status",
+      "planned",
+      "--json",
+    ),
+    (error) => error.stderr.includes("INDEPENDENT_REVIEW_CAPABILITY_UNAVAILABLE"),
+  );
+  const after = (await loadTask(root, "reviewer-capability-fast-fail")).state;
+  assert.equal(after.reviews.independent.unavailable.length, 1);
+  assert.equal(after.agents.dispatches.length, 1);
+
+  const fallback = await recordSolutionReview(root, "reviewer-capability-fast-fail", {
+    status: "passed",
+    reviewer: "main",
+    summary: "Main review passed after the host capability check failed closed.",
+    checks: "all",
+    fallbackReason: "The host cannot provide the required leaf Reviewer runtime.",
+  });
+  assert.equal(fallback.state.reviews.solution.status, "passed");
 });
 
 test("independent review rejects over-budget success and only rechecks a changed solution after actionable findings", async (t) => {
@@ -578,9 +689,9 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     runtimeAttestation: {
       verified: true,
       source: "test-host",
-      profile: "sol-critical-review",
-      model: "gpt-5.6-sol",
-      reasoningEffort: "xhigh",
+      profile: "astra-review",
+      model: "gpt-6-astra",
+      reasoningEffort: "medium",
       forkTurns: "none",
       sandbox: "read-only",
       leaf: true,
@@ -591,8 +702,8 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     outputTokens: 10,
     durationMs: 250,
   });
-  assert.equal(reviewed.dispatch.model, "gpt-5.6-sol");
-  assert.equal(reviewed.dispatch.reasoningEffort, "xhigh");
+  assert.equal(reviewed.dispatch.model, "gpt-6-astra");
+  assert.equal(reviewed.dispatch.reasoningEffort, "medium");
   assert.equal(reviewed.dispatch.durationMs, 250);
 
   await recordRepairAttempt(root, "resume-context", {
@@ -632,9 +743,9 @@ test("schema v3 routing state receives additive controller, Agent policy, and ex
   const files = taskFiles(root, "routing-defaults");
   const persisted = JSON.parse(await readFile(files.state, "utf8"));
   persisted.routing.controller = {
-    profile: "sol-controller",
+    profile: "sol-critical-controller",
     model: "gpt-5.6-sol",
-    reasoningEffort: "high",
+    reasoningEffort: "xhigh",
     forkTurns: "none",
     sandbox: "workspace-write",
   };
@@ -643,14 +754,14 @@ test("schema v3 routing state receives additive controller, Agent policy, and ex
   await writeFile(files.state, `${JSON.stringify(persisted, null, 2)}\n`);
 
   const loaded = (await loadTask(root, "routing-defaults")).state;
-  assert.equal(loaded.routing.controller.profile, "sol-critical-controller");
-  assert.equal(loaded.routing.controller.model, "gpt-5.6-sol");
-  assert.equal(loaded.routing.controller.reasoningEffort, "xhigh");
-  assert.deepEqual(loaded.routing.agents.roles, ["independent-review", "bounded-implementation", "complex-implementation"]);
-  assert.deepEqual(loaded.execution, { planStatus: "not_planned", plannedAt: null, plan: null, results: {} });
+  assert.equal(loaded.routing.controller.profile, "astra-controller");
+  assert.equal(loaded.routing.controller.model, "gpt-6-astra");
+  assert.equal(loaded.routing.controller.reasoningEffort, "medium");
+  assert.deepEqual(loaded.routing.agents.roles, ["independent-review", "acceptance-review", "bounded-implementation", "complex-implementation"]);
+  assert.deepEqual(loaded.execution, { planStatus: "not_planned", plannedAt: null, plan: null, results: {}, fallbackReason: null, nextActions: [] });
 });
 
-test("complex implementation requires Luna max and returns failures to the Sol xhigh controller", async (t) => {
+test("complex implementation requires Luna max and returns failures for Astra diagnosis", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "complex-luna-worker";
   await prepareApprovedTask(root, taskId, {
@@ -722,7 +833,7 @@ test("complex implementation requires Luna max and returns failures to the Sol x
   });
   assert.equal(running.dispatch.model, "gpt-5.6-luna");
   assert.equal(running.dispatch.reasoningEffort, "max");
-  assert.equal(running.dispatch.escalation, "sol-xhigh-controller");
+  assert.equal(running.dispatch.escalation, "astra-design-diagnosis");
 });
 
 test("planned workers prove runtime identity, actual scoped changes, verification, evidence, and current candidate", async (t) => {
@@ -839,9 +950,9 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   await writeFile(attestationFile, `${JSON.stringify({
     verified: true,
     source: "cli-test-host",
-    profile: "sol-critical-review",
-    model: "gpt-5.6-sol",
-    reasoningEffort: "xhigh",
+    profile: "astra-review",
+    model: "gpt-6-astra",
+    reasoningEffort: "medium",
     forkTurns: "none",
     sandbox: "read-only",
     leaf: true,
@@ -860,11 +971,11 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
     "--summary",
     "Review completed",
     "--profile",
-    "sol-critical-review",
+    "astra-review",
     "--model",
-    "gpt-5.6-sol",
+    "gpt-6-astra",
     "--reasoning-effort",
-    "xhigh",
+    "medium",
     "--fork-turns",
     "none",
     "--sandbox",
@@ -929,9 +1040,9 @@ test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, con
   assert.equal(state.agents.dispatches[0].context.surface, "verification");
   assert(state.agents.dispatches[0].context.digest);
   assert.equal(state.agents.dispatches[0].id, "AGENT-009");
-  assert.equal(state.agents.dispatches[0].profile, "sol-critical-review");
-  assert.equal(state.agents.dispatches[0].model, "gpt-5.6-sol");
-  assert.equal(state.agents.dispatches[0].reasoningEffort, "xhigh");
+  assert.equal(state.agents.dispatches[0].profile, "astra-review");
+  assert.equal(state.agents.dispatches[0].model, "gpt-6-astra");
+  assert.equal(state.agents.dispatches[0].reasoningEffort, "medium");
   assert.equal(state.agents.dispatches[0].forkTurns, "none");
   assert.equal(state.agents.dispatches[0].sandbox, "read-only");
   assert.equal(state.agents.dispatches[0].inputTokens, 120);

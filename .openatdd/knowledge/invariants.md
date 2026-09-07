@@ -67,3 +67,27 @@ Protection: tests/orchestration.test.mjs and tests/orchestration-workflow.test.m
 History replay evidence is immutable per frozen source fingerprint; later formal runs never overwrite it, and a successful replay repairs only missing or hash-drifted passed evidence references.
 
 Protection: tests/finalization.test.mjs covers invalid history evidence self-healing and two formal runs with distinct fingerprint-scoped history evidence while preserving the first file byte-for-byte.
+
+## INV-2026-003
+
+A passed orchestration session must cover every command in the persisted execution-task verification contract with a passed entry.
+
+Protection: tests/orchestration-workflow.test.mjs rejects unrelated Worker verification, tests/orchestration.test.mjs requires a non-empty planned verification contract
+
+## INV-2026-004
+
+Only Quick exact deterministic rehearsal commands may reuse preview evidence; every reused artifact must match its preview digest, while all formal lanes advance the persisted epoch at formal start.
+
+Protection: tests/finalization.test.mjs covers multi-command Quick reuse, tamper rejection, and Standard formal epoch boundaries
+
+## INV-2026-005
+
+Timing projections return zero for incomplete boundaries, prefer finite recorded durationMs, include orchestration sessions once, and never mutate persisted state.
+
+Protection: tests/strategy.test.mjs covers incomplete timestamps, recorded critical-path duration, and orchestration Worker attribution
+
+## INV-2026-006
+
+Worker argv is POSIX-shell quoted without expansion; every passed session gets a digest-bound Git-private receipt; only integrated sessions become passed execution results.
+
+Protection: tests/orchestration-workflow.test.mjs proves literal shell argv, durable tamper-detected receipts, and integrated execution-result projection, tests/orchestration.test.mjs preserves the planned-verification safety contract
