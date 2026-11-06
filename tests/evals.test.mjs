@@ -4,12 +4,12 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
+import { createLegacyTask as createTask } from "./helpers.mjs";
 import {
   approveAcceptance,
   assessTask,
   beginImplementation,
   beginPreUat,
-  createTask,
   draftSolution,
   loadTask,
   markReady,

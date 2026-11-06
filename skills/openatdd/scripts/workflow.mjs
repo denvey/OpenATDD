@@ -42,7 +42,6 @@ import { MAX_IMPLEMENTATION_WORKERS, RISK_OVERLAYS, agentPolicyForLane, authoriz
 import { profileForDispatch, verificationExecutionProfile } from "./agent-profiles.mjs";
 import {
   IMPLEMENTATION_ROUTES,
-  deriveDefaultExecutionPlan,
   validateExecutionPlan,
   validateExecutionResult,
   validateRuntimeAttestation,
@@ -75,6 +74,7 @@ import {
 } from "./profiles.mjs";
 import { canonicalJson, fingerprintProject, loadFinalizationManifest } from "./manifest.mjs";
 import { projectStageTiming } from "./timing.mjs";
+import { assertAcceptanceBaseline } from "./acceptance-baseline.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -200,6 +200,7 @@ function authorityFingerprint(state) {
     review: state.reviews?.solution ?? null,
     executionPlan: state.execution?.plan ?? null,
     directive: state.execution?.directive ?? null,
+    ...(state.deliveryVersion >= 4 ? { acceptanceBaseline: state.acceptanceBaseline ?? null } : {}),
   }));
 }
 
@@ -375,7 +376,7 @@ function historyEvent(event, at, details = undefined) {
 function initialState(taskId, requirement, now) {
   return {
     schemaVersion: 3,
-    deliveryVersion: 3,
+    deliveryVersion: 4,
     taskId,
     requirement,
     phase: PHASES.ACCEPTANCE_DRAFT,
@@ -559,7 +560,11 @@ export async function loadTask(root, taskId) {
   assert(persisted.schemaVersion === 3, "UNSUPPORTED_STATE", `Unsupported task state version: ${persisted.schemaVersion}`);
   const state = persisted;
   const hadExecution = Boolean(state.execution);
-  if (state.routing?.lane) {
+  const hasBoundSessions = Object.values(state.execution?.orchestration?.sessions ?? {})
+    .some((session) => session.authorityFingerprint);
+  // Session authority digests include routing; preserve its recorded contract
+  // until explicit replanning replaces the bound sessions.
+  if (state.routing?.lane && !hasBoundSessions) {
     state.routing.controller = controllerProfileForLane(state.routing.lane);
     state.routing.agents = agentPolicyForLane(state.routing.lane);
   }
@@ -751,7 +756,7 @@ export async function assessTask(root, taskId, assessment, clock = () => new Dat
   assertPhase(state, Object.values(PHASES).filter((phase) => !isDeliveryTerminalPhase(phase)), "Task assessment");
   const routing = classifyTask(assessment);
   const now = isoNow(clock);
-  state.deliveryVersion = 3;
+  state.deliveryVersion = Math.max(state.deliveryVersion ?? 1, 3);
   state.routing = { status: "assessed", assessedAt: now, ...routing };
   state.context = { ...state.context, status: "stale", path: state.context?.path ?? null, digest: null, sourceDigests: {} };
   state.readyAt = null;
@@ -822,7 +827,7 @@ export async function recordSolutionReview(root, taskId, input, clock = () => ne
     );
     assert(independentDispatch.runtimeAttestation?.verified === true, "INDEPENDENT_REVIEW_ATTESTATION_REQUIRED", "The independent reviewer must have a verified runtime attestation.");
     const expected = profileForDispatch({ role: "independent-review", lane: state.routing?.lane, deliveryVersion: state.deliveryVersion });
-    assert(independentDispatch.profile === expected.profile && independentDispatch.model === expected.model && independentDispatch.reasoningEffort === expected.reasoningEffort, "INDEPENDENT_REVIEW_PROFILE_REQUIRED", "The independent reviewer must use the authoritative lane-aware Astra profile.");
+    validateRuntimeAttestation(expected, independentDispatch.runtimeAttestation);
     assert(independentDispatch.context?.digest, "INDEPENDENT_REVIEW_CONTEXT_REQUIRED", "The independent reviewer must receive recorded scoped context.");
     assert(independentDispatch.reviewControl?.solutionSha256 === solutionFingerprint(await readUtf8(files.requirement)), "INDEPENDENT_REVIEW_CURRENT_SOLUTION_REQUIRED", "The independent reviewer result must be bound to the current solution fingerprint.");
   }
@@ -878,7 +883,7 @@ function executionTask(state, subtaskId) {
   return state.execution?.plan?.tasks?.find((item) => item.id === subtaskId) ?? null;
 }
 
-function inventoryChanges(beforeFiles, afterFiles) {
+export function inventoryChanges(beforeFiles, afterFiles) {
   const before = new Map((beforeFiles ?? []).map((item) => [item.path, item]));
   const after = new Map((afterFiles ?? []).map((item) => [item.path, item]));
   return [...new Set([...before.keys(), ...after.keys()])]
@@ -897,7 +902,7 @@ export async function planExecution(root, taskId, input, clock = () => new Date(
   const plan = validateExecutionPlan(state.acceptance.items.map((item) => item.id), input);
   if (state.routing?.lane === "quick") {
     assert(plan.tasks.length === 1 && plan.tasks[0].route === "bounded-implementation",
-      "QUICK_EXECUTION_SCOPE", "Quick uses one bounded Luna Worker; reassess cross-module or parallel work.");
+      "QUICK_EXECUTION_SCOPE", "Explicit Quick delegation uses one bounded Worker; reassess cross-module or parallel work.");
   }
   if (state.execution?.directive?.mode === "parallel") {
     const contracts = await orchestrationContracts();
@@ -930,6 +935,7 @@ export async function planExecution(root, taskId, input, clock = () => new Date(
 
 export async function recordExecutionResult(root, taskId, input, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
+  await assertAcceptanceBaseline(root, state);
   assertPhase(state, [PHASES.IMPLEMENTING, PHASES.REPAIRING, PHASES.BLOCKED], "Execution result recording");
   await assertContractIntegrity(files, state);
   assert(state.execution?.planStatus === "planned", "EXECUTION_PLAN_REQUIRED", "Record a validated execution plan before worker results.");
@@ -1060,7 +1066,7 @@ function runnableOrchestrationBatch(batches, orchestration, results = {}) {
   return [];
 }
 
-function orchestrationActions(batches, controller = null, sharedContract = null, lane = "standard") {
+function orchestrationActions(batches, controller = null, sharedContract = null, lane = "standard", acceptanceTests = []) {
   const sessions = batches.flatMap((batch) => batch.tasks ?? []).map((task) => {
     const profile = profileForDispatch({ role: task.route, deliveryVersion: 3, lane });
     const contractFiles = sharedContract?.files?.map((item) => typeof item === "string" ? item : item.path).filter(Boolean) ?? [];
@@ -1077,7 +1083,7 @@ function orchestrationActions(batches, controller = null, sharedContract = null,
       task: task.task,
       acceptanceIds: task.acceptanceIds,
       writeScope: task.writeScope,
-      doNotTouch: [...new Set([...(task.doNotTouch ?? []), ...contractFiles])],
+      doNotTouch: [...new Set([...(task.doNotTouch ?? []), ...contractFiles, ...acceptanceTests])],
       expectedResult: task.expectedResult,
       verification: task.verification,
       firstArtifact: task.firstArtifact,
@@ -1085,7 +1091,7 @@ function orchestrationActions(batches, controller = null, sharedContract = null,
       canSpawnAgents: false,
       runtime: profile,
       sharedContract,
-      repairPolicy: { maxNoProgressAttempts: 2, escalation: "astra-design-diagnosis", implementAfterDiagnosis: "gpt-5.6-luna" },
+      repairPolicy: { maxNoProgressAttempts: 2, escalation: "controller-diagnosis" },
       outputPolicy: "Return changed paths, verification results, evidence locators, and blockers; do not return the full execution transcript.",
     },
     worktree: { required: true, unique: true, sharedCheckout: false },
@@ -1217,6 +1223,7 @@ async function assertFrozenSharedContract(root, orchestration) {
 
 export async function orchestrationStart(root, taskId, input = {}, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
+  await assertAcceptanceBaseline(root, state);
   await assertSolutionIntegrity(files, state);
   const directive = state.execution?.directive ?? null;
   if (directive) {
@@ -1307,12 +1314,14 @@ export async function orchestrationStart(root, taskId, input = {}, clock = () =>
     controller,
     frozenContract,
     state.routing?.lane,
+    state.acceptanceBaseline?.testFiles.map((file) => file.path) ?? [],
   );
   const actionPlan = orchestrationActions(
     runnableOrchestrationBatch(safeBatches, orchestration, state.execution.results),
     controller,
     frozenContract,
     state.routing?.lane,
+    state.acceptanceBaseline?.testFiles.map((file) => file.path) ?? [],
   );
   for (const item of allSessionPlan.sessions) {
     orchestration.sessions[item.sessionId] ??= {
@@ -1537,6 +1546,7 @@ async function sessionWorktreeDiff(session) {
 
 export async function recordOrchestrationSessionResult(root, taskId, input, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
+  await assertAcceptanceBaseline(root, state);
   const orchestration = ensureOrchestration(state);
   const sessionId = orchestrationSessionId(input);
   assert(sessionId, "SESSION_ID_REQUIRED", "Session result requires sessionId.");
@@ -1692,6 +1702,7 @@ function integrationBatchReady(orchestration, subtaskId) {
 
 export async function integrateOrchestration(root, taskId, input = {}, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
+  await assertAcceptanceBaseline(root, state);
   const orchestration = ensureOrchestration(state);
   const candidates = orderedSessions(orchestration, input.sessionIds);
   assert(candidates.length > 0, "NO_VERIFIED_SESSIONS", "No verified passed sessions are ready for integration.");
@@ -1796,7 +1807,7 @@ export async function integrateOrchestration(root, taskId, input = {}, clock = (
   orchestration.integration.candidateFingerprint = (await fingerprintProject(root, { include: ["**/*"] })).fingerprint;
   orchestration.integration.completedAt = isoNow(clock);
   const nextBatches = runnableOrchestrationBatch(orchestration.batches ?? [], orchestration, state.execution.results);
-  const nextActionPlan = orchestrationActions(nextBatches, orchestration.controller, orchestration.contract, state.routing?.lane);
+  const nextActionPlan = orchestrationActions(nextBatches, orchestration.controller, orchestration.contract, state.routing?.lane, state.acceptanceBaseline?.testFiles.map((file) => file.path) ?? []);
   orchestration.nextActions = nextActionPlan.actions;
   if (nextActionPlan.actions.length > 0) {
     orchestration.integration.budgetStartedAt = null;
@@ -2037,6 +2048,7 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     await assertContractIntegrity(files, state);
   }
   if (implementationRole) {
+    await assertAcceptanceBaseline(root, state);
     assertPhase(state, [PHASES.IMPLEMENTING, PHASES.REPAIRING, PHASES.BLOCKED], "Implementation Agent dispatch recording");
     assert(input.subtaskId?.trim(), "AGENT_SUBTASK_REQUIRED", "Implementation Agent dispatches must reference a planned subtask.");
     assert(state.execution?.planStatus === "planned", "EXECUTION_PLAN_REQUIRED", "Implementation Agent dispatch requires a validated execution plan.");
@@ -2069,22 +2081,19 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     repairAttempts: state.repair?.attempts ?? [],
     concerns,
   });
-  const configured = previous?.profile ? previous : recommended;
+  const configured = previous ?? recommended;
   const reviewControl = role === "independent-review"
     ? assertIndependentReviewDispatchAllowed(state, id, currentIndependentReviewPlan(state, await readUtf8(files.requirement)))
     : null;
   for (const [property, label] of [
-    ["profile", "profile"],
-    ["model", "model"],
-    ["reasoningEffort", "reasoning effort"],
     ["forkTurns", "fork turns"],
     ["sandbox", "sandbox"],
   ]) {
     if (input[property] !== undefined) {
       assert(
-        String(input[property]).trim() === String(configured[property]),
+        String(input[property]).trim() === String(recommended[property]),
         "AGENT_PROFILE_MISMATCH",
-        `Agent ${label} ${input[property]} does not match ${role} profile ${configured[property]}.`,
+        `Agent ${label} ${input[property]} does not match ${role} permissions ${recommended[property]}.`,
       );
     }
   }
@@ -2092,7 +2101,7 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     ? validateRuntimeFailure(input.runtimeAttestation)
     : previous?.runtimeFailure ?? null;
   const runtimeAttestation = state.deliveryVersion >= 3 && input.status !== "planned" && !runtimeFailure
-    ? validateRuntimeAttestation(configured, input.runtimeAttestation)
+    ? validateRuntimeAttestation(recommended, input.runtimeAttestation)
     : previous?.runtimeAttestation ?? null;
   if (role === "independent-review" && ["failed", "blocked"].includes(input.status)) {
     assert(runtimeFailure, "INDEPENDENT_REVIEW_RUNTIME_FAILURE_REQUIRED", "A non-passed independent-review dispatch must record a concrete unverified runtime failure; actionable review findings use a passed dispatch plus a failed solution review verdict.");
@@ -2151,9 +2160,9 @@ export async function recordAgentDispatch(root, taskId, input, clock = () => new
     subtaskId: input.subtaskId?.trim() || null,
     status: input.status,
     summary: input.summary?.trim() || "",
-    profile: configured.profile,
-    model: configured.model,
-    reasoningEffort: configured.reasoningEffort,
+    profile: runtimeAttestation ? runtimeAttestation.profile : input.profile ?? configured.profile,
+    model: runtimeAttestation ? runtimeAttestation.model : input.model ?? configured.model,
+    reasoningEffort: runtimeAttestation ? runtimeAttestation.reasoningEffort : input.reasoningEffort ?? configured.reasoningEffort,
     forkTurns: configured.forkTurns,
     sandbox: configured.sandbox,
     writable: configured.writable ?? false,
@@ -2553,6 +2562,10 @@ export async function approveSolution(root, taskId, inputOrClock = {}, maybeCloc
     impactPaths: validation.parsed.impactPaths.map(normalizeImpactPath),
     trace: validation.parsed.trace,
   };
+  if (state.deliveryVersion >= 4) {
+    state.implementationBaseline ??= { recordedAt: state.creationBaseline.recordedAt, fingerprint: state.creationBaseline.fingerprint, files: state.creationBaseline.files };
+    state.acceptanceBaseline = null;
+  }
   if (input.parallel !== true && state.execution.directive?.solutionSha256 !== digest) state.execution.directive = null;
   setPhase(state, PHASES.CONTRACT_APPROVED, now);
   advanceEpoch(state, now, "solution approved");
@@ -2570,75 +2583,51 @@ export async function approveSolution(root, taskId, inputOrClock = {}, maybeCloc
   };
 }
 
-function shellQuote(value) {
-  return `'${String(value).replaceAll("'", `'"'"'`)}'`;
-}
-
-function workerVerificationCommand(command) {
-  const argv = (command?.argv ?? []).map(shellQuote).join(" ");
-  if (!argv) return null;
-  return command.cwd ? `cd ${shellQuote(command.cwd)} && ${argv}` : argv;
-}
-
-async function prepareDefaultExecutionRouting(root, state, clock) {
-  if (["planned", "controller-sequential"].includes(state.execution?.planStatus)) return;
-  let verification = [];
-  let manifestError = null;
-  try {
-    const manifestInfo = await loadFinalizationManifest(root, state.taskId);
-    const checks = manifestInfo.manifest?.checks ?? [];
-    const group = checks.find((item) => item.scope === "focused")
-      ?? checks.find((item) => item.scope === "module")
-      ?? checks.find((item) => item.scope === "broad");
-    verification = (group?.commands ?? []).map(workerVerificationCommand).filter(Boolean);
-  } catch (error) {
-    manifestError = `${error.code ?? "FINALIZATION_MANIFEST_UNAVAILABLE"}: ${error.message}`;
-  }
-  const routing = deriveDefaultExecutionPlan({
-    acceptanceIds: state.acceptance.items.map((item) => item.id),
-    impactPaths: state.solution.impactPaths,
-    lane: state.routing?.lane,
-    requirement: state.requirement,
-    verification,
-    protectedPaths: [".git", ".openatdd/requirements", ".env.openatdd.local"],
-  });
-  const now = isoNow(clock);
-  if (routing.status === "planned") {
-    state.execution = {
-      ...state.execution,
-      planStatus: "planned",
-      plannedAt: now,
-      plan: routing.plan,
-      results: {},
-      fallbackReason: null,
-      nextActions: ["dispatch-worker"],
-      orchestration: orchestrationDefaults(),
-    };
-    appendHistory(state, "EXECUTION_PLANNED", now, { source: "approved-solution-default", taskCount: routing.plan.tasks.length, stages: 1 });
+function prepareDefaultExecutionRouting(state, clock) {
+  if (state.execution?.planStatus === "planned") return;
+  if (state.execution?.directive?.mode === "parallel"
+    && state.execution.directive.consumed !== true
+    && !state.execution.plan) {
+    state.execution.planStatus = "not_planned";
+    state.execution.plannedAt = null;
+    state.execution.nextActions = ["plan-execution"];
     return;
   }
+  if (["inline", "controller-sequential"].includes(state.execution?.planStatus)) return;
+  const now = isoNow(clock);
   state.execution = {
     ...state.execution,
-    planStatus: "controller-sequential",
+    planStatus: "inline",
     plannedAt: now,
     plan: null,
-    fallbackReason: {
-      ...routing.reason,
-      details: [...(routing.reason?.details ?? []), ...(manifestError ? [manifestError] : [])],
-    },
-    nextActions: ["controller-sequential"],
+    fallbackReason: null,
+    nextActions: ["implement-inline"],
   };
-  appendHistory(state, "EXECUTION_CONTROLLER_SEQUENTIAL", now, state.execution.fallbackReason);
+  appendHistory(state, "EXECUTION_INLINE_SELECTED", now);
 }
 
-export async function beginImplementation(root, taskId, clock = () => new Date()) {
+export async function beginImplementation(root, taskId, inputOrClock = {}, maybeClock = () => new Date()) {
+  const input = typeof inputOrClock === "function" ? {} : (inputOrClock ?? {});
+  const clock = typeof inputOrClock === "function" ? inputOrClock : maybeClock;
   const { state, files } = await loadTask(root, taskId);
   assertPhase(state, [PHASES.CONTRACT_APPROVED, PHASES.IMPLEMENTING], "Implementation");
   await assertContractIntegrity(files, state);
+  if (state.deliveryVersion >= 4) {
+    if (state.acceptanceBaseline) {
+      const manifestInfo = input.manifest ? await loadFinalizationManifest(root, taskId, input.manifest) : undefined;
+      await assertAcceptanceBaseline(root, state, manifestInfo);
+    }
+    else {
+      assert(state.phase === PHASES.CONTRACT_APPROVED, "ACCEPTANCE_BASELINE_REQUIRED", "Implementation requires a pre-implementation acceptance baseline.");
+      const { runAcceptanceBaseline } = await import("./finalization.mjs");
+      state.acceptanceBaseline = await runAcceptanceBaseline(root, taskId, input, clock);
+      appendHistory(state, "ACCEPTANCE_BASELINE_RECORDED", state.acceptanceBaseline.recordedAt, { outcome: state.acceptanceBaseline.outcome, contractDigest: state.acceptanceBaseline.contractDigest });
+    }
+  }
   if (state.phase !== PHASES.IMPLEMENTING) {
     const now = isoNow(clock);
-    const baseline = await fingerprintProject(root, { include: ["**/*"] });
-    state.implementationBaseline = {
+    const baseline = state.deliveryVersion >= 4 ? null : await fingerprintProject(root, { include: ["**/*"] });
+    if (baseline) state.implementationBaseline = {
       recordedAt: now,
       fingerprint: baseline.fingerprint,
       files: baseline.files,
@@ -2648,7 +2637,7 @@ export async function beginImplementation(root, taskId, clock = () => new Date()
     await saveTask(files, state, clock);
   }
   if (state.deliveryVersion < 3) return { state, files };
-  await prepareDefaultExecutionRouting(root, state, clock);
+  prepareDefaultExecutionRouting(state, clock);
   const prepared = await loadContextForState(root, state, files, { surface: "implementation" });
   const context = prepared.context;
   appendHistory(state, "SCOPED_CONTEXT_PREPARED", isoNow(clock), {
@@ -2728,7 +2717,7 @@ export async function advanceQuickTask(root, taskId, input = {}, clock = () => n
     steps.push({ step: "review-solution", performed: false }, { step: "approve-solution", performed: false });
   }
 
-  const begun = await beginImplementation(root, taskId, clock);
+  const begun = await beginImplementation(root, taskId, input, clock);
   steps.push({ step: "begin", performed: true });
   return { state: begun.state, files: begun.files, context: begun.context ?? null, steps, warnings, affectedDependencies };
 }
@@ -2736,6 +2725,7 @@ export async function advanceQuickTask(root, taskId, input = {}, clock = () => n
 export async function resumeTask(root, taskId, clock = () => new Date()) {
   const { state, files } = await loadTask(root, taskId);
   if (state.solution?.approvedAt) await assertContractIntegrity(files, state);
+  if (state.acceptanceBaseline || (state.deliveryVersion >= 4 && ![PHASES.ACCEPTANCE_DRAFT, PHASES.ACCEPTANCE_APPROVED, PHASES.SOLUTION_DRAFT, PHASES.CONTRACT_APPROVED].includes(state.phase))) await assertAcceptanceBaseline(root, state);
   const contextPhases = new Set([
     PHASES.IMPLEMENTING,
     PHASES.REPAIRING,
@@ -2878,7 +2868,6 @@ export function validateUatPlan(state, plan) {
   if (plan?.execution !== undefined) {
     if (!["deterministic", "browser-low", "human"].includes(plan.execution?.mode)) errors.push("UAT execution mode must be deterministic, browser-low, or human.");
     if (plan.execution?.mode === "browser-low") {
-      if (plan.execution.model !== "gpt-5.6-luna" || plan.execution.reasoningEffort !== "low") errors.push("Low-model browser execution must use gpt-5.6-luna with low reasoning.");
       if (plan.execution.forkTurns !== "none" || plan.execution.reuseSession !== true) errors.push("Low-model browser execution must use a clean context and one reused session.");
       if (plan.execution.screenshotPolicy !== "checkpoint-or-failure") errors.push("Low-model browser execution must capture screenshots only at checkpoints or failure.");
     }
@@ -3326,6 +3315,11 @@ export async function reopenAcceptance(root, taskId, reason, clock = () => new D
   assert(state.acceptance.approvedAt, "ACCEPTANCE_NOT_APPROVED", "Acceptance is not currently approved.");
   const now = isoNow(clock);
   invalidateForReopen(state, now, reason.trim());
+  state.acceptanceBaseline = null;
+  if (state.deliveryVersion >= 4) {
+    const baseline = await fingerprintProject(root, { include: ["**/*"] });
+    state.implementationBaseline = { recordedAt: now, fingerprint: baseline.fingerprint, files: baseline.files };
+  }
   state.acceptance.approvedAt = null;
   state.acceptance.sha256 = null;
   state.solution = { approvedAt: null, sha256: null, impactPaths: [], trace: [], stale: true };
@@ -3361,6 +3355,11 @@ export async function reopenSolution(root, taskId, reason, clock = () => new Dat
   assert(state.solution.approvedAt, "SOLUTION_NOT_APPROVED", "Solution is not currently approved.");
   const now = isoNow(clock);
   invalidateForReopen(state, now, reason.trim());
+  state.acceptanceBaseline = null;
+  if (state.deliveryVersion >= 4) {
+    const baseline = await fingerprintProject(root, { include: ["**/*"] });
+    state.implementationBaseline = { recordedAt: now, fingerprint: baseline.fingerprint, files: baseline.files };
+  }
   state.solution = { approvedAt: null, sha256: null, impactPaths: [], trace: [], stale: true };
   state.reviews = { solution: null, independent: { initialSolutionSha256: null, recheckSolutionSha256: null, lastVerdict: null, unavailable: [] } };
   state.context = { status: "stale", path: state.context?.path ?? null, digest: null, sourceDigests: {} };
@@ -3607,6 +3606,17 @@ export async function prepareHandoff(root, taskId, input = {}, clock = () => new
 export async function readinessErrorsForState(root, state, files, options = {}) {
   const contract = await contractErrors(files, state);
   const errors = [...contract.errors, ...(await evidenceErrors(files.root, state))];
+  if (state.deliveryVersion >= 4) {
+    try { await assertAcceptanceBaseline(root, state); } catch (error) { errors.push(error.message); }
+    for (const id of state.acceptanceBaseline?.batchIds ?? []) {
+      const batch = state.uat?.batches?.[id];
+      if (batch?.status !== "passed" || batch.epoch !== state.verification.epoch || batch.acceptanceContractDigest !== state.acceptanceBaseline.contractDigest) errors.push(`Acceptance batch ${id} has no passing execution of the frozen acceptance baseline contract in this epoch.`);
+      else {
+        if (!batch.evidence?.length) errors.push(`Acceptance batch ${id} has no execution evidence.`);
+        errors.push(...await verifyCapturedEvidence(root, batch.evidence, evidenceBoundary(state)));
+      }
+    }
+  }
   const boundary = evidenceBoundary(state);
 
   for (const criterion of state.acceptance.items) {
@@ -4243,8 +4253,9 @@ export function summarizeState(state) {
     phase: state.phase,
     acceptanceApproved: Boolean(state.acceptance.approvedAt),
     solutionApproved: Boolean(state.solution.approvedAt),
+    acceptanceBaseline: state.acceptanceBaseline ?? null,
     routing: state.routing,
-    modelPolicy: state.routing?.lane ? modelPolicyForRouting(state.routing) : null,
+    modelPolicy: state.routing?.lane ? modelPolicyForRouting(state.routing, { execution: state.execution }) : null,
     decisions: state.decisions,
     solutionReview: state.reviews?.solution ?? null,
     independentReview: state.reviews?.independent ?? null,

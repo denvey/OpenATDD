@@ -1,9 +1,9 @@
 import { assert } from "./lib.mjs";
 
 const DEFAULT_SCOUT_PROFILE = Object.freeze({
-  profile: "luna-low-scout",
-  model: "gpt-5.6-luna",
-  reasoningEffort: "low",
+  profile: "read-only-scout",
+  model: null,
+  reasoningEffort: null,
   forkTurns: "none",
   sandbox: "read-only",
   writable: false,
@@ -13,9 +13,9 @@ const DEFAULT_SCOUT_PROFILE = Object.freeze({
 });
 
 const STANDARD_REVIEW_PROFILE = Object.freeze({
-  profile: "astra-review",
-  model: "gpt-6-astra",
-  reasoningEffort: "medium",
+  profile: "review",
+  model: null,
+  reasoningEffort: null,
   forkTurns: "none",
   sandbox: "read-only",
   writable: false,
@@ -26,8 +26,8 @@ const STANDARD_REVIEW_PROFILE = Object.freeze({
 
 const DEEP_REVIEW_PROFILE = Object.freeze({
   ...STANDARD_REVIEW_PROFILE,
-  profile: "astra-critical-review",
-  reasoningEffort: "high",
+  profile: "critical-review",
+  reasoningEffort: null,
 });
 
 const HIGH_REVIEW_RISKS = new Set([
@@ -49,28 +49,28 @@ export function acceptanceReviewProfile(input = {}) {
 }
 
 const BOUNDED_IMPLEMENTATION_PROFILE = Object.freeze({
-  profile: "luna-max-worker",
-  model: "gpt-5.6-luna",
-  reasoningEffort: "max",
+  profile: "implementation-worker",
+  model: null,
+  reasoningEffort: null,
   forkTurns: "none",
   sandbox: "workspace-write",
   writable: true,
   leaf: true,
   canSpawnAgents: false,
   authority: "approved-subtask-only",
-  escalation: "astra-design-diagnosis",
+  escalation: "controller-diagnosis",
 });
 
 const COMPLEX_IMPLEMENTATION_PROFILE = Object.freeze({
   ...BOUNDED_IMPLEMENTATION_PROFILE,
-  profile: "luna-max-complex-worker",
+  profile: "complex-implementation-worker",
 });
 
 const LOW_BROWSER_PROFILE = Object.freeze({
   mode: "browser-low",
   profile: "browser-execution",
-  model: "gpt-5.6-luna",
-  reasoningEffort: "low",
+  model: null,
+  reasoningEffort: null,
   forkTurns: "none",
   sandbox: "read-only",
   capabilities: Object.freeze(["browser"]),
@@ -89,8 +89,8 @@ export const AGENT_PROFILE_DEFAULTS = Object.freeze({
 const LEGACY_AGENT_PROFILE_DEFAULTS = Object.freeze({
   "clean-context-execution": Object.freeze({
     profile: "clean-context-execution",
-    model: "gpt-5.6-terra",
-    reasoningEffort: "medium",
+    model: null,
+    reasoningEffort: null,
     forkTurns: "none",
     sandbox: "workspace-write",
   }),

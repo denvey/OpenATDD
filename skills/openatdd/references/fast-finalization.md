@@ -1,12 +1,72 @@
 # Fast finalization
 
-Use this reference after the acceptance and solution cards are approved and
-implementation repairs are complete. The portable default is:
+Use this reference when preparing executable acceptance tests before implementation,
+or when finalizing completed implementation. The portable default is:
 
 ```text
 focused implementation and repair
 → finalize --fast   (validation + rehearsal + one formal run, single invocation)
 ```
+
+## Acceptance baseline
+
+New tasks use deliveryVersion 4. Prepare a manifest before `begin` (or the merged
+`advance` / `approve-solution --begin`). These entry points run environment
+preflight, smoke commands and the exact `uat.batches` acceptance commands before
+allowing product edits. Each executable batch declares project-relative
+`testFiles` for its assertions, adapters and fixtures. They must exist as regular
+files inside the project; no symlink escape is accepted. For example:
+
+```json
+{
+  "id": "journey",
+  "name": "Export filtered orders",
+  "acceptanceIds": ["AC-01"],
+  "testFiles": ["tests/export-journey.mjs", "tests/fixtures/orders.json"],
+  "commands": [{ "id": "export-journey", "argv": ["node", "tests/export-journey.mjs"] }]
+}
+```
+
+The command prints one JSON object to stdout; put other diagnostics on stderr.
+Across a batch's commands, each listed criterion must appear exactly once:
+
+```json
+{
+  "schemaVersion": 1,
+  "results": [
+    { "acceptanceId": "AC-01", "status": "failed", "failureClass": "assertion", "summary": "Expected two filtered orders, observed all five" }
+  ]
+}
+```
+
+Print `status: "passed"` and a non-empty `summary` when the observed result
+satisfies the approved criterion. Exit 0 for all passed results, 1 for assertion
+failure. The final manifest commands must require exit 0; only the baseline
+executor permits exit 1 while inspecting explicit assertion outcomes. Do not
+translate startup, setup, timeout or network failures into assertion failures.
+Framework adapters should catch only assertion errors and let setup errors fail
+normally. Plain test-runner output needs an adapter; exit status alone is insufficient.
+
+The baseline records `missing_behavior`, `already_satisfied`, or `manual_only`
+with actual results and immutable Git-private logs; it never marks formal
+acceptance passed. Product changes since task creation (or an explicit reopen)
+are rejected before the baseline. Test preparation, the selected manifest and
+environment profile are allowed. A runner may not change project source. Declare
+generated export files or browser traces in the existing `source.exclude`; frozen
+test files and environment integrity are still checked even when excluded.
+
+The approved cards, test bytes/modes, commands, preflight contract and environment
+profile bind the baseline. Resume, Worker dispatch, readiness and delivery verify
+that contract and its evidence. Workers receive test files in `doNotTouch`.
+Finalization reruns the same commands and requires complete passing results.
+Correction of a frozen test requires `reopen-solution`, reviewed approval and
+a fresh baseline; it cannot silently weaken acceptance. The selected `--manifest`
+path is reused automatically after begin. Checks and handoff metadata can still
+be refined without changing the frozen acceptance contract.
+
+Existing deliveryVersion 1–3 tasks retain their old workflow. `runner: "internal"`
+remains a human handoff only for ASSISTED/MANUAL criteria; manual-only tasks have
+no automated baseline pass and must retain explicit human judgment.
 
 Use the explicit ladder when the intermediate output matters: no project
 manifest yet, a rehearsal you expect to fail, or a narrow diagnosis.
@@ -273,7 +333,7 @@ evidence; valid unaffected references remain unchanged.
 
 ## Manual fallback
 
-If no valid manifest exists, use the granular sequence documented in
+For legacy deliveryVersion 1–3 tasks without a valid manifest, use the granular sequence documented in
 `SKILL.md`: preflight, delivery-verification planning, checks, batches,
 acceptance records, handoff, and ready. Use granular commands for diagnosis, but do not repeat them
 after a successful formal finalization for the same fingerprint.

@@ -35,7 +35,8 @@ when its stated trigger applies.
    Quick completes simplicity review and autonomous solution approval first.
 4. Never silently modify an approved card; reopen its gate.
 5. Trace every solution row to an acceptance ID.
-6. Execute the approved user journey; unit tests alone are not delivery evidence.
+6. New tasks execute acceptance tests before product edits and freeze that contract;
+   delivery reruns the same approved user journey. Unit tests alone are not delivery evidence.
 7. Every passed blocking automatic criterion needs fresh evidence.
 8. Mark affected historical criteria and reverify them after shared changes.
 9. Every resolved defect records root cause, regression protection, and an invariant.
@@ -76,30 +77,47 @@ when a machine summary is needed. Do not repeat persisted approvals.
 ## Route effort, overlay risk
 
 - **Quick:** local, established, low uncertainty. Use compact autonomous
-  contracts and one bounded Luna/max implementation Worker; no routine research.
+  contracts and implement inline in the current session; no routine research.
 - **Standard:** cross-module or moderately uncertain. Use local discovery and
   optional read-only review only when useful.
 - **Deep:** system-wide, novel cross-cutting, or high uncertainty. Perform
   parallel local discovery, relevant external research, and independent
   solution review. Record unavailable research.
 
-For design, Quick and Standard use `gpt-6-astra/medium`;
-Deep uses `gpt-6-astra/high`. Parallelism alone never raises design effort.
-Luna/max performs implementation, tests, and ordinary repairs. The host must
-explicitly select and prove the routed profile; an
-unproven model, effort, or permission blocks a compliant run.
-The controller retains workspace write access for contracts and integration,
-not routine product implementation. Unbounded work returns for diagnosis and
-decomposition, then to Luna; direct GPT-6 implementation needs explicit user
-authorization. Read-only applies to scouts and independent reviewers.
+Model routing is advisory and host-dependent. The controller is the model and
+reasoning setting the user selected for the current conversation, including
+design and final technical acceptance. Do not switch it for a lane, risk,
+parallel batch, or role preference; there is no fixed Astra controller.
+For authorized delegation, use these defaults unless the user specifies otherwise:
+
+| Work | Preferred executor |
+|---|---|
+| Business logic, permissions, data consistency, complex implementation and repair | Sol / xhigh |
+| UI, visual implementation and inspection, copy, documentation, dynamic browser acceptance | Terra 6.1 / xhigh |
+| Stable browser journeys, API assertions, builds and regression checks | Existing deterministic commands, no model |
+
+Use a preference only when the selected host tool supports that model and effort.
+Otherwise use a suitable available executor, inheriting host settings when no
+supported override exists, and report the substitution once. Do not guess model
+IDs or treat tool availability elsewhere in the host as dispatch support.
+A different or unknown model/effort does not block the workflow. Record actual
+runtime metadata when exposed; never claim that guidance switched the runtime.
+The controller implements and repairs inline by default. When applying this Skill,
+use host-permitted subagents for bounded work when delegation improves total
+delivery time; users need not append a separate delegation phrase. A model
+preference does not require a Worker: keep small, context-rich work inline.
+Respect user limits and host authorization requirements; this instruction does
+not override a host that requires explicit user authorization for delegation.
+Read-only permissions for scouts/reviewers, leaf capability, ownership, and
+Worker isolation remain required and must be proven before delegation.
 
 `status --json` and assessed `new` include `modelPolicy`. Before technical
 acceptance, use that policy or `openatdd model-policy TASK --json`; concrete
-unresolved concerns may be supplied with `--concern "reason"`. Acceptance uses
-GPT-6/medium by default, high for sensitive risk overlays or explicit concerns,
-even when design used high. This command resolves policy only: the host must
-apply the model/effort; it does not switch the current runtime. A separate
-`acceptance-review` dispatch enforces its recorded runtime attestation.
+unresolved concerns may be supplied with `--concern "reason"`. Acceptance keeps
+the host's reasoning settings; sensitive risks or explicit concerns select a
+critical review profile without prescribing an effort level. This command returns policy only;
+it does not switch the current runtime. A separate `acceptance-review` dispatch
+enforces read-only isolation and records available runtime metadata.
 
 Risk never changes the complexity lane by itself. It strengthens authorization,
 denial-path, rollback, compatibility, redaction, preflight, and evidence. The
@@ -167,8 +185,9 @@ openatdd review-solution TASK --status passed --reviewer main \
   --check all --summary "concise finding"
 ```
 
-Deep requires an independent solution review. Check the selected model identity
-and leaf permission before dispatch. A permanent `model_identity` or
+Deep requires an independent solution review. Check read-only isolation
+and leaf permission before dispatch. Model recommendations are not a gate.
+A permanent `model_identity` or
 `permission` failure records one idempotent unavailable outcome for that
 solution fingerprint and does not consume a second runtime attempt. Otherwise,
 the initial Reviewer receives a 15-minute hard budget. A Reviewer that returns
@@ -184,27 +203,30 @@ reopen acceptance; other edits invalidate and repeat solution review.
 
 ### Optional multi-session execution
 
-After solution approval in every lane,
-`begin` derives a conservative structured execution plan when approved impact
-paths and manifest verification commands safely bound the work; otherwise it
-persists a concrete `controller-sequential` reason. A returned Worker action is
-not advisory: the host dispatches it through the isolated-session adapter.
-Separate sessions are also used for read-only discovery and research (Luna/low),
-independent solution review (GPT-6/medium for Standard, high for Deep), or an
-explicit `bounded-implementation` / `complex-implementation` plan
-(Luna/max leaf sessions with `forkTurns:none` and `canSpawnAgents=false` that
-cannot change acceptance, solution, authorization, or verdicts). Ambiguous or
-unbounded work returns for controller diagnosis and a narrower plan. Every writable Worker, including a
+After solution approval in every lane, `begin` defaults to inline implementation
+and returns `implement-inline`. New tasks require the acceptance manifest and
+test adapters first; `begin` runs their baseline before allowing product edits.
+It does not generate a Worker plan. An explicit parallel directive returns
+`plan-execution` until the controller records a safe plan. Existing Worker plans
+are preserved. After approval, the controller uses `plan-execution` when a bounded
+handoff is useful and host-permitted; no separate workflow approval is required.
+A returned Worker action from that plan uses the isolated-session
+adapter. Separate sessions may perform discovery, research, independent review,
+or an explicit `bounded-implementation` / `complex-implementation` plan.
+Model profiles are recommendations; Workers remain leaf sessions with
+`forkTurns:none` and `canSpawnAgents=false` and cannot change acceptance,
+solution, authorization, or verdicts. Every writable Worker, including a
 single Worker, uses its own isolated worktree; only a real parallel batch needs
 the frozen shared-interface contract.
 
-Evaluate parallelism during design. Use at most two implementation Workers at
+Evaluate safe decomposition during design before choosing parallel execution.
+Use at most two implementation Workers at
 once, with disjoint ownership and frozen shared interfaces. Integrate the
 current batch before dispatching the next; use one Worker when dependencies
 prevent parallelism. Workers return compact results and evidence locators, not
 complete transcripts. After two no-progress repair attempts, return the failed
-assertion, diff, and rejected hypotheses for GPT-6 diagnosis; Luna implements
-the resulting repair. Do not add recursive delegation or routine GPT-6 polling.
+assertion, diff, and rejected hypotheses for controller diagnosis and a revised
+repair plan. Do not add recursive delegation or routine controller polling.
 
 Read [orchestration.md](references/orchestration.md) before delegating a worker,
 before dispatching an independent reviewer, when the person approves the
@@ -231,13 +253,33 @@ Report any affected historical tasks before implementation.
 
 ## Implement and verify
 
+Before product edits, create executable acceptance tests for the approved
+criteria. Reuse the finalization manifest's `uat.batches`; every executable batch
+declares `testFiles` containing assertions, adapters and fixtures. Commands print
+structured per-criterion outcomes. Read [fast-finalization.md](references/fast-finalization.md)
+for the result format. `begin`, `advance`, and `approve-solution --begin` run
+preflight, smoke checks and the acceptance baseline. An assertion failure records
+missing behavior; an all-passing baseline records existing satisfied behavior.
+Startup, environment, timeout, missing coverage and invalid results block entry.
+Baseline outcomes never count as formal acceptance passes. `--manifest PATH`
+selects a task-specific plan and remains bound through resume and delivery.
+
+Keep the test files, commands, preflight contract and environment profile frozen.
+Resume, delegation, readiness and finalization reject drift. A necessary test
+correction reopens the solution and rebuilds the baseline after approval.
+Existing deliveryVersion 1–3 tasks retain their previous flow. Manual-only tasks
+record `manual_only` and still require explicit human judgment.
+
 Use existing architecture and conventions. Establish affected baselines, run
 automatic preflight, implement the smallest complete change, add
 risk-proportionate coverage, and review the actual diff/call paths.
-Luna executes checks; GPT-6 judges the final diff against approved acceptance,
-key call paths, actual evidence, and unresolved risks. A Worker summary alone
-is not proof. Read linked source/evidence when needed rather than loading full
-logs by default. Report only blocking findings, evidence gaps, and residual
+Deterministic commands and authorized executors perform checks; dynamic browser
+acceptance follows the executor preference above. The controller judges the final
+diff, approved criteria, key call paths, actual evidence, and unresolved risks.
+A Worker summary alone is not proof. Read relevant evidence rather than full
+logs, and do not repeat verified operations merely to have the controller perform
+them. Repeat checks only for changed inputs, failure, missing evidence, or a
+concrete unresolved concern. Report blocking findings, evidence gaps, and residual
 risks. Technical acceptance is not a substitute for human authorization or UAT.
 
 Check order:
@@ -280,7 +322,7 @@ debugging a manifest, preflight, evidence mapping, or history override.
 
 For Web work, read
 [browser-verification.md](references/browser-verification.md). Stable journeys
-use zero-model commands; dynamic journeys use a bounded Luna/low browser
+use zero-model commands; dynamic journeys use a bounded browser
 executor; subjective visual conclusions remain human.
 
 ## Quick budget
@@ -301,8 +343,9 @@ targeted batch read, one assessed `new`, both cards written together, one
 `finalize --fast` — about six working turns. This is an optimization budget,
 not a correctness cap. Exceed it only for a concrete risk or failed hypothesis.
 Do not add unrelated foundational reading, repeated equivalent searches,
-extra scouts/reviewers, or reference files the CLI already validates. A bounded
-implementation Worker is part of this budget, not an extra research phase.
+extra scouts/reviewers, or reference files the CLI already validates. Inline
+implementation is the default; a controller-selected Worker keeps the same
+bounded scope and verification obligations.
 
 ## Repair and handoff
 

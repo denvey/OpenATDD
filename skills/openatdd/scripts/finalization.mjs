@@ -22,6 +22,7 @@ import {
 import {
   fingerprintProject,
   loadFinalizationManifest,
+  matchesGlob,
   resolveCommand,
   validateFinalizationManifest,
 } from "./manifest.mjs";
@@ -39,6 +40,7 @@ import {
   assertContractIntegrity,
   evidenceBoundary,
   loadTask,
+  inventoryChanges,
   projectFiles,
   readinessErrorsForState,
   renderTaskNotification,
@@ -49,6 +51,7 @@ import {
   validateHandoff,
   validateUatPlan,
 } from "./workflow.mjs";
+import { acceptanceTestContract, acceptanceCommandOutcome, assertBatchOutcomeCoverage, assertAcceptanceBaseline } from "./acceptance-baseline.mjs";
 
 function json(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
@@ -101,6 +104,7 @@ async function executeCommand(root, commandInput, credentials, outputPath, metri
   let timedOut = false;
   let overflow = false;
   let timer;
+  let killTimer;
   const exitCode = await new Promise((resolve, reject) => {
     const child = spawn(command.argv[0], command.argv.slice(1), {
       cwd: command.cwd,
@@ -108,11 +112,15 @@ async function executeCommand(root, commandInput, credentials, outputPath, metri
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
     });
+    const stop = () => {
+      child.kill("SIGTERM");
+      killTimer ??= setTimeout(() => child.kill("SIGKILL"), 1000);
+    };
     const append = (current, chunk) => {
       const next = Buffer.concat([current, chunk]);
       if (next.length > maximum) {
         overflow = true;
-        child.kill("SIGTERM");
+        stop();
         return next.subarray(0, maximum);
       }
       return next;
@@ -123,9 +131,9 @@ async function executeCommand(root, commandInput, credentials, outputPath, metri
     child.on("close", resolve);
     timer = setTimeout(() => {
       timedOut = true;
-      child.kill("SIGTERM");
+      stop();
     }, command.timeoutMs);
-  }).finally(() => clearTimeout(timer));
+  }).finally(() => { clearTimeout(timer); clearTimeout(killTimer); });
   const endedAt = isoNow(clock);
   const durationMs = Math.max(0, Date.now() - start);
   metrics.commandInvocations += 1;
@@ -395,8 +403,15 @@ async function loadContext(root, taskId, input) {
 async function inspectFinalization(root, taskId, input = {}) {
   const loaded = await loadTask(root, taskId);
   await assertContractIntegrity(loaded.files, loaded.state);
-  const manifestInfo = await loadFinalizationManifest(root, taskId, input.manifest);
+  const manifestInfo = await loadFinalizationManifest(root, taskId, input.manifest ?? loaded.state.acceptanceBaseline?.manifestPath);
+  if (loaded.state.deliveryVersion >= 4 && loaded.state.phase !== PHASES.CONTRACT_APPROVED) {
+    await assertAcceptanceBaseline(root, loaded.state, manifestInfo);
+  }
   const validation = validateFinalizationManifest(manifestInfo.manifest, loaded.state.acceptance.items);
+  if (loaded.state.deliveryVersion >= 4 && validation.valid) {
+    try { await acceptanceTestContract(root, manifestInfo.manifest, loaded.state.acceptance.items); }
+    catch (error) { validation.errors.push(error.message); validation.valid = false; }
+  }
   return { loaded, manifestInfo, validation };
 }
 
@@ -416,6 +431,73 @@ export async function validateFinalizationPlan(root, taskId, input = {}) {
       reason: manifestInfo.manifest.preflight?.reason ?? null,
     },
   };
+}
+
+export async function runAcceptanceBaseline(root, taskId, input = {}, clock = () => new Date()) {
+  const { loaded, manifestInfo, validation } = await inspectFinalization(root, taskId, input);
+  const { state, files } = loaded;
+  assert(state.phase === PHASES.CONTRACT_APPROVED, "INVALID_PHASE", "Acceptance baseline must run after approval and before implementation.");
+  assert(validation.valid, "INVALID_FINALIZATION_MANIFEST", "Acceptance manifest is invalid.", { errors: validation.errors });
+  const contract = await acceptanceTestContract(root, manifestInfo.manifest, state.acceptance.items);
+  const before = await fingerprintProject(root, { include: ["**/*"] });
+  const allowed = new Set([
+    ...contract.files.map((file) => file.path),
+    manifestInfo.relativePath,
+    `.openatdd/environments/${manifestInfo.manifest.environment}.yaml`,
+  ]);
+  const changes = inventoryChanges(state.implementationBaseline?.files ?? state.creationBaseline?.files ?? [], before.files);
+  const premature = changes.filter((file) => !allowed.has(file));
+  assert(premature.length === 0, "IMPLEMENTATION_BEFORE_BASELINE", "Product files changed before the executable acceptance baseline.", { errors: premature });
+  const profileInfo = await profileDigest(root, manifestInfo.manifest.environment);
+  const credentials = manifestInfo.manifest.preflight?.scope === "project"
+    ? await loadScanOnlyCredentials(root, profileInfo.profile.credential_variables)
+    : await loadLocalCredentials(root, profileInfo.profile.credential_variables);
+  const recordedAt = isoNow(clock);
+  const directory = path.join(files.evidence, "acceptance-baseline", `${Date.now()}-${process.pid}`);
+  await mkdir(directory, { recursive: true });
+  const metrics = initialMetrics("baseline", clock);
+  beginMetricsPhase(metrics, "preflight");
+  const assertions = await executePreflightCommands(root, manifestInfo.manifest, credentials, directory, metrics, clock);
+  const preflight = await runEnvironmentPreflight(root, manifestInfo.manifest.environment, {
+    assertions: mergePreflightAssertions(input.assertions, assertions), persist: false,
+    notBefore: recordedAt, scope: manifestInfo.manifest.preflight?.scope, reason: manifestInfo.manifest.preflight?.reason,
+  }, clock);
+  assert(preflight.result.status === "passed", "PREFLIGHT_FAILED", "Acceptance baseline environment preflight failed.", { errors: preflight.result.checks.filter((check) => check.status === "failed").map((check) => `${check.name}: ${check.detail}`) });
+  for (const command of manifestInfo.manifest.dryRun.commands) {
+    await executeCommand(root, command, credentials, path.join(directory, `smoke-${command.id}.md`), metrics, clock);
+  }
+  beginMetricsPhase(metrics, "acceptance-baseline");
+  const results = [];
+  const evidencePaths = [];
+  for (const batch of manifestInfo.manifest.uat.batches) {
+    if (batch.runner === "internal") continue;
+    const outcomes = [];
+    for (const command of batch.commands) {
+      const result = await executeCommand(root, { ...command, expectedExitCodes: [0, 1] }, credentials, path.join(directory, `${batch.id}-${command.id}.md`), metrics, clock);
+      outcomes.push(...acceptanceCommandOutcome(result, batch, { baseline: true }));
+      evidencePaths.push(result.evidencePath);
+    }
+    assertBatchOutcomeCoverage(batch, outcomes);
+    results.push(...outcomes.map((outcome) => ({ batchId: batch.id, ...outcome })));
+  }
+  // Manual-only tasks still record an explicit, non-passing baseline fact.
+  const recordPath = path.join(directory, "result.json");
+  const baseline = {
+    recordedAt, manifestPath: manifestInfo.relativePath,
+    acceptanceSha256: state.acceptance.sha256, solutionSha256: state.solution.sha256,
+    contractDigest: contract.digest, testFiles: contract.files,
+    batchIds: contract.batchIds, sourceFingerprint: before.fingerprint,
+    outcome: results.some((item) => item.status === "failed") ? "missing_behavior" : results.length ? "already_satisfied" : "manual_only",
+    results,
+  };
+  await atomicWrite(recordPath, json(baseline));
+  evidencePaths.push(artifactLocator(root, recordPath));
+  baseline.evidence = await capturePaths(root, evidencePaths, recordedAt, clock);
+  await assertAcceptanceBaseline(root, { ...state, acceptanceBaseline: baseline });
+  const after = await fingerprintProject(root, { include: ["**/*"] });
+  const mutations = inventoryChanges(before.files, after.files).filter((file) => !(manifestInfo.manifest.source.exclude ?? []).some((pattern) => matchesGlob(file, pattern)));
+  assert(mutations.length === 0, "SOURCE_CHANGED_DURING_BASELINE", "The acceptance baseline runner changed project source.", { errors: mutations });
+  return baseline;
 }
 
 async function finalizationUnchanged(root, taskId, input = {}) {
@@ -871,6 +953,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
   metrics.browserRoundTrips = plan.estimatedRoundTrips;
   for (const batch of manifestInfo.manifest.uat.batches) {
     const paths = [];
+    const outcomes = [];
     if (batch.runner === "internal") {
       const target = path.join(runDirectory, `batch-${batch.id}-internal.md`);
       await atomicWrite(target, `# Manual UAT handoff: ${batch.name}\n\nNo automatic UAT journey was executed for this batch.\n\nCovered acceptance: ${batch.acceptanceIds.join(", ")}\nSource fingerprint: ${inventory.fingerprint}\nRequired outcome: a person must judge the approved journey.\n`);
@@ -880,9 +963,11 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
     } else {
       for (const command of batch.commands) {
         const result = await executeCommand(root, command, credentials, path.join(runDirectory, `batch-${batch.id}-${command.id}.md`), metrics, clock);
+        if (state.deliveryVersion >= 4) outcomes.push(...acceptanceCommandOutcome(result, batch));
         paths.push(result.evidencePath);
       }
     }
+    if (state.deliveryVersion >= 4 && batch.runner !== "internal") assertBatchOutcomeCoverage(batch, outcomes);
     const evidence = await capturePaths(root, paths, boundary, clock);
     referenceEvidence.set(`batch:${batch.id}`, evidence);
     const status = batch.runner === "internal" ? "manual" : "passed";
@@ -895,6 +980,7 @@ export async function finalizeTask(root, taskId, input = {}, clock = () => new D
       evidence,
       verifiedAt: isoNow(clock),
       epoch: draft.verification.epoch,
+      ...(state.deliveryVersion >= 4 ? { acceptanceContractDigest: state.acceptanceBaseline.contractDigest, outcomes } : {}),
     };
     metrics.uatBatchRuns += 1;
   }

@@ -236,7 +236,7 @@ test("browser plans use cohesive batches, warn on round-trip budgets, and isolat
   const planned = await prepareUatPlan(root, "browser-batches");
   assert.equal(planned.plan.batches.length, 3);
   assert.equal(planned.plan.execution.mode, "browser-low");
-  assert.equal(planned.plan.execution.model, "gpt-5.6-luna");
+  assert.equal(planned.plan.execution.model, null);
   assert.equal(planned.plan.execution.reuseSession, true);
   assert.equal(planned.plan.execution.screenshotPolicy, "checkpoint-or-failure");
   assert.equal(new Set(planned.plan.batches.flatMap((batch) => batch.steps.map((step) => step.acceptanceId))).size, 7);

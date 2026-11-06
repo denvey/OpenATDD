@@ -85,11 +85,11 @@ Usage:
   openatdd review-solution TASK --status passed|failed --reviewer main|independent --summary TEXT
                   --check all [--agent-id AGENT-001] [--fallback-reason TEXT]
   openatdd review-fallback TASK --status approved|denied --rationale TEXT --human-confirmed
-  openatdd approve-solution TASK [--begin] [--parallel]
+  openatdd approve-solution TASK [--begin] [--parallel] [--manifest PATH] [--assertions FILE]
   openatdd reopen-acceptance TASK --reason TEXT
   openatdd reopen-solution TASK --reason TEXT
-  openatdd begin TASK
-  openatdd advance TASK [--summary TEXT] [--finding TEXT]
+  openatdd begin TASK [--manifest PATH] [--assertions FILE]
+  openatdd advance TASK [--summary TEXT] [--finding TEXT] [--manifest PATH] [--assertions FILE]
   openatdd resume TASK
   openatdd validate-finalization TASK [--manifest PATH] [--json]
   openatdd finalize TASK --fast [--manifest PATH] [--assertions FILE]
@@ -292,6 +292,7 @@ async function execute(parsed, io) {
       const { state } = await loadTask(root, taskId(positionals));
       const policy = modelPolicyForRouting(state.routing, {
         concerns: asArray(options.concern).map((value) => required(value, "--concern")),
+        execution: state.execution,
       });
       outputJson(io, policy);
       return 0;
@@ -378,7 +379,10 @@ async function execute(parsed, io) {
         parallel: options.parallel === true,
         source: options.source,
       });
-      const begun = options.begin === true ? await beginImplementation(root, taskId(positionals)) : null;
+      const begun = options.begin === true ? await beginImplementation(root, taskId(positionals), {
+        manifest: options.manifest,
+        assertions: options.assertions ? await readJsonInput(root, options.assertions, "--assertions") : undefined,
+      }) : null;
       const payload = {
         ...summarizeState((begun ?? result).state),
         warnings: result.warnings,
@@ -417,7 +421,10 @@ async function execute(parsed, io) {
       return 0;
     }
     case "begin": {
-      const result = await beginImplementation(root, taskId(positionals));
+      const result = await beginImplementation(root, taskId(positionals), {
+        manifest: options.manifest,
+        assertions: options.assertions ? await readJsonInput(root, options.assertions, "--assertions") : undefined,
+      });
       if (json) outputJson(io, summarizeState(result.state));
       else io.stdout.write(`Implementation started: ${result.state.taskId}\n`);
       return 0;
@@ -426,6 +433,8 @@ async function execute(parsed, io) {
       const result = await advanceQuickTask(root, taskId(positionals), {
         summary: options.summary === undefined ? undefined : String(options.summary),
         findings: options.finding,
+        manifest: options.manifest,
+        assertions: options.assertions ? await readJsonInput(root, options.assertions, "--assertions") : undefined,
       });
       const payload = {
         ...summarizeState(result.state),

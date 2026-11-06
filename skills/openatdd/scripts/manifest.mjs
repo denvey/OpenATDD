@@ -9,6 +9,7 @@ import {
   normalizeImpactPath,
   pathExists,
   readJson,
+  resolveArtifactPath,
   resolveInside,
   sha256,
   toPosix,
@@ -258,7 +259,7 @@ export async function loadFinalizationManifest(root, taskId, candidate = undefin
   const taskManifest = path.join(gitPrivateRoot(projectRoot), "tasks", taskId, "finalization.manifest.json");
   const projectManifest = path.join(projectRoot, ".openatdd", "finalization.json");
   const manifestPath = candidate
-    ? resolveInside(root, candidate).resolved
+    ? (String(candidate).startsWith("git:") ? resolveArtifactPath(root, candidate) : resolveInside(root, candidate).resolved)
     : await pathExists(taskManifest)
       ? taskManifest
       : projectManifest;

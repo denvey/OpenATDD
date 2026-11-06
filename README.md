@@ -15,17 +15,28 @@ requirement
   -> only unresolved human decisions (recommendation + 2-3 choices)
   -> Quick: compact acceptance + solution -> autonomous approval
   -> Standard / Deep: acceptance approval -> solution approval
+  -> executable acceptance tests -> real baseline -> freeze test contract
   -> focused implementation -> non-formal rehearsal -> repair
   -> source freeze -> checks + approved journey + history once
   -> DELIVERED -> no reply unless an objection reopens repair
 ```
 
-Design and technical acceptance use GPT-6 Astra; implementation and ordinary
-repairs use GPT-5.6 Luna/max. Quick/Standard design uses medium, Deep design
-uses high. Acceptance uses medium unless sensitive risk overlays or explicit
-concerns require high. At most two isolated implementation Workers are allocated
-before integration. These are configurable-host policy requirements, not claims
-of measured quota savings or automatic model switching by the CLI.
+The controller uses the model and reasoning setting selected in the current
+conversation for design and final technical acceptance; it is not fixed to Astra.
+For authorized delegation, prefer Sol / xhigh for engineering and Terra 6.1 /
+xhigh for UI, visual work, copy, documentation, and dynamic browser acceptance.
+Explicit user choices take precedence. Check support in the selected host tool,
+use a suitable available executor if needed, and report substitutions once.
+Stable browser journeys, API assertions, and regression checks use deterministic
+commands. Keep small work inline and use the fewest executors that can deliver;
+at most two isolated implementation Workers are allocated before integration.
+These are advisory preferences, not measured speed claims or automatic runtime
+switching. The [Skill](skills/openatdd/SKILL.md#route-effort-overlay-risk) defines
+the executor preferences and the controller's unchanged authority.
+Invoke `$openatdd` with the requirement alone. The Skill directs the controller to
+choose direct execution or useful subagent delegation within host permissions;
+no extra "allow delegation" phrase is required by OpenATDD. Explicit user limits
+and stricter host authorization requirements still apply.
 
 Standard and Deep have two routine confirmations. Quick preserves the same
 contract order and hashes but does not pause when no blocking human decision
@@ -111,8 +122,15 @@ start — into one `advance` invocation; every persisted gate keeps its own
 validation, and a blocking or authorization decision still stops the chain.
 Standard and Deep keep the two human confirmations and combine the
 post-confirmation approval with `approve-solution --begin`. That begin step
-derives one bounded Worker plan from approved impact paths and manifest checks,
-or records a concrete controller-sequential reason. A single Worker still uses
+defaults to inline implementation in the controller session, without generating
+a Worker plan. New tasks require a manifest with executable acceptance tests;
+`begin` runs a real baseline before product edits. Assertion failures record
+missing behavior; all-passing tests record behavior already satisfied. Execution
+faults block entry. Tests, commands and the environment profile stay frozen,
+and delivery must pass the same tests. Existing version 1–3 tasks retain their
+previous flow. Controller-selected delegation uses
+`plan-execution`; an explicit parallel directive requests that plan before any
+dispatch. Existing Worker plans are preserved, and a single Worker still uses
 an isolated worktree. Within `finalize --fast`, exact deterministic Quick
 rehearsal evidence may satisfy the one broad group without spawning the same
 command again; the real approved journey and affected-history pass still run.
@@ -123,7 +141,18 @@ the report and enters `DELIVERED`. Granular `preflight`, `check`, `record`,
 `batch`, `handoff`, and `ready` commands remain available for debugging and
 projects that have not adopted the manifest yet.
 
+New tasks cannot use granular `record`, `batch` or `ready` commands to bypass the
+acceptance baseline or the passing execution of its frozen test contract. Use
+`--manifest PATH` with `begin`, `advance`, or `approve-solution --begin` for an
+alternate task plan. See the [acceptance result format](skills/openatdd/references/fast-finalization.md#acceptance-baseline)
+for `uat.batches[].testFiles` and structured runner output.
+
 ### Optional parallel Standard/Deep execution
+
+The controller may select a bounded Worker plan when useful and host-permitted,
+without asking for an extra delegation approval. The parallel directive below is
+an optional user preference to maximize safe parallelism, not a prerequisite for
+such a plan. A generic Skill invocation does not create that directive.
 
 At solution approval, natural language such as “批准方案，并行执行” maps to
 the one-time command `openatdd approve-solution TASK --begin --parallel` for
@@ -154,7 +183,8 @@ capability check
 The core exposes a host-neutral contract; it does not directly call Codex
 proprietary APIs. The Codex App adapter must prove unique thread, worktree,
 branch, and base identities and fail closed when any capability or identity is
-missing, duplicated, shared, or mismatched. Workers are Luna/max leaves with
+missing, duplicated, shared, or mismatched. Workers use supported executor
+preferences and remain leaves with
 `forkTurns:none` and `canSpawnAgents=false`; each receives an exact prompt,
 ownership, `writeScope`, `doNotTouch`, verification, evidence, base, and
 candidate-fingerprint contract.
@@ -171,7 +201,7 @@ openatdd orchestration-cleanup TASK --json
 not erase passed siblings. Stale baselines, candidate drift, scope violations,
 missing verification/evidence, or integration conflicts cannot pass; the
 controller preserves independent results and returns the affected work to the
-GPT-6 controller for diagnosis and replanning, then Luna implementation. A session result
+controller for diagnosis and replanning. A session result
 is never `DELIVERED` by itself. Quick also supports bounded Workers. All lanes
 dispatch every returned Worker action through an isolated worktree, even when
 there is only one task; hosts without proven session/worktree capabilities fail
@@ -202,7 +232,7 @@ OpenATDD records one deterministic lane from repository-derived facts:
 
 - **Quick** — local, established, and low uncertainty. Small bugs normally stay
   here, even when they touch sensitive code or require guarded operations. Work
-  stays local with compact autonomous approvals and one bounded Luna/max Worker;
+  stays local with compact autonomous approvals and inline implementation;
   no routine confirmation, scout, or external research wait.
 - **Standard** — ordinary cross-module or moderately uncertain work. Local
   discovery is normal and an independent review is optional.
@@ -292,9 +322,10 @@ context persists by default for recovery and scoped verification. Source
 digests cause stale context to rebuild instead of silently drifting.
 
 Discovery/research subagent task labels resolve to one read-only scout profile:
-`gpt-5.6-luna/low` with no inherited conversation history. Independent searches
+an available suitable model with host reasoning settings and no inherited
+conversation history. Independent searches
 run in parallel; the main Agent waits for their compressed evidence, then owns
-all decisions, contracts, integration, and final validation; Luna Workers own
+all decisions, contracts, integration, and final validation; delegated Workers own
 bounded code changes. Dispatch records preserve the
 selected profile, isolation settings, available token counts, and duration.
 
@@ -536,26 +567,29 @@ source and verification time.
 OpenATDD optimizes the order without weakening the final journey:
 
 1. focused checks while code changes;
-2. module checks after repairs close;
-3. one non-formal rehearsal against real entry points;
-4. one broad satisfaction after the complete source fingerprint freezes (Quick
-   may reuse exact deterministic rehearsal evidence for that same boundary);
-5. one complete approved journey and affected-history pass in the current
-   clean verification epoch.
+2. once source is ready, stop manually running manifest-owned module, broad, or
+   journey commands and run `finalize --fast` once;
+3. that invocation owns the rehearsal, required checks, one complete approved
+   journey, and affected-history pass. Reuse only evidence accepted by the
+   finalizer for the same candidate and verification boundary; required coverage
+   and clean-epoch rules remain enforced.
 
 For browser work, `openatdd plan-uat <task>` groups setup/login, the primary
 journey, and final readback/evidence into a few cohesive batches. The agent
 reuses the session and captures DOM/screenshots at checkpoints or failure.
 Round-trip and discovery budgets produce warnings, not quality failures.
 
-Browser execution is cost-routed. Stable command-backed journeys use
-`--execution-mode deterministic` and no model. Dynamic pages use
-`--execution-mode browser-low`: a clean-context `gpt-5.6-luna`/low executor
-receives only approved steps and assertions, reuses one session, and escalates
-failure or uncertainty to the main model. Subjective visual conclusions use
-`--execution-mode human` and remain as manual UAT steps in the delivery report. A lower model
-reduces price, while batching, scoped DOM facts, and checkpoint-only screenshots
-reduce Token.
+Browser execution minimizes total journey latency. Stable command-backed journeys
+use `--execution-mode deterministic` and no model. Dynamic pages use
+`--execution-mode browser-low` with the supported Terra 6.1 / xhigh preference;
+the mode name does not require low reasoning. A clean-context executor receives
+approved steps, assertions, and environment details, reuses one browser session,
+and escalates failure or uncertainty to the controller. API assertions stay in
+command adapters; browser-only permissions are unchanged. The controller reads
+coverage and evidence rather than repeating successful operations. Subjective
+visual conclusions use `--execution-mode human`. Batching, scoped DOM facts, and
+checkpoint-only screenshots reduce interaction overhead; existing stage timings
+measure total delivery latency without adding mandatory model benchmarks.
 
 Successful formal finalization updates the top of the single requirement file
 in Reviewer decision order: status and merge recommendation, conclusion, human
@@ -606,7 +640,7 @@ npm run check
 OpenATDD does not integrate with or require OpenSpec, Spec Kit, Superpowers,
 Trellis, or another workflow framework. It does not mandate TDD, Gherkin,
 a particular architecture, or production deployment. Its bundled model policy
-uses GPT-6 for design/acceptance and isolated Luna Workers for implementation.
+keeps host model/reasoning settings and scales review by complexity and risk.
 The core is host-adapted; it does not invoke a provider or create sessions itself.
 Quick and single-Worker delivery remain first-class.
 It governs outcomes and evidence while leaving implementation choices to the
@@ -625,29 +659,32 @@ evals/                        deterministic and real-agent scenarios, rubrics, r
 
 中文定位：**OpenATDD 是面向 AI 编程的开源验收驱动交付框架。描述需求；Quick 直接交付，Standard / Deep 确认验收与方案，其余交给 AI。**
 
-Design controller selection is deterministic:
-Quick and Standard use `gpt-6-astra/medium`; Deep uses `gpt-6-astra/high`. The
-Codex host must explicitly apply the routed controller and prove the actual
-runtime; a mismatch blocks the run instead of silently falling back.
-The controller remains workspace-write for contracts and integration, not routine
-product implementation. Scouts and reviewers remain read-only.
-Agent roles are selected separately from the controller. Luna/low handles
+The controller retains the user's current conversation model and reasoning
+setting in every lane, including final technical acceptance. Delegated executor
+preferences do not switch the controller. Different or unknown model
+identity and reasoning effort do not block the workflow. The controller
+implements and repairs approved product code inline, alongside contracts and
+integration. Scouts and delegated reviewers remain read-only.
+Agent roles are selected separately from the controller. A suitable available model handles
 read-only discovery and research. Independent solution review uses a fresh
-GPT-6 context matching the design effort. Technical acceptance is separate:
-GPT-6/medium by default, high for sensitive risk overlays or explicit concerns.
+context with host reasoning settings. Technical acceptance is separate:
+sensitive risk overlays or explicit concerns select a critical review profile.
 `status --json` includes `modelPolicy`; `model-policy TASK --concern "reason"`
-returns a high acceptance profile without changing design or task complexity.
-The host must actually select and prove the profile. The command does not switch
+returns a critical acceptance profile without changing design or task complexity.
+These profiles are advisory. The command does not switch
 models, execute reviews, or mark criteria passed. An `acceptance-review` dispatch
-validates the host's read-only runtime attestation, not the acceptance verdict.
-Only an approved structured execution plan can delegate
-writes: bounded and complex implementation both use Luna/max. Work that cannot
-be safely bounded, or that returns failed, blocked, or materially ambiguous,
-returns to GPT-6 for diagnosis and decomposition, then Luna for implementation.
+validates the host's read-only permissions, fresh context, and leaf capability,
+not the acceptance verdict. Runtime metadata records actual model/effort when
+available and leaves unknown values null.
+Only an approved structured execution plan can delegate writes. Bounded and complex
+implementation both follow supported executor preferences. Work that cannot be
+safely bounded, or that returns failed, blocked, or materially ambiguous,
+returns to the controller for diagnosis and decomposition.
 After two no-progress repairs, Workers return the failed assertion, diff, and
-rejected hypotheses. Direct GPT-6 implementation requires user authorization;
-`controller-sequential` is retained as a compatibility label for diagnosis and
-replanning, not automatic authorization to spend GPT-6 quota on coding.
+rejected hypotheses. Inline implementation uses the approved solution without
+a separate model-specific authorization. Existing `controller-sequential`
+states and delegated plans retain their diagnostics and verification obligations;
+changing execution strategy must not discard active Worker sessions.
 Workers are leaf Agents
 (`canSpawnAgents=false`) and cannot change acceptance, solution, authorization,
 scheduling, or the final verdict. PASS requires actual in-scope changed paths,
@@ -657,10 +694,9 @@ Workers both require isolated worktrees so actual path ownership remains
 provable; only a real parallel batch requires the frozen shared-interface
 contract.
 
-When `begin` returns Worker actions—or parallel execution is
-explicitly requested during solution approval—the Codex App host adapter must
+When an explicit Worker plan returns host actions, the Codex App host adapter must
 create one authorized isolated execution session per scheduled subtask,
-send the exact contract, wait/read all results, and let the GPT-6 controller
+send the exact contract, wait/read all results, and let the controller
 serially record and integrate them. Unique thread/worktree/branch/base identity,
 capability attestation, stale-baseline checks, and failure-closed behavior are
 mandatory. Partial failures and `needs_input` remain visible for controller
