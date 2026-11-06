@@ -4,13 +4,13 @@ import { execFile } from "node:child_process";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
+import { createLegacyTask as createTask } from "./helpers.mjs";
 import {
   advanceQuickTask,
   approveAcceptance,
   assessTask,
   beginImplementation,
   beginPreUat,
-  createTask,
   draftSolution,
   initProject,
   isDeliveryTerminalPhase,
@@ -58,7 +58,7 @@ test("project initialization creates and preserves one compact project truth fil
 test("enforces acceptance approval before solution and solution approval before implementation", async (t) => {
   const root = await temporaryProject(t);
   const criteria = [criterion("AC-01")];
-  const { createTask, approveSolution } = await import("../skills/openatdd/scripts/workflow.mjs");
+  const { approveSolution } = await import("../skills/openatdd/scripts/workflow.mjs");
   await createTask(root, "gate-order", "Deliver a gated feature", clock("2020-01-01T00:00:00.000Z"));
   await assessTask(root, "gate-order", {
     scope: "local",

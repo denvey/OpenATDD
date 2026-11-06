@@ -46,7 +46,7 @@ test("orchestration docs describe the one-time parallel directive and adapter co
     "needs_input",
     "stale",
     "conflict",
-    "GPT-6/high",
+    "Model routing is advisory",
     "Quick",
     "single-session",
     "fail closed",
@@ -56,7 +56,7 @@ test("orchestration docs describe the one-time parallel directive and adapter co
 
   assert.match(orchestration, /The controller is the sole contract, task-state, session-event, integration, and\nverdict writer/);
   assert.match(skill, /Read \[orchestration\.md\]\(references\/orchestration\.md\) before delegating a worker/);
-  assert.match(skill, /`begin` derives a conservative structured execution plan/);
+  assert.match(skill, /`begin` defaults to inline implementation/);
   assert.match(skill, /Every writable Worker, including a\nsingle Worker, uses its own isolated worktree/);
   assert.match(skill, /stop manually running manifest-owned `module`, `broad`, or UAT commands/);
   assert.match(governance, /A pre-dispatch\n`model_identity` or `permission` failure is permanent/);

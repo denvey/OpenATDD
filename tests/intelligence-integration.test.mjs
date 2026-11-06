@@ -4,12 +4,12 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
+import { createLegacyTask as createTask } from "./helpers.mjs";
 import {
   approveAcceptance,
   approveSolution,
   assessTask,
   beginImplementation,
-  createTask,
   draftSolution,
   INDEPENDENT_REVIEW_BUDGETS,
   INDEPENDENT_REVIEW_MAX_ATTEMPTS,
@@ -245,7 +245,7 @@ test("acceptance dispatch binds runtime, concerns and candidate without granting
   await assert.rejects(() => recordAgentDispatch(root, taskId, input),
     (error) => error.code === "RUNTIME_ATTESTATION_REQUIRED");
   await assert.rejects(() => recordAgentDispatch(root, taskId, {
-    ...input, runtimeAttestation: { ...reviewRuntime(), model: "gpt-5.6-luna" },
+    ...input, runtimeAttestation: { ...reviewRuntime(), sandbox: "workspace-write" },
   }));
   await assert.rejects(() => recordAgentDispatch(root, taskId, {
     ...input, status: "passed", runtimeAttestation: reviewRuntime(),
@@ -271,7 +271,7 @@ test("acceptance dispatch binds runtime, concerns and candidate without granting
   }), (error) => error.code === "ACCEPTANCE_REVIEW_STALE");
 });
 
-test("CLI acceptance dispatch uses medium by default and explicit concerns select high", async (t) => {
+test("CLI acceptance dispatch keeps host effort settings and explicit concerns select critical review", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "acceptance-cli";
   await prepareApprovedTask(root, taskId);
@@ -279,8 +279,9 @@ test("CLI acceptance dispatch uses medium by default and explicit concerns selec
   await run(root, "agent-dispatch", taskId, "--role", "acceptance-review", "--status", "planned", "--id", "DEFAULT");
   await run(root, "agent-dispatch", taskId, "--role", "acceptance-review", "--status", "planned", "--id", "CONCERN", "--concern", "Race condition");
   const { state } = await loadTask(root, taskId);
-  assert.equal(state.agents.dispatches.find((item) => item.id === "DEFAULT").reasoningEffort, "medium");
-  assert.equal(state.agents.dispatches.find((item) => item.id === "CONCERN").reasoningEffort, "high");
+  assert.equal(state.agents.dispatches.find((item) => item.id === "DEFAULT").reasoningEffort, null);
+  assert.equal(state.agents.dispatches.find((item) => item.id === "CONCERN").reasoningEffort, null);
+  assert.equal(state.agents.dispatches.find((item) => item.id === "CONCERN").profile, "critical-review");
 });
 
 async function reviewReadyTask(root, taskId, assessment = {}) {
@@ -679,7 +680,7 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     () => recordAgentDispatch(root, "resume-context", {
       role: "independent-review",
       status: "passed",
-      model: "gpt-5.6-luna",
+      sandbox: "workspace-write",
     }),
     (error) => error.code === "AGENT_PROFILE_MISMATCH",
   );
@@ -690,7 +691,7 @@ test("resume and repair automatically restore the scoped context boundary", asyn
       verified: true,
       source: "test-host",
       profile: "astra-review",
-      model: "gpt-6-astra",
+      model: "gpt-6.1-sol",
       reasoningEffort: "medium",
       forkTurns: "none",
       sandbox: "read-only",
@@ -702,7 +703,7 @@ test("resume and repair automatically restore the scoped context boundary", asyn
     outputTokens: 10,
     durationMs: 250,
   });
-  assert.equal(reviewed.dispatch.model, "gpt-6-astra");
+  assert.equal(reviewed.dispatch.model, "gpt-6.1-sol");
   assert.equal(reviewed.dispatch.reasoningEffort, "medium");
   assert.equal(reviewed.dispatch.durationMs, 250);
 
@@ -731,7 +732,7 @@ test("legacy delivery tasks can still record their historical execution role", a
     status: "passed",
   });
   assert.equal(recorded.dispatch.profile, "clean-context-execution");
-  assert.equal(recorded.dispatch.model, "gpt-5.6-terra");
+  assert.equal(recorded.dispatch.model, null);
   assert.equal(recorded.dispatch.sandbox, "workspace-write");
 });
 
@@ -754,14 +755,14 @@ test("schema v3 routing state receives additive controller, Agent policy, and ex
   await writeFile(files.state, `${JSON.stringify(persisted, null, 2)}\n`);
 
   const loaded = (await loadTask(root, "routing-defaults")).state;
-  assert.equal(loaded.routing.controller.profile, "astra-controller");
-  assert.equal(loaded.routing.controller.model, "gpt-6-astra");
-  assert.equal(loaded.routing.controller.reasoningEffort, "medium");
+  assert.equal(loaded.routing.controller.profile, "controller");
+  assert.equal(loaded.routing.controller.model, null);
+  assert.equal(loaded.routing.controller.reasoningEffort, null);
   assert.deepEqual(loaded.routing.agents.roles, ["independent-review", "acceptance-review", "bounded-implementation", "complex-implementation"]);
   assert.deepEqual(loaded.execution, { planStatus: "not_planned", plannedAt: null, plan: null, results: {}, fallbackReason: null, nextActions: [] });
 });
 
-test("complex implementation requires Luna max and returns failures for Astra diagnosis", async (t) => {
+test("complex implementation accepts available models and enforces leaf permissions", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "complex-luna-worker";
   await prepareApprovedTask(root, taskId, {
@@ -809,7 +810,7 @@ test("complex implementation requires Luna max and returns failures for Astra di
         forkTurns: "none",
         sandbox: "workspace-write",
         leaf: true,
-        canSpawnAgents: false,
+        canSpawnAgents: true,
       },
     }),
     (error) => error.code === "RUNTIME_PROFILE_MISMATCH",
@@ -822,18 +823,18 @@ test("complex implementation requires Luna max and returns failures for Astra di
     runtimeAttestation: {
       verified: true,
       source: "test-host",
-      profile: "luna-max-complex-worker",
-      model: "gpt-5.6-luna",
-      reasoningEffort: "max",
+      profile: "host-worker",
+      model: "gpt-6.1-sol",
+      reasoningEffort: "high",
       forkTurns: "none",
       sandbox: "workspace-write",
       leaf: true,
       canSpawnAgents: false,
     },
   });
-  assert.equal(running.dispatch.model, "gpt-5.6-luna");
-  assert.equal(running.dispatch.reasoningEffort, "max");
-  assert.equal(running.dispatch.escalation, "astra-design-diagnosis");
+  assert.equal(running.dispatch.model, "gpt-6.1-sol");
+  assert.equal(running.dispatch.reasoningEffort, "high");
+  assert.equal(running.dispatch.escalation, "controller-diagnosis");
 });
 
 test("planned workers prove runtime identity, actual scoped changes, verification, evidence, and current candidate", async (t) => {
@@ -906,6 +907,11 @@ test("planned workers prove runtime identity, actual scoped changes, verificatio
 test("real CLI forwards 1.0 routing, decision, review, agent, repair, graph, context, and eval options", async (t) => {
   const root = await temporaryProject(t);
   await run(root, "new", "cli-intelligence", "--requirement", "Deliver a governed export flow");
+  // This compatibility journey covers the persisted v3 CLI contract.
+  const legacyFiles = taskFiles(root, "cli-intelligence");
+  const legacyState = JSON.parse(await readFile(legacyFiles.state, "utf8"));
+  legacyState.deliveryVersion = 3;
+  await writeFile(legacyFiles.state, JSON.stringify(legacyState));
   await run(
     root,
     "assess",

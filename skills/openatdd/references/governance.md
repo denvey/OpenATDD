@@ -38,7 +38,7 @@ blocking decision before acceptance approval.
 
 ## Investigation and Agents
 
-- Quick: compact local work with one bounded Luna/max Worker; no routine scouts
+- Quick: compact local work implemented inline; no routine scouts
   or external research.
 - Standard: local discovery and optional independent read-only review when it
   materially reduces risk.
@@ -46,16 +46,20 @@ blocking decision before acceptance approval.
   independent solution review. Record unavailable research rather than silently
   treating Deep as Standard.
 
-Design routing is explicit: Quick/Standard use GPT-6/medium, Deep uses
-GPT-6/high. Acceptance uses medium by default, high for sensitive risk overlays
-or explicit evidence/correctness concerns; complexity alone does not raise it.
-The controller remains workspace-write for contracts and final
-integration; read-only applies to scouts and independent reviewers.
-Discovery and external research use Luna/low, read-only; independent review uses
-a fresh GPT-6 context at the lane's design effort. Give every role a
-bounded context and record a host runtime attestation matching model, reasoning
-effort, sandbox, `forkTurns:none`, and leaf capability. Parent runtime overrides
-remain authoritative, so an unverifiable or mismatched runtime fails closed.
+Model routing is advisory and host-dependent. Keep the controller on the model
+and reasoning setting the user selected for the current conversation. Complexity,
+risk, and executor preferences do not switch that runtime. Authorized delegates
+follow the kernel's executor preferences when the selected host tool supports
+them; user choices take precedence and substitutions are reported once.
+The controller remains workspace-write for approved implementation, repairs,
+contracts, and final integration; read-only applies to scouts and reviewers.
+Discovery and external research may favor a suitable low-cost model,
+read-only; independent review uses a fresh context with host reasoning settings.
+Give every role a
+bounded context. A delegated runtime must prove its sandbox, `forkTurns:none`,
+and leaf capability. Record actual model/effort when available; a mismatch or
+unknown value does not block dispatch. Parent runtime restrictions remain
+authoritative; unavailable permissions or isolation fail closed.
 
 Independent review is bounded by machine state, not only prose. A pre-dispatch
 `model_identity` or `permission` failure is permanent for the selected
@@ -76,14 +80,15 @@ After solution approval, the controller in any lane may persist a structured
 Git-private execution plan. If the person explicitly approves with language such
 as “批准方案，并行执行”, the host records the one-time
 `approve-solution TASK --begin --parallel` directive against only the current
-solution SHA; it is not configuration. Without that request the controller may
-still choose a safe batch when the contract permits it. With it, the controller
+solution SHA; it is not configuration or a prerequisite for delegation. Inline
+execution is the default; the controller chooses a Worker plan when useful and
+host-permitted, without an extra workflow approval. With it, the controller
 maximizes only safe parallelism from approved `stage`, `dependsOn`, `writeScope`,
 `doNotTouch`, and verification contracts. Dependencies, authorization,
 ownership, isolation, and verification gates always win; a plan with fewer than
 two safe tasks remains serial and is explained before dispatch.
 
-Route both bounded and complex work to Luna/max only when it is unambiguous,
+Use an authorized suitable executor for Workers when work is unambiguous,
 scope-owned, and independently verifiable. Workers receive an exact prompt,
 ownership, `writeScope`/`doNotTouch`, verification, evidence, base, and
 fingerprint contract. They are leaves with `forkTurns:none` and
@@ -92,10 +97,11 @@ scheduling, shared state, integration, or final verdicts. Their PASS must match
 actual in-scope changed paths, every planned verification command, fresh
 evidence, and the current candidate fingerprint. Lifecycle `completed` is never
 a PASS. Work that cannot be safely bounded, or a worker result that is failed,
-blocked, or materially ambiguous, returns to GPT-6 for diagnosis and replanning,
-then Luna for implementation; there is no silent model fallback. After two
+blocked, or materially ambiguous, returns to the controller for diagnosis and replanning,
+and a revised implementation plan. After two
 no-progress repairs, the Worker returns the failing assertion, relevant diff,
-and rejected hypotheses. Direct GPT-6 implementation needs user authorization.
+and rejected hypotheses. Inline implementation requires the approved contract,
+without a separate model-specific authorization.
 
 The controller is the sole contract/state/session-event/integration/verdict
 writer. The adapter maps authorized isolated-session creation, messaging,
@@ -129,11 +135,12 @@ result does not erase passed siblings, but blocks affected dependents and final
 integration until the controller replans. Stale baselines, changed candidate
 fingerprints, out-of-scope paths, missing verification/evidence, and merge
 conflicts are not PASS; preserve the other verified results, mark the affected
-session for conflict/replan, and return to GPT-6 for diagnosis. This
+session for conflict/replan, and return to the controller for diagnosis. This
 release permits one running writable Worker per worktree and at most two
 allocated implementation Workers until the current batch is integrated. `begin`
-derives one bounded Worker plan when approved scope and manifest checks permit
-it; the host must execute the returned create/send/wait/read actions. Single and
+defaults to inline implementation and preserves explicit Worker plans. Parallel
+approval requests a safe plan before dispatch; the host then executes its
+returned create/send/wait/read actions. Single and
 parallel writable Workers both require isolated worktrees so scope attribution
 remains provable, while the frozen shared-interface contract is required only
 for a real parallel batch. Quick permits bounded delegation, and orchestration
@@ -144,11 +151,11 @@ controller must revalidate exact path, Git common-dir, immutable identity, and
 all residual content before ordinary `git worktree remove`. Never use `--force`;
 retain and report ignored, unknown, foreign, drifted, or failed candidates.
 
-Scouts explore or verify; GPT-6 owns contracts, scheduling, integration, final
+Scouts explore or verify; the controller owns contracts, scheduling, integration, final
 validation, and the verdict.
 
 For dynamic Web verification only, follow `browser-verification.md`: a
-browser-only Luna/low executor may perform approved steps without code writes.
+browser-only executor may perform approved steps without code writes.
 
 ## Knowledge, graph, and context
 

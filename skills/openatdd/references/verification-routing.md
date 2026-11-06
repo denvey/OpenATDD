@@ -6,14 +6,24 @@ direct local path, Standard adds cross-module boundaries, and Deep adds
 independent and risk-specific verification. Load the `verification` view from
 the task's scoped context; do not reuse implementation assumptions as proof.
 
-Luna and deterministic commands execute verification. GPT-6 performs technical
-acceptance using the final diff, approved criteria, relevant call paths, and
-actual evidence. Resolve its profile from `model-policy`: medium by default,
-high for sensitive risk overlays or a concrete `--concern`. A high-effort design
-does not require high-effort acceptance. The host applies this policy; the CLI
-does not invoke a model or treat a profile selection as an acceptance verdict.
-An `acceptance-review` Agent dispatch can record and validate the actual profile
-in a fresh read-only context. Its lifecycle is not a formal evidence pass.
+Deterministic commands execute stable browser journeys, API assertions, and
+regression checks. An authorized browser executor performs dynamic visual journeys
+using `browser-verification.md` and the kernel's executor preference. The controller
+keeps the user's current conversation model and reasoning setting for technical
+acceptance using the final diff, approved criteria, relevant call paths, and actual
+evidence. Resolve its role profile from `model-policy`; sensitive risk overlays or
+a concrete `--concern` select critical review without switching that runtime.
+The CLI does not invoke a model or treat a profile selection as an acceptance verdict.
+An `acceptance-review` Agent dispatch records available runtime metadata and
+validates fresh read-only isolation. Its lifecycle is not a formal evidence pass.
+
+The controller verifies coverage and reads the relevant evidence, concentrating
+on failures, contradictions, gaps, and material risks. Do not rerun a passing
+operation simply because another executor performed it, or add a second reviewer
+without a requirement or concrete concern. Respect frozen-candidate, environment,
+contract, and epoch checks; implementation self-tests do not replace formal
+acceptance. UI and API observations should refer to the same approved scenario
+and candidate, with explicit assertions rather than duplicated manual checks.
 
 | Surface | Primary verifier | Typical evidence |
 |---|---|---|
@@ -58,13 +68,13 @@ evidence must be recaptured in the new verification epoch.
 ## Efficient check order
 
 - `focused`: affected tests during implementation and each small repair;
-- `module`: the relevant subsystem after repairs close;
-- rehearsal: `openatdd finalize <task> --dry-run` against real entry points,
-  without formal evidence or historical reruns;
-- `broad`: the full risk-proportionate suite once inside formal finalization
-  after the complete source fingerprint is frozen;
-- approved journey: one complete command-backed journey in the same formal operation;
-- history: one affected-history pass after current acceptance succeeds.
+- once source is ready, stop manually running manifest-owned module, broad, or
+  journey commands; one `openatdd finalize <task> --fast` owns the rehearsal,
+  required checks, complete approved journey, and affected-history pass;
+- reuse only evidence the finalizer accepts for the same frozen candidate,
+  verification contract, environment, and epoch; never skip required coverage;
+- use separate `--dry-run` or formal invocations only for expected failures or
+  narrow diagnosis, not as routine additional passes.
 
 ## Multi-session verification and integration
 
@@ -84,7 +94,7 @@ OpenATDD.
 
 Keep partial outcomes explicit. `failed`, `blocked`, and `needs_input` sessions
 retain their diagnostics and do not erase passed siblings; affected dependents
-remain pending and GPT-6 diagnoses/replans before Luna implements the repair.
+remain pending until the controller diagnoses/replans the affected work.
 A stale base, candidate drift, duplicate or missing thread/worktree/branch/base
 identity, out-of-scope change, missing verification/evidence, or integration
 conflict fails closed and cannot be recorded as PASS. Preserve independent

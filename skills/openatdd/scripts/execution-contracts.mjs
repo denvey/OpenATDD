@@ -205,16 +205,19 @@ export function deriveDefaultExecutionPlan(input = {}) {
 export function validateRuntimeAttestation(expected, input) {
   assert(isRecord(input), "RUNTIME_ATTESTATION_REQUIRED", "A host runtime attestation is required.");
   assert(input.verified === true, "RUNTIME_ATTESTATION_UNVERIFIED", "The host must verify the actual Agent runtime.");
-  for (const key of ["profile", "model", "reasoningEffort", "forkTurns", "sandbox", "leaf", "canSpawnAgents"]) {
-    assert(input[key] === expected[key], "RUNTIME_PROFILE_MISMATCH", `Runtime attestation ${key} does not match the authoritative profile.`);
+  for (const key of ["forkTurns", "sandbox", "leaf", "canSpawnAgents"]) {
+    assert(input[key] === expected[key], "RUNTIME_PROFILE_MISMATCH", `Runtime attestation ${key} does not match the required permissions and isolation.`);
+  }
+  for (const key of ["profile", "model", "reasoningEffort"]) {
+    assert(input[key] === undefined || input[key] === null || nonEmpty(input[key]), "INVALID_RUNTIME_METADATA", `Runtime ${key} must be a non-empty string when provided.`);
   }
   assert(nonEmpty(input.source), "RUNTIME_ATTESTATION_SOURCE_REQUIRED", "Runtime attestation needs a source.");
   return {
     verified: true,
     source: input.source.trim(),
-    profile: input.profile,
-    model: input.model,
-    reasoningEffort: input.reasoningEffort,
+    profile: input.profile?.trim() ?? null,
+    model: input.model?.trim() ?? null,
+    reasoningEffort: input.reasoningEffort?.trim() ?? null,
     forkTurns: input.forkTurns,
     sandbox: input.sandbox,
     leaf: input.leaf,

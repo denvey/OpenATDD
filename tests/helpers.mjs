@@ -133,7 +133,8 @@ export async function prepareApprovedTask(root, taskId, options = {}) {
   const createdAt = options.createdAt ?? "2020-01-01T00:00:00.000Z";
   const acceptanceAt = options.acceptanceAt ?? "2020-01-01T00:01:00.000Z";
   const solutionAt = options.solutionAt ?? "2020-01-01T00:02:00.000Z";
-  await createTask(root, taskId, options.requirement ?? `Deliver ${taskId}`, clock(createdAt));
+  const create = options.legacy === false ? createTask : createLegacyTask;
+  await create(root, taskId, options.requirement ?? `Deliver ${taskId}`, clock(createdAt));
   await assessTask(root, taskId, options.assessment ?? {
     scope: "local",
     projectPattern: "established",
@@ -152,6 +153,14 @@ export async function prepareApprovedTask(root, taskId, options = {}) {
   }, clock(solutionAt));
   const approved = await approveSolution(root, taskId, clock(solutionAt));
   return { ...approved, criteria };
+}
+
+// Existing fixtures exercise persisted v3 tasks; new ATDD cases use legacy:false.
+export async function createLegacyTask(root, taskId, requirement, now) {
+  const created = await createTask(root, taskId, requirement, now);
+  created.state.deliveryVersion = 3;
+  await writeFile(created.files.state, `${JSON.stringify(created.state, null, 2)}\n`);
+  return created;
 }
 
 export async function writeEvidence(root, taskId, name, content = name) {

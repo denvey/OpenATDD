@@ -8,9 +8,10 @@ description: Review read-only against approved contracts and repository standard
 Review is a read-only intent, not a fourth Quick/Standard/Deep lane. Prefer
 OpenATDD artifacts as the specification; do not create a task merely to review.
 
-Use GPT-6/medium; high for sensitive risks or concrete correctness concerns.
-`openatdd model-policy TASK --json [--concern "reason"]` resolves policy, not a
-runtime switch. The host verifies the runtime; Luna/max implements repairs.
+Keep the model and reasoning setting the user selected for the current
+conversation, including sensitive reviews. `openatdd model-policy TASK
+--json [--concern "reason"]` returns policy without switching runtime. Verify
+read-only isolation for delegated review; implement approved repairs inline.
 
 ## 1. Freeze the review boundary
 
@@ -18,7 +19,7 @@ runtime switch. The host verifies the runtime; Luna/max implements repairs.
 - Use the requested boundary. For branches/PRs, review the merge-base diff; include
   staged, unstaged, and relevant untracked files.
 - Report invalid refs or an empty diff honestly.
-- Read enough changed code, callers, tests, and invariants to prove behavior.
+- Read changed code, callers, tests, and invariants to prove behavior.
 
 ## 2. Resolve specification and standards
 
@@ -38,10 +39,10 @@ Read applicable repository and module rules; they override generic preferences.
 **Spec:** trace missing requirements, contradicted behavior, and unrequested
 scope to the approved contract.
 
-**Correctness:** inspect introduced logic, boundary/error behavior, call-path
-regressions, authorization and data effects, compatibility, material
-performance/concurrency risks, and whether tests observe the changed behavior.
-Run only proportionate non-mutating checks. Do not run formatters, fix modes,
+**Correctness:** inspect logic, boundary/error behavior, call-path regressions,
+authorization, data effects, compatibility, performance/concurrency risks, and
+whether tests observe changes. Run proportionate non-mutating checks.
+Do not run formatters, fix modes,
 dependency installation, generators, or commands likely to rewrite the tree.
 Do not report formatting, import order, or lint findings that tooling owns.
 Read actual evidence, not Worker summaries. Repeat passing checks only for new

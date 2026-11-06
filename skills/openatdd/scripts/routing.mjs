@@ -43,7 +43,7 @@ export const AUTHORIZATION_OVERLAYS = Object.freeze([
 
 export const AGENT_POLICIES = Object.freeze({
   [LANES.QUICK]: Object.freeze({
-    policy: "bounded",
+    policy: "optional",
     roles: Object.freeze(["bounded-implementation", "acceptance-review"]),
   }),
   [LANES.STANDARD]: Object.freeze({
@@ -70,23 +70,23 @@ export const AGENT_POLICIES = Object.freeze({
 
 export const CONTROLLER_PROFILES = Object.freeze({
   [LANES.QUICK]: Object.freeze({
-    profile: "astra-controller",
-    model: "gpt-6-astra",
-    reasoningEffort: "medium",
+    profile: "controller",
+    model: null,
+    reasoningEffort: null,
     forkTurns: "none",
     sandbox: "workspace-write",
   }),
   [LANES.STANDARD]: Object.freeze({
-    profile: "astra-controller",
-    model: "gpt-6-astra",
-    reasoningEffort: "medium",
+    profile: "controller",
+    model: null,
+    reasoningEffort: null,
     forkTurns: "none",
     sandbox: "workspace-write",
   }),
   [LANES.DEEP]: Object.freeze({
-    profile: "astra-critical-controller",
-    model: "gpt-6-astra",
-    reasoningEffort: "high",
+    profile: "critical-controller",
+    model: null,
+    reasoningEffort: null,
     forkTurns: "none",
     sandbox: "workspace-write",
   }),
@@ -239,12 +239,14 @@ export function modelPolicyForRouting(routing, options = {}) {
     "INVALID_REVIEW_CONCERNS", "Review concerns must contain non-empty reasons.");
   return {
     design,
-    implementation: profileForDispatch({ role: lane === LANES.DEEP ? "complex-implementation" : "bounded-implementation", lane }),
+    implementation: options.execution?.plan
+      ? { ...profileForDispatch({ role: lane === LANES.DEEP ? "complex-implementation" : "bounded-implementation", lane }), mode: "worker" }
+      : { ...controllerProfileForLane(LANES.STANDARD), mode: "inline" },
     acceptance: acceptanceReviewProfile({ riskSignals: routing.riskOverlays ?? routing.assessment?.riskSignals ?? [], concerns }),
     concerns,
     maxImplementationWorkers: MAX_IMPLEMENTATION_WORKERS,
     stalledRepairLimit: 2,
-    hostSelectionRequired: true,
+    hostSelectionRequired: false,
   };
 }
 
@@ -333,10 +335,10 @@ export function validateRouting(routing) {
   }
 
   if (!isRecord(routing.controller)) {
-    errors.push("controller must contain the authoritative controller profile.");
+    errors.push("controller must contain the recommended controller profile.");
   } else if (LANE_VALUES.has(routing.lane)) {
     const expected = CONTROLLER_PROFILES[routing.lane];
-    for (const key of ["profile", "model", "reasoningEffort", "forkTurns", "sandbox"]) {
+    for (const key of ["forkTurns", "sandbox"]) {
       if (routing.controller[key] !== expected[key]) errors.push(`Controller ${key} does not match the routing lane.`);
     }
   }

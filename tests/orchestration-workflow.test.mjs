@@ -4,6 +4,7 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import test from "node:test";
+import { createLegacyTask as createTask } from "./helpers.mjs";
 
 import {
   approveAcceptance,
@@ -12,7 +13,6 @@ import {
   assessTask,
   beginImplementation,
   cleanupOrchestrationWorktrees,
-  createTask,
   draftSolution,
   integrateOrchestration,
   loadTask,
@@ -25,7 +25,9 @@ import {
   validateTask,
 } from "../skills/openatdd/scripts/workflow.mjs";
 import { replaceRequirementSection } from "../skills/openatdd/scripts/contracts.mjs";
-import { resolveArtifactPath } from "../skills/openatdd/scripts/lib.mjs";
+import { deriveDefaultExecutionPlan } from "../skills/openatdd/scripts/execution-contracts.mjs";
+import { resolveArtifactPath, sha256 } from "../skills/openatdd/scripts/lib.mjs";
+import { canonicalJson } from "../skills/openatdd/scripts/manifest.mjs";
 import {
   acceptanceMarkdown,
   criterion,
@@ -59,7 +61,9 @@ async function prepareParallelTask(root, taskId, options = {}) {
     checks: "all",
   }, clock("2026-01-01T00:00:04.000Z"));
   await approveSolution(root, taskId, { parallel: true }, clock("2026-01-01T00:00:05.000Z"));
-  await beginImplementation(root, taskId, clock("2026-01-01T00:00:06.000Z"));
+  const begun = await beginImplementation(root, taskId, clock("2026-01-01T00:00:06.000Z"));
+  assert.equal(begun.state.execution.planStatus, "not_planned");
+  assert.deepEqual(begun.state.execution.nextActions, ["plan-execution"]);
   const contractFile = "tests/orchestration-shared-contract.test.mjs";
   if (options.includeContract !== false) {
     await mkdir(path.join(root, "tests"), { recursive: true });
@@ -195,7 +199,7 @@ test("parallel approval is solution-bound and orchestration-start returns host a
   assert(send.prompt.doNotTouch.includes("tests/orchestration-shared-contract.test.mjs"));
 });
 
-test("Standard begin derives a default plan and dispatches one isolated Worker without a parallel directive", async (t) => {
+test("Standard begin defaults inline and an explicit plan still dispatches one isolated Worker", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "default-single-worker";
   const criteria = [criterion("AC-01")];
@@ -222,11 +226,19 @@ test("Standard begin derives a default plan and dispatches one isolated Worker w
   const begunPayload = JSON.parse(begunCli.stdout);
   const begun = (await loadTask(root, taskId)).state;
 
-  assert.equal(begunPayload.execution.planStatus, "planned");
-  assert.equal(begun.execution.planStatus, "planned");
-  assert.equal(begun.execution.plan.tasks.length, 1);
-  assert.deepEqual(begun.execution.nextActions, ["dispatch-worker"]);
+  assert.equal(begunPayload.execution.planStatus, "inline");
+  assert.equal(begun.execution.planStatus, "inline");
+  assert.equal(begun.execution.plan, null);
+  assert.deepEqual(begun.execution.nextActions, ["implement-inline"]);
   assert.equal(begun.execution.directive, null);
+  const { plan } = deriveDefaultExecutionPlan({
+    acceptanceIds: ["AC-01"], impactPaths: ["src/one"], lane: "standard",
+    requirement: "Deliver one bounded change", verification: ["node --check src/one/index.mjs"],
+  });
+  const planned = await planExecution(root, taskId, plan);
+  const resumed = await beginImplementation(root, taskId);
+  assert.deepEqual(resumed.state.execution.plan, plan);
+  assert.deepEqual(resumed.state.execution.nextActions, ["dispatch-worker"]);
 
   const capabilitiesInput = path.join(root, "single-worker-capabilities.json");
   await writeFile(capabilitiesInput, `${JSON.stringify({ capabilities, controller }, null, 2)}\n`);
@@ -237,7 +249,7 @@ test("Standard begin derives a default plan and dispatches one isolated Worker w
   assert.equal(started.orchestration.contract, null);
   assert.deepEqual(started.actions.map((item) => item.type), ["create", "send", "wait", "read"]);
   assert.equal(started.actions.find((item) => item.type === "send").prompt.sharedContract, null);
-  const plannedVerification = begun.execution.plan.tasks[0].verification[0];
+  const plannedVerification = planned.state.execution.plan.tasks[0].verification[0];
 
   const worktree = path.join(root, "single-worker");
   await mkdir(path.join(worktree, "src", "one"), { recursive: true });
@@ -296,7 +308,7 @@ test("Standard begin derives a default plan and dispatches one isolated Worker w
   assert(invalid.errors.some((item) => item.includes("Execution ST-001") && item.includes("changed after it was recorded")));
 });
 
-test("Quick autonomous approval delegates bounded code to Luna and exposes a read-only model policy", async (t) => {
+test("Quick autonomous approval implements inline and exposes advisory model recommendations", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "quick-luna";
   const criteria = [criterion("AC-01")];
@@ -307,23 +319,23 @@ test("Quick autonomous approval delegates bounded code to Luna and exposes a rea
   await writeDefaultWorkerManifest(root);
   const advanced = await advanceQuickTask(root, taskId, { summary: "Reuse the local pattern" });
   assert.equal(advanced.state.phase, "IMPLEMENTING");
-  assert.equal(advanced.state.execution.planStatus, "planned");
+  assert.equal(advanced.state.execution.planStatus, "inline");
   const before = await readFile(taskFiles(root, taskId).state, "utf8");
   const run = (...args) => execFileAsync(process.execPath, [cli, ...args, "--root", root]);
   const policy = JSON.parse((await run("model-policy", taskId, "--json")).stdout);
-  assert.equal(policy.design.reasoningEffort, "medium");
-  assert.equal(policy.implementation.model, "gpt-5.6-luna");
-  assert.equal(policy.implementation.reasoningEffort, "max");
-  assert.equal(policy.acceptance.reasoningEffort, "medium");
+  assert.equal(policy.design.reasoningEffort, null);
+  assert.equal(policy.implementation.mode, "inline");
+  assert.equal(policy.implementation.model, null);
+  assert.equal(policy.implementation.reasoningEffort, null);
+  assert.equal(policy.hostSelectionRequired, false);
+  assert.equal(policy.acceptance.reasoningEffort, null);
   const concerned = JSON.parse((await run("model-policy", taskId, "--concern", "Lost update risk", "--json")).stdout);
-  assert.equal(concerned.acceptance.reasoningEffort, "high");
-  assert.equal(concerned.design.reasoningEffort, "medium");
+  assert.equal(concerned.acceptance.reasoningEffort, null);
+  assert.equal(concerned.acceptance.profile, "critical-review");
+  assert.equal(concerned.design.reasoningEffort, null);
   assert.equal(await readFile(taskFiles(root, taskId).state, "utf8"), before);
-  const started = await orchestrationStart(root, taskId, { capabilities, controller });
-  assert.equal(started.actions.filter((action) => action.type === "create").length, 1);
-  assert.equal(started.actions[0].profile.model, "gpt-5.6-luna");
-  assert.equal(started.actions[0].profile.reasoningEffort, "max");
-  assert.deepEqual(started.actions[0].prompt.acceptanceIds, ["AC-01"]);
+  await assert.rejects(() => orchestrationStart(root, taskId, { capabilities, controller }),
+    (error) => error.code === "EXECUTION_PLAN_REQUIRED");
 });
 
 test("three independent Workers run as two then one and later stages wait for integration", async (t) => {
@@ -367,7 +379,7 @@ test("three independent Workers run as two then one and later stages wait for in
   assert.equal(current.orchestration.aggregate.integrated, 4);
 });
 
-test("default Worker commands preserve argv literally when rendered for the host shell", async (t) => {
+test("inline begin does not rewrite manifest verification argv into shell commands", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "default-worker-shell-quoting";
   const criteria = [criterion("AC-01")];
@@ -391,28 +403,24 @@ test("default Worker commands preserve argv literally when rendered for the host
   await approveSolution(root, taskId);
   const cwd = "verification dir's";
   await mkdir(path.join(root, cwd), { recursive: true });
-  await writeDefaultWorkerManifest(root, {
-    cwd,
-    argv: [
-      process.execPath,
-      "-e",
-      "process.stdout.write(process.argv.slice(1).join('|'))",
-      "$HOME",
-      "`printf injected`",
-      "it's literal",
-    ],
-  });
+  const argv = [
+    process.execPath,
+    "-e",
+    "process.stdout.write(process.argv.slice(1).join('|'))",
+    "$HOME",
+    "`printf injected`",
+    "it's literal",
+  ];
+  await writeDefaultWorkerManifest(root, { cwd, argv });
 
   const begun = await beginImplementation(root, taskId);
-  const verification = begun.state.execution.plan.tasks[0].verification[0];
-  const executed = await execFileAsync("/bin/sh", ["-c", verification], {
-    cwd: root,
-    env: { ...process.env, HOME: "expanded-home" },
-  });
-  assert.equal(executed.stdout, "$HOME|`printf injected`|it's literal");
+  assert.equal(begun.state.execution.planStatus, "inline");
+  assert.equal(begun.state.execution.plan, null);
+  const manifest = JSON.parse(await readFile(path.join(root, ".openatdd", "finalization.json"), "utf8"));
+  assert.deepEqual(manifest.checks[0].commands[0].argv, argv);
 });
 
-test("Standard begin records a stable controller-sequential reason when verification routing is unavailable", async (t) => {
+test("legacy Standard begin implements inline without requiring a verification manifest", async (t) => {
   const root = await temporaryProject(t);
   const taskId = "default-worker-fallback";
   const criteria = [criterion("AC-01")];
@@ -436,10 +444,13 @@ test("Standard begin records a stable controller-sequential reason when verifica
   await approveSolution(root, taskId);
 
   const begun = await beginImplementation(root, taskId);
-  assert.equal(begun.state.execution.planStatus, "controller-sequential");
-  assert.equal(begun.state.execution.fallbackReason.code, "verification-unavailable");
-  assert.deepEqual(begun.state.execution.nextActions, ["controller-sequential"]);
-  assert(begun.state.execution.fallbackReason.details.some((item) => item.includes("FINALIZATION_MANIFEST_NOT_FOUND")));
+  assert.equal(begun.state.execution.planStatus, "inline");
+  assert.equal(begun.state.execution.fallbackReason, null);
+  assert.deepEqual(begun.state.execution.nextActions, ["implement-inline"]);
+  await approveSolution(root, taskId, { parallel: true });
+  const resumed = await beginImplementation(root, taskId);
+  assert.equal(resumed.state.execution.planStatus, "not_planned");
+  assert.deepEqual(resumed.state.execution.nextActions, ["plan-execution"]);
 });
 
 test("parallel planning fails before dispatch without a frozen shared contract", async (t) => {
@@ -486,6 +497,26 @@ test("an already implementing task can persist the previously explicit parallel 
     () => approveSolution(root, "parallel-late-directive", {}, clock("2026-01-01T00:00:10.000Z")),
     (error) => error.code === "SOLUTION_ALREADY_IMPLEMENTING",
   );
+});
+
+test("loading a legacy bound session preserves its recorded routing authority", async (t) => {
+  const root = await temporaryProject(t);
+  const taskId = "legacy-session-authority";
+  await prepareParallelTask(root, taskId);
+  const { state, files } = await loadTask(root, taskId);
+  state.routing.controller = { design: { model: "historical-model", reasoningEffort: "historical-effort" } };
+  state.routing.agents = { historical: true };
+  const digest = (value) => sha256(canonicalJson({
+    acceptance: value.acceptance, solution: value.solution, decisions: value.decisions,
+    routing: value.routing, review: value.reviews?.solution ?? null,
+    executionPlan: value.execution?.plan ?? null, directive: value.execution?.directive ?? null,
+  }));
+  const authority = digest(state);
+  state.execution.orchestration.sessions["session-historical"] = { authorityFingerprint: authority };
+  await writeFile(files.state, JSON.stringify(state));
+  const loaded = await loadTask(root, taskId);
+  assert.deepEqual(loaded.state.routing, state.routing);
+  assert.equal(digest(loaded.state), authority);
 });
 
 test("orchestration-start fails closed when the host cannot prove isolated capabilities", async (t) => {

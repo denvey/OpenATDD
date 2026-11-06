@@ -73,13 +73,13 @@ test("routing classifies a local established low-risk task as quick", () => {
   assert.equal(routing.lane, "quick");
   assert.equal(routing.investigation.externalResearch, false);
   assert.deepEqual(routing.controller, {
-    profile: "astra-controller",
-    model: "gpt-6-astra",
-    reasoningEffort: "medium",
+    profile: "controller",
+    model: null,
+    reasoningEffort: null,
     forkTurns: "none",
     sandbox: "workspace-write",
   });
-  assert.deepEqual(routing.agents, { policy: "bounded", roles: ["bounded-implementation", "acceptance-review"] });
+  assert.deepEqual(routing.agents, { policy: "optional", roles: ["bounded-implementation", "acceptance-review"] });
   assert.deepEqual(routing.interaction, { approvals: "autonomous", contract: "compact" });
   assert.equal(validateRouting(routing).valid, true);
 });
@@ -103,8 +103,8 @@ test("routing classifies ordinary cross-module work as standard", () => {
   assert.equal(routing.lane, "standard");
   assert.equal(routing.investigation.externalResearch, false);
   assert.deepEqual(routing.agents, { policy: "optional", roles: ["independent-review", "acceptance-review", "bounded-implementation", "complex-implementation"] });
-  assert.equal(routing.controller.profile, "astra-controller");
-  assert.equal(routing.controller.reasoningEffort, "medium");
+  assert.equal(routing.controller.profile, "controller");
+  assert.equal(routing.controller.reasoningEffort, null);
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.reasons.includes("cross-module-scope"));
 });
@@ -113,8 +113,8 @@ test("routing classifies novel cross-cutting work as deep", () => {
   const routing = classifyTask(assessment({ scope: "cross-module", projectPattern: "none" }));
   assert.equal(routing.lane, "deep");
   assert.equal(routing.investigation.externalResearch, true);
-  assert.equal(routing.controller.profile, "astra-critical-controller");
-  assert.equal(routing.controller.reasoningEffort, "high");
+  assert.equal(routing.controller.profile, "critical-controller");
+  assert.equal(routing.controller.reasoningEffort, null);
   assert.equal(routing.agents.policy, "parallel");
   assert.deepEqual(routing.interaction, { approvals: "human", contract: "full" });
   assert(routing.agents.roles.includes("external-research"));
@@ -178,32 +178,32 @@ test("routing overlay validation is additive for persisted schema-v1 tasks", () 
 test("Agent roles resolve to deterministic lane-aware model and authority profiles", () => {
   for (const role of ["local-discovery", "external-research"]) {
     const profile = profileForDispatch({ role });
-    assert.equal(profile.profile, "luna-low-scout");
-    assert.equal(profile.model, "gpt-5.6-luna");
-    assert.equal(profile.reasoningEffort, "low");
+    assert.equal(profile.profile, "read-only-scout");
+    assert.equal(profile.model, null);
+    assert.equal(profile.reasoningEffort, null);
     assert.equal(profile.sandbox, "read-only");
     assert.equal(profile.writable, false);
     assert.equal(profile.canSpawnAgents, false);
   }
   const standardReview = profileForDispatch({ role: "independent-review", lane: "standard" });
-  assert.equal(standardReview.profile, "astra-review");
-  assert.equal(standardReview.reasoningEffort, "medium");
+  assert.equal(standardReview.profile, "review");
+  assert.equal(standardReview.reasoningEffort, null);
   const deepReview = profileForDispatch({ role: "independent-review", lane: "deep" });
-  assert.equal(deepReview.profile, "astra-critical-review");
-  assert.equal(deepReview.reasoningEffort, "high");
+  assert.equal(deepReview.profile, "critical-review");
+  assert.equal(deepReview.reasoningEffort, null);
   const bounded = profileForDispatch({ role: "bounded-implementation", lane: "standard" });
-  assert.equal(bounded.model, "gpt-5.6-luna");
-  assert.equal(bounded.reasoningEffort, "max");
+  assert.equal(bounded.model, null);
+  assert.equal(bounded.reasoningEffort, null);
   assert.equal(bounded.sandbox, "workspace-write");
   assert.equal(bounded.authority, "approved-subtask-only");
-  assert.equal(bounded.escalation, "astra-design-diagnosis");
+  assert.equal(bounded.escalation, "controller-diagnosis");
   const complex = profileForDispatch({ role: "complex-implementation", lane: "deep" });
-  assert.equal(complex.profile, "luna-max-complex-worker");
-  assert.equal(complex.model, "gpt-5.6-luna");
-  assert.equal(complex.reasoningEffort, "max");
+  assert.equal(complex.profile, "complex-implementation-worker");
+  assert.equal(complex.model, null);
+  assert.equal(complex.reasoningEffort, null);
   assert.equal(complex.leaf, true);
   assert.equal(complex.canSpawnAgents, false);
-  assert.equal(complex.escalation, "astra-design-diagnosis");
+  assert.equal(complex.escalation, "controller-diagnosis");
   assert.throws(
     () => profileForDispatch({ role: "clean-context-execution" }),
     (error) => error.code === "UNKNOWN_AGENT_ROLE",
@@ -211,48 +211,59 @@ test("Agent roles resolve to deterministic lane-aware model and authority profil
   assert.deepEqual(profileForDispatch({ role: "clean-context-execution", deliveryVersion: 2 }), {
     role: "clean-context-execution",
     profile: "clean-context-execution",
-    model: "gpt-5.6-terra",
-    reasoningEffort: "medium",
+    model: null,
+    reasoningEffort: null,
     forkTurns: "none",
     sandbox: "workspace-write",
     escalation: null,
   });
 });
 
-test("routing documentation exposes explicit tiers without claiming unmeasured quality or cost gains", async () => {
+test("routing guidance preserves the selected controller and recommends supported executors without unmeasured gains", async () => {
   const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
   const skill = await readFile(new URL("../skills/openatdd/SKILL.md", import.meta.url), "utf8");
   const governance = await readFile(new URL("../skills/openatdd/references/governance.md", import.meta.url), "utf8");
   const docs = `${readme}\n${skill}\n${governance}`;
-  assert.match(docs, /Quick and Standard use `gpt-6-astra\/medium`/);
-  assert.match(docs, /Deep uses `gpt-6-astra\/high`/);
-  assert.match(docs, /complex.*Luna\/max/is);
+  assert.match(readme, /controller retains the user's current conversation model and reasoning\s+setting in every lane/);
+  assert.match(skill, /Do not switch it for a lane, risk,\s+parallel batch, or role preference/);
+  assert.match(skill, /Sol \/ xhigh/);
+  assert.match(skill, /Terra 6\.1 \/ xhigh/);
+  assert.match(skill, /selected host tool supports that model and effort/);
+  assert.match(skill, /use host-permitted subagents for bounded work when delegation improves total\s+delivery time/);
+  assert.match(skill, /users need not append a separate delegation phrase/);
+  assert.match(skill, /does\s+not override a host that requires explicit user authorization for delegation/);
+  assert.doesNotMatch(docs, /only when delegation is explicitly requested|only for explicitly requested delegation/);
   assert.doesNotMatch(docs, /complex(?:\/cross-module| or ambiguous)? implementation uses Terra\/high/i);
   assert.match(readme, /not a claimed cost or quality win until a real\s+project evaluation demonstrates it/);
 });
 
-test("design effort follows complexity while acceptance effort follows risk and concrete concerns", () => {
+test("role profiles follow complexity and risk without prescribing model-specific effort levels", () => {
   const ordinary = modelPolicyForRouting(classifyTask(assessment()));
-  assert.equal(ordinary.design.reasoningEffort, "medium");
-  assert.equal(ordinary.implementation.model, "gpt-5.6-luna");
-  assert.equal(ordinary.implementation.reasoningEffort, "max");
-  assert.equal(ordinary.acceptance.model, "gpt-6-astra");
-  assert.equal(ordinary.acceptance.reasoningEffort, "medium");
+  assert.equal(ordinary.design.reasoningEffort, null);
+  assert.equal(ordinary.implementation.model, null);
+  assert.equal(ordinary.implementation.reasoningEffort, null);
+  assert.equal(ordinary.implementation.mode, "inline");
+  assert.equal(ordinary.hostSelectionRequired, false);
+  assert.equal(ordinary.acceptance.model, null);
+  assert.equal(ordinary.acceptance.reasoningEffort, null);
   assert.equal(ordinary.acceptance.sandbox, "read-only");
   assert.equal(ordinary.maxImplementationWorkers, 2);
   const complex = modelPolicyForRouting(classifyTask(assessment({ scope: "system" })));
-  assert.equal(complex.design.reasoningEffort, "high");
-  assert.equal(complex.acceptance.reasoningEffort, "medium");
+  assert.equal(complex.design.profile, "critical-controller");
+  assert.equal(complex.design.reasoningEffort, null);
+  assert.equal(complex.implementation.reasoningEffort, null);
+  assert.equal(complex.acceptance.reasoningEffort, null);
   const sensitive = modelPolicyForRouting(classifyTask(assessment({ riskSignals: ["authorization"] })));
-  assert.equal(sensitive.design.reasoningEffort, "medium");
-  assert.equal(sensitive.acceptance.reasoningEffort, "high");
+  assert.equal(sensitive.acceptance.profile, "critical-review");
+  assert.equal(sensitive.design.reasoningEffort, null);
+  assert.equal(sensitive.acceptance.reasoningEffort, null);
   const uncertain = modelPolicyForRouting(classifyTask(assessment()), { concerns: ["Concurrent updates may overwrite each other"] });
-  assert.equal(uncertain.acceptance.reasoningEffort, "high");
+  assert.equal(uncertain.acceptance.profile, "critical-review");
+  assert.equal(uncertain.acceptance.reasoningEffort, null);
   assert.throws(() => modelPolicyForRouting(classifyTask(assessment()), { concerns: [""] }), /non-empty reasons/);
   const review = profileForDispatch({ role: "acceptance-review", lane: "deep" });
-  assert.equal(review.reasoningEffort, "medium");
-  assert.throws(() => validateRuntimeAttestation(review, { ...review, verified: true, source: "test", model: "gpt-5.6-luna" }),
-    (error) => error.code === "RUNTIME_PROFILE_MISMATCH");
+  assert.equal(review.reasoningEffort, null);
+  assert.equal(validateRuntimeAttestation(review, { ...review, verified: true, source: "test", model: "gpt-5.6-luna" }).model, "gpt-5.6-luna");
 });
 
 test("independent review documentation exposes the bounded retry and fallback contract", async () => {
@@ -316,11 +327,19 @@ test("default execution planning returns a bounded Worker contract or a concrete
   assert.equal(unverifiable.reason.code, "verification-unavailable");
 });
 
-test("runtime attestation proves the authoritative profile and leaf capability", () => {
+test("runtime attestation records actual model metadata and proves leaf capability", () => {
   const expected = profileForDispatch({ role: "bounded-implementation", lane: "standard" });
-  const attested = validateRuntimeAttestation(expected, { ...expected, verified: true, source: "host-runtime" });
-  assert.equal(attested.model, "gpt-5.6-luna");
+  const attested = validateRuntimeAttestation(expected, { ...expected, verified: true, source: "host-runtime", model: "gpt-6.1-sol", reasoningEffort: "high" });
+  assert.equal(attested.model, "gpt-6.1-sol");
+  assert.equal(attested.reasoningEffort, "high");
   assert.equal(attested.canSpawnAgents, false);
+  const unknown = validateRuntimeAttestation(expected, {
+    verified: true, source: "host-permissions", forkTurns: "none",
+    sandbox: "workspace-write", leaf: true, canSpawnAgents: false,
+  });
+  assert.equal(unknown.profile, null);
+  assert.equal(unknown.model, null);
+  assert.equal(unknown.reasoningEffort, null);
   assert.throws(
     () => validateRuntimeAttestation(expected, { ...expected, verified: true, source: "host-runtime", canSpawnAgents: true }),
     (error) => error.code === "RUNTIME_PROFILE_MISMATCH",
@@ -364,8 +383,8 @@ test("verification execution uses zero-model commands first and a bounded low br
   });
   const dynamic = verificationExecutionProfile({ surface: "web" });
   assert.equal(dynamic.mode, "browser-low");
-  assert.equal(dynamic.model, "gpt-5.6-luna");
-  assert.equal(dynamic.reasoningEffort, "low");
+  assert.equal(dynamic.model, null);
+  assert.equal(dynamic.reasoningEffort, null);
   assert.equal(dynamic.forkTurns, "none");
   assert.equal(dynamic.sandbox, "read-only");
   assert.deepEqual(dynamic.capabilities, ["browser"]);
